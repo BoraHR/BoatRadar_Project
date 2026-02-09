@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Security.Cryptography.X509Certificates;
 using Spectre.Console;
 
 public class MapDisplay
@@ -9,6 +10,36 @@ public class MapDisplay
     const string Frame_side_left = "\n║"; // used for both left and right
     const string Frame_side_right = "║";
     public Coordinates coordinates;
+    public MapDisplay()
+    {
+        coordinates = new Coordinates(Symbol_flag.Boat);
+    }
+    // start boat with the saved X - Y coordinates
+    public void StartBoatSession(int id)
+    {
+        while(true)
+        {
+            foreach(var boat in Coordinates.Entities)
+            {
+                if(boat.ID == id)
+                {
+                    coordinates = boat;
+                    break;
+                }
+            }
+            break;
+        }
+        if(coordinates == null)
+        {
+            Console.WriteLine("Boat id not found");
+            Console.WriteLine("Exit Code 3");
+            return;
+        }
+        while(true)
+        {
+            break;
+        }
+    }
     private bool IsValidFrame()
     {
         bool isValid = true;
@@ -32,15 +63,20 @@ public class MapDisplay
         }
         return isValid;
     }
-    public MapDisplay()
+    public void SimulateRadar()
     {
-        coordinates = new Coordinates(Symbol_flag.Boat);
+        bool isAlive = true;
+        while(isAlive)
+        {
+            // List<Coordinates> filteredCoordinates = Coordinates.Entities.Where(x => x.)
+            string line = Frame_side_left + new string(' ', Frame_top.Length - 2) + Frame_side_right;
+        }
     }
     public void DisplayBlankMapExample()
     {
         string line = Frame_side_left + new string(' ', Frame_top.Length - 2) + Frame_side_right;
-        string center_line = Frame_side_left + new string(' ', (Frame_top.Length - 2) / 2) + "[red bold]^[/]" + new string(' ', (Frame_top.Length - 3) / 2) + Frame_side_right;
-        int drawCount = (Frame_top.Length - 2) / 3;
+        string center_line = Frame_side_left + new string(' ', (Frame_top.Length - 2) / 2) + "[red bold]█[/]" + new string(' ', (Frame_top.Length - 3) / 2) + Frame_side_right;
+        int drawCount = (Frame_top.Length - 2) / 2;
         int center = drawCount / 2;
         string map = "";
         while(drawCount != 0)
