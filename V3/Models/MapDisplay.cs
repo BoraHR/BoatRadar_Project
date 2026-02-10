@@ -5,10 +5,10 @@ using Spectre.Console;
 public class MapDisplay
 {
     // frame is currently 200 * 200 make sure 
-    const string Frame_top = "╔════════════════════════════════════════════════════════════════════════════════════════════════════╗"; // = "╔" + new string('═', 100) + "╗";
-    const string Frame_buttom = "\n╚════════════════════════════════════════════════════════════════════════════════════════════════════╝"; // = "╚" + new string('═', 100) + "╝";
-    const string Frame_side_left = "\n║"; // used for both left and right
-    const string Frame_side_right = "║";
+    const string Frame_top = "╔════════════════════════════════════════════════════════════════════════════════════════════════════╗"; // == "╔" + new string('═', 100) + "╗";
+    const string Frame_buttom = "\n╚════════════════════════════════════════════════════════════════════════════════════════════════════╝"; // == "╚" + new string('═', 100) + "╝";
+    const string Frame_side_left = "\n║"; // call left instead of right to initilize newline/row
+    const string Frame_side_right = "║"; // call at end of row
     public Coordinates coordinates;
     public MapDisplay()
     {
@@ -17,18 +17,20 @@ public class MapDisplay
     // start boat with the saved X - Y coordinates
     public void StartBoatSession(int id)
     {
-        while(true)
-        {
-            foreach(var boat in Coordinates.Entities)
-            {
-                if(boat.ID == id)
-                {
-                    coordinates = boat;
-                    break;
-                }
-            }
-            break;
-        }
+        Coordinates coordinates = null;
+        // Rework to read SQLdata.
+        // while(true)
+        // {
+        //     foreach(var boat in Coordinates.Entities)
+        //     {
+        //         if(boat.ID == id)
+        //         {
+        //             coordinates = boat;
+        //             break;
+        //         }
+        //     }
+        //     break;
+        // }
         if(coordinates == null)
         {
             Console.WriteLine("Boat id not found");

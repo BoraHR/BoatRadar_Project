@@ -1,22 +1,18 @@
 public class Coordinates
 {
-    public static List<Coordinates> Entities = new();
-    private static int _id;
-    public int ID { get; }
+    public int ID { get; set; }
     public int Y { get; set; }
     public int X { get; set; }
     public Symbol_flag Type;
+
+    public Coordinates() { } // EF Core needs this
     public Coordinates(Symbol_flag type, int y = 0, int x = 0)
     {
-        // increament ID.
-        _id += 1;
-        // Fill fields.
-        ID = _id;
         Type = type;
         Y = y;
         X = x;
         // Add this coordinate entity to list to display entity to other entities and ViseVersa.
-        Entities.Add(this);
+        // Entities.Add(this);
     }
     private void Logic() => throw new NotImplementedException();
     public void Update_Y(int y) => Y += y;
