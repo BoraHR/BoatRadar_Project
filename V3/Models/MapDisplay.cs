@@ -4,7 +4,7 @@ using Spectre.Console;
 
 public class MapDisplay
 {
-    // frame is currently 200 * 200.
+    // frame is currently 200 * 200 make sure 
     const string Frame_top = "╔════════════════════════════════════════════════════════════════════════════════════════════════════╗"; // = "╔" + new string('═', 100) + "╗";
     const string Frame_buttom = "\n╚════════════════════════════════════════════════════════════════════════════════════════════════════╝"; // = "╚" + new string('═', 100) + "╝";
     const string Frame_side_left = "\n║"; // used for both left and right

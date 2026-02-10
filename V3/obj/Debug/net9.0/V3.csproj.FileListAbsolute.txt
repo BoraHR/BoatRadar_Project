@@ -1,0 +1,8 @@
+C:\Users\borag\Downloads\Shool_2025-2026\Stage_2026\GIT\BoatRadar_Project\v3\obj\Debug\net9.0\V3.csproj.AssemblyReference.cache
+C:\Users\borag\Downloads\Shool_2025-2026\Stage_2026\GIT\BoatRadar_Project\v3\obj\Debug\net9.0\V3.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\borag\Downloads\Shool_2025-2026\Stage_2026\GIT\BoatRadar_Project\v3\obj\Debug\net9.0\V3.AssemblyInfoInputs.cache
+C:\Users\borag\Downloads\Shool_2025-2026\Stage_2026\GIT\BoatRadar_Project\v3\obj\Debug\net9.0\V3.AssemblyInfo.cs
+C:\Users\borag\Downloads\Shool_2025-2026\Stage_2026\GIT\BoatRadar_Project\v3\obj\Debug\net9.0\V3.csproj.CoreCompileInputs.cache
+C:\Users\borag\Downloads\Shool_2025-2026\Stage_2026\GIT\BoatRadar_Project\v3\obj\Debug\net9.0\V3.MvcApplicationPartsAssemblyInfo.cs
+C:\Users\borag\Downloads\Shool_2025-2026\Stage_2026\GIT\BoatRadar_Project\v3\obj\Debug\net9.0\V3.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\borag\Downloads\Shool_2025-2026\Stage_2026\GIT\BoatRadar_Project\v3\obj\Debug\net9.0\V3.sourcelink.json
