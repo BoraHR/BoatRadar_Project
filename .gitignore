@@ -1,4 +1,4 @@
-*.dll
-*.exe
-*.AssemblyInfo.cs
-*.pdb
+**/*.dll
+**/*.exe
+**/*.pdb
+**/*AssemblyInfo.cs
