@@ -1,0 +1,4 @@
+*.dll
+*.exe
+*.AssemblyInfo.cs
+*.pdb
