@@ -46,7 +46,7 @@ namespace V3
 
             // 4️⃣ Set current boat in center
             int center = radarRange;
-            positions_zoomLVL200[center][center] = 'O';
+            positions_zoomLVL200[center][center] = 'X';
 
             // 5️⃣ Place other boats relative to current boat
             foreach (var boat in boatsInRange)
@@ -78,14 +78,14 @@ namespace V3
                 if(i == positions_zoomLVL200.Length - 1)
                 {
                     map += Frame_buttom;
+                    Console.WriteLine(map);
                     return map;
                 }
                 else
                 {
                     map += Frame_side_left;
                     i++;
-                } 
-                AnsiConsole.MarkupLine(line);
+                }
             }
             return map;
         }

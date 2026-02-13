@@ -30,6 +30,7 @@ using (var conn = new NpgsqlConnection(builder.Configuration.GetConnectionString
     {
         conn.Open();
         Console.WriteLine("Database connection successful!");
+        Console.WriteLine("http://localhost:5177/swagger/index.html");
     }
     catch (Exception ex)
     {
