@@ -51,11 +51,14 @@ namespace V3
             // 5️⃣ Place other boats relative to current boat
             foreach (var boat in boatsInRange)
             {
-                int dx = boat.X - currentBoat.X;
-                int dy = boat.Y - currentBoat.Y;
+                float dx = boat.X - currentBoat.X;
+                float dy = boat.Y - currentBoat.Y;
 
-                int arrayX = center + dx;
-                int arrayY = center + dy;
+                float floatArrayX = center + dx;
+                float floatArrayY = center + dy;
+
+                int arrayX = (int)Math.Round(floatArrayX);
+                int arrayY = (int)Math.Round(floatArrayY);
 
                 if (arrayX >= 0 && arrayX < gridSize && arrayY >= 0 && arrayY < gridSize)
                     positions_zoomLVL200[arrayY][arrayX] = Symbol.GetSymbol(boat.Type);
@@ -89,5 +92,70 @@ namespace V3
             }
             return map;
         }
+        [HttpPut("Drive/{id}/heading/{heading}/speed/{speed}/hold/{hold}")]
+        public async Task<ActionResult<string>> DriveShip(int id, float heading, float speed, int hold, AppContext db)
+        {
+            var boat = db.Coordinates.SingleOrDefault(b => b.ID == id);
+
+            if (boat == null)
+                return NotFound("Boat not found");
+
+            double radians = heading * Math.PI / 180.0;
+
+            float deltaX = (float)(Math.Cos(radians) * speed);
+            float deltaY = (float)(Math.Sin(radians) * speed);
+
+            while (hold > 0)
+            {
+                Thread.Sleep(1000);
+
+                boat.X += deltaX;
+                boat.Y += deltaY;
+
+                await db.SaveChangesAsync();
+
+                Console.WriteLine($"Boat_{boat.ID} New position → X: {boat.X}, Y: {boat.Y}");
+                hold--;
+            }
+            // 🔁 IMPORTANT: invert Y because array Y grows downward
+            return Ok($"Boat_{boat.ID} New position → X: {boat.X}, Y: {boat.Y}");
+        }
+        [HttpGet("CalculateColision/B1_X/{B1_X}/B1_Y/{B1_Y}/B1_Heading/{B1_Heading}/B1_Speed/{B1_Speed}/B2_X/{B2_X}/B2_Y/{B2_Y}/B2_Heading/{B2_Heading}/B2_Speed/{B2_Speed}/Hold/{hold}")]
+        public async Task<ActionResult<bool>> SimulateColisionCal(float B1_X, float B1_Y, float B1_Heading, float B1_Speed, float B2_X, float B2_Y, float B2_Heading, float B2_Speed, int hold)
+        {
+            double radians1 = B1_Heading * Math.PI / 180.0;
+            double radians2 = B2_Heading * Math.PI / 180.0;
+
+            float B1_deltaX = (float)(Math.Cos(radians1) * B1_Speed);
+            float B1_deltaY = (float)(Math.Sin(radians1) * B1_Speed);
+
+            float B2_deltaX = (float)(Math.Cos(radians2) * B2_Speed);
+            float B2_deltaY = (float)(Math.Sin(radians2) * B2_Speed);
+
+            while (hold > 0)
+            {
+                // Thread.Sleep(1000);
+
+                B1_X += B1_deltaX;
+                B1_Y += B1_deltaY;
+
+                B2_X += B2_deltaX;
+                B2_Y += B2_deltaY;
+                
+                Console.WriteLine($"Boat_1 New position → X: {B1_X}, Y: {B1_Y}");
+                Console.WriteLine($"Boat_2 New position → X: {B2_X}, Y: {B2_Y}");
+
+
+                if((int)Math.Round(B1_X) == (int)Math.Round(B2_X) && (int)Math.Round(B1_Y) == (int)Math.Round(B2_Y))
+                {
+                    Console.WriteLine("Boat_1 and Boat_2 got KIA'd");
+                    return true;
+                }
+                hold--;
+            }
+            Console.WriteLine("Both boats survived");
+            return false;
+        }
+
     }
 }
