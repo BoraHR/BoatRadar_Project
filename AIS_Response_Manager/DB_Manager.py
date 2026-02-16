@@ -1,26 +1,37 @@
 import os
-import pandas as pd
+import sqlite3
 
-FileRoute = 'AIS-Responder_Data.xlsx'
+FileRoute_sql3 = 'AIS-Responder_DB.db'
 
-def GetCurrentDirectory():
-    # used the startpoint of directory file search.
-    print("Current working directory:")
-    print(os.getcwd())
+def CreateDB():
+    if not os.path.exists(FileRoute_sql3):
+        conn = sqlite3.connect(FileRoute_sql3)
+        c = conn.cursor()
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS AIS_Responder (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                Name TEXT,
+                Msii TEXT,
+                Flag TEXT,
+                Class TEXT,
+                N TEXT,
+                W TEXT,
+                ReportAge TEXT,
+                Speed TEXT,
+                Course TEXT,
+                Heading TEXT,
+                Range TEXT,
+                Bearing TEXT,
+                TurnRate TEXT
+            )
+        ''')
+        conn.commit()
+        conn.close()
+        print("DB created")
+    else:
+        print("DB already exists")
 
-def ReadExcell():
-    df = pd.read_excel(FileRoute) 
-    print(df)
-    
-def ReadFirst5Rows():
-    df = pd.read_excel(FileRoute) 
-    print(df.head)
-
-def ReadLast5Rows():
-    df = pd.read_excel(FileRoute) 
-    print(df.tail)
-
-def AddRow():
+def AddRowDB():
     shipName = input("Name: ")
     mssi = input("MSII: ")
     flag = input("Flag: ")
@@ -61,76 +72,49 @@ def AddRow():
     if turnRate == "":
         turnRate = None
 
-    # Read existing file (or create empty if not exists)
-    if os.path.exists(FileRoute):
-        df_existing = pd.read_excel(FileRoute)
-    else:
-        df_existing = pd.DataFrame(columns=[
-            "ID", "Name", "Msii", "Flag", "Class",
-            "N", "W", "ReportAge", "Speed", "Course",
-            "Heading", "Range", "Bearing", "TurnRate"
-        ])
+    if os.path.exists(FileRoute_sql3):
+        try:
+            conn = sqlite3.connect(FileRoute_sql3)
+            c = conn.cursor()
+            c.execute('''INSERT INTO AIS_Responder
+                (
+                    Name, 
+                    Msii, 
+                    Flag,
+                    Class,
+                    N,
+                    W,
+                    ReportAge,
+                    Speed,
+                    Course,
+                    Heading,
+                    Range,
+                    Bearing,
+                    TurnRate
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                shipName,
+                mssi,
+                flag,
+                boatClass,
+                n,
+                w,
+                reportAge,
+                speed,
+                course,
+                heading,
+                range_val,
+                bearing,
+                turnRate
+                )
+            )
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            print("Error inserting data:")
+            print(e)
+            
 
-    # Generate new ID
-    if df_existing.empty:
-        new_id = 1
-    else:
-        new_id = df_existing["ID"].max() + 1
-
-    # Create new row properly
-    new_row = {
-        "ID": new_id,
-        "Name": shipName,
-        "Msii": mssi,
-        "Flag": flag,
-        "Class": boatClass,
-        "N": n,
-        "W": w,
-        "ReportAge": reportAge,
-        "Speed": speed,
-        "Course": course,
-        "Heading": heading,
-        "Range": range_val,
-        "Bearing": bearing,
-        "TurnRate": turnRate
-    }
-
-    df_new = pd.DataFrame([new_row])
-
-    # Append safely (modern pandas way)Br
-    df_combined = pd.concat([df_existing, df_new], ignore_index=True)
-
-    # Save
-    df_combined.to_excel(FileRoute, index=False)
-
-    print("Ship added successfully.")
-
-def DropRow(_row):
-    try:
-        row = int(_row)
-    except ValueError:
-        print("Invalid input: cannot convert to integer")
-        return
-    
-    if(row < 0):
-        print("row index cant be negative")
-        return
-
-    if (os.path.exists(FileRoute) == False):
-        print("File not found")
-        return
-
-    content = pd.read_excel(FileRoute)
-
-     # Save deleted row for printing
-    deleted_row = content.loc[row]
-
-    # Drop row
-    content = content.drop(row)
-
-    # Save updated file
-    content.to_excel(FileRoute, index=False)
-
-    print("Deleted row:")
-    print(deleted_row)
-
+CreateDB()
+AddRowDB()
