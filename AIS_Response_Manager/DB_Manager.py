@@ -160,6 +160,24 @@ def DeleteByID(_id):
         print(e)
         print("Deletion failed")
 
+def SearchByMSSI(mssi):
+    try:
+        conn = sqlite3.connect(FileRoute_sql3)
+        c = conn.cursor()
+        boat = c.execute('''
+        SELECT * FROM AIS_Responder WHERE Msii = ?
+        ''', (mssi,)).fetchone()
+        if boat != None:
+            print(boat)
+        else:
+            print(f"no boat found with MSSI: {mssi}")
+        input("ENTER to continue")
+
+    except Exception as e:
+        print("sqlite3 operation failed:")
+        print(e)
+        print("fetch failed")
+
 CreateDB()
-id = input("ID: ")
-DeleteByID(id)
+mssi = input("MSSI: ")
+SearchByMSSI(mssi)
