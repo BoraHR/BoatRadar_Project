@@ -122,7 +122,7 @@ def DropRow(_row):
 
     content = pd.read_excel(FileRoute_xlsx)
 
-     # Save deleted row for printing
+    # Save deleted row for printing
     deleted_row = content.loc[row]
 
     # Drop row

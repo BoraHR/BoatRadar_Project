@@ -114,7 +114,50 @@ def AddRowDB():
         except Exception as e:
             print("Error inserting data:")
             print(e)
-            
 
-CreateDB()
-AddRowDB()
+def DeleteByID(_id):  
+    try:
+        id = int(_id)
+    except ValueError:
+        print("Invalid input: cannot convert to integer")
+        print("Deletion failed")
+        return
+
+    try:
+        conn = sqlite3.connect(FileRoute_sql3)
+        c = conn.cursor()
+        check = c.execute('''
+        SELECT * FROM AIS_Responder WHERE id = ?
+        ''', (id,)).fetchone()
+        if(check != None):
+            choice = " "
+            print(check)
+            while(choice[0] != 'Y' and choice[0] != 'N'):
+                choice = input("are you sure you want to DELETE this data? Its not reverseble. (Y (yes)/N (No)) ").upper()
+                # reset choice to prefent exeption if blank
+                if choice == "":
+                    choice = " "
+                    continue
+                # confirm input
+                if choice[0] == 'Y':
+                    c.execute(''' 
+                    DELETE FROM AIS_Responder WHERE id = ?
+                    ''', (id,))
+                    conn.commit()
+                    conn.close()
+                    print("Deletion succes")
+                    return
+                print("Deletion cancelled")
+                conn.close()
+                return
+        print(f"id {id} not found")
+        print("Deletion cancelled")
+        conn.close()
+    except Exception as e:
+        print("sqlite3 operation failed:")
+        print(e)
+        print("Deletion failed")
+
+
+id = input("ID: ")
+DeleteByID(id)
