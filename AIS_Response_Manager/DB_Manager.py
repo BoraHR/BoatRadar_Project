@@ -1,7 +1,9 @@
 import os
 import sqlite3
 
-FileRoute_sql3 = 'AIS-Responder_DB.db'
+# Folder where THIS python file is located
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FileRoute_sql3 = os.path.join(BASE_DIR, "AIS-Responder_DB.db")
 
 def CreateDB():
     if not os.path.exists(FileRoute_sql3):
@@ -158,6 +160,6 @@ def DeleteByID(_id):
         print(e)
         print("Deletion failed")
 
-
+CreateDB()
 id = input("ID: ")
 DeleteByID(id)
