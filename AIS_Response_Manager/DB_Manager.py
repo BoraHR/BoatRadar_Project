@@ -1,9 +1,10 @@
 import os
 import sqlite3
+from pyais import decode
 
 # Folder where THIS python file is located
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-FileRoute_sql3 = os.path.join(BASE_DIR, "AIS-Responder_DB.db")
+FileRoute_sql3 = os.path.join(BASE_DIR, "Data/AIS-Responder_DB.db")
 
 def CreateDB():
     if not os.path.exists(FileRoute_sql3):
@@ -179,5 +180,24 @@ def SearchByMSSI(mssi):
         print("fetch failed")
 
 CreateDB()
-mssi = input("MSSI: ")
-SearchByMSSI(mssi)
+choice = " "
+print("Options:")
+print("1. Add ship")
+print("2. Delete ship by id")
+print("3. Search ship by mssi")
+print("4. exit")
+while(True):
+    choice = input("pick number: ")
+    if choice == "1":
+        AddRowDB()
+    if choice == "2":
+        id = input("id: ")
+        DeleteByID(id)
+    if choice == "3":
+        mssi = input("mssi: ")
+        SearchByMSSI(mssi)
+    if choice == "4":
+        print("Exiting program.")
+        break
+    
+    
