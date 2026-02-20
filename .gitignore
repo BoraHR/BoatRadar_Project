@@ -36,3 +36,6 @@ project.lock.json
 .idea/
 *.resharper
 *.resharper.user
+
+# Template
+template.gitignore
