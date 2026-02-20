@@ -4,16 +4,15 @@ from pyais import decode
 from pyais.stream import FileReaderStream
 import time
 
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ais_file1 = os.path.join(BASE_DIR, "Data/ais_arca.txt")
 ais_file2 = os.path.join(BASE_DIR, "Data/ais_rp42.txt")
 FileRoute_sql3 = os.path.join(BASE_DIR, "Data/AIS-Responder_DB.db")
 
-
-def Decode_file1():
-    with open(ais_file1, "r") as file:
+def Decode_file(file):
+    with open(ais_file1, "r", encoding="utf-8", errors="ignore") as file:
         for line in file:
+            start = time.time()
             line = line.strip()
 
             # Skip empty lines
@@ -30,36 +29,20 @@ def Decode_file1():
                     print("Decoded message:")
                     print(decoded)
                     print("-" * 50)
+                    end = time.time()
+                    print(f"ms: {end - start}")
                 except Exception as e:
                     print("Failed to decode:", nmea_sentence)
                     print("Error:", e)
                     print("-" * 50)
+                    end = time.time()
+                    print(f"ms: {end - start}")
 
-def Decode_file2():
-    with open(ais_file2, "r") as file:
-        for line in file:
-            line = line.strip()
-
-            # Skip empty lines
-            if not line:
-                continue
-
-            # Extract only the AIS sentence (starts with $AIVDM)
-            if "$AIVDM" in line:
-                nmea_sentence = line.split("$AIVDM")[-1]
-                nmea_sentence = "$AIVDM" + nmea_sentence
-
-                try:
-                    decoded = decode(nmea_sentence)
-                    print("Decoded message:")
-                    print(decoded)
-                    print("-" * 50)
-                except Exception as e:
-                    print("Failed to decode:", nmea_sentence)
-                    print("Error:", e)
-                    print("-" * 50)
-
-def Save_DecodedData_File1():
+def Save_DecodedData(_file):
+    total_time = 0.00
+    failed = 0
+    skipped = 0
+    passed = 0
     conn = sqlite3.connect(FileRoute_sql3)
     c = conn.cursor()
     # Accuracy and Raim is bool stored as an integer because of sql3 limitations 
@@ -74,21 +57,22 @@ def Save_DecodedData_File1():
             Turn TEXT,
             Speed REAL,
             Accuracy INTEGER,
-            Logitude REAL,
+            Longitude REAL,
             Latitude REAL,
             Course REAL,
             Heading REAL,
             Second REAL,
             Manuever TEXT,
             Spare_1 TEXT,
-            Raim INTERGER,
-            Radio INTERGER
+            Raim INTEGER,
+            Radio INTEGER
         )
     ''') 
     conn.commit()
     print("DB created")
-    with open(ais_file1, "r") as file:
+    with open(_file, "r", encoding="utf-8", errors="ignore") as file:
         for line in file:
+            start = time.time()
             line = line.strip()
 
             # Skip empty lines
@@ -101,12 +85,9 @@ def Save_DecodedData_File1():
                 nmea_sentence = "$AIVDM" + nmea_sentence
                 try:
                     decoded = decode(nmea_sentence)
-                    print("Decoded message:")
-                    print(decoded)
-                    print("-" * 50)
                     accuracyInt = int(bool(decoded.accuracy))
                     raimInt = int(bool(decoded.raim))
-                    if(len(str(decoded.mmsi)) == 9):
+                    if(decoded.mmsi and len(str(decoded.mmsi).strip()) == 9):
                         if(ValidateFields(decoded) == True):
                             try:
                                 c.execute('''
@@ -119,7 +100,7 @@ def Save_DecodedData_File1():
                                         Turn,
                                         Speed,
                                         Accuracy,
-                                        Logitude,
+                                        Longitude,
                                         Latitude,
                                         Course,
                                         Heading,
@@ -138,7 +119,7 @@ def Save_DecodedData_File1():
                                     decoded.status,
                                     decoded.turn,
                                     decoded.speed,
-                                    int(decoded.accuracy),
+                                    accuracyInt,
                                     decoded.lon,
                                     decoded.lat,
                                     decoded.course,
@@ -146,32 +127,62 @@ def Save_DecodedData_File1():
                                     decoded.second,
                                     decoded.maneuver,
                                     decoded.spare_1,
-                                    int(decoded.raim),
+                                    raimInt,
                                     decoded.radio
                                 )   
                             )
-                                conn.commit()
+                                end = time.time()
+                                print("Passed:")
+                                print(nmea_sentence)
+                                print(decoded)
+                                print(f"ms: {(end - start) * 1000:.2f}")
+                                print("-" * 50)
+                                total_time += end - start
+                                passed += 1
                             except Exception as e:
                                 print("Failed:")
                                 print(nmea_sentence)
                                 print(decoded)
                                 print("Do to an error during SQL Insertion")
                                 print(e)
+                                end = time.time()
+                                print(f"ms: {(end - start) * 1000:.2f}")
+                                print("-" * 50)
+                                total_time += end - start
+                                failed += 1
                         else:
                             print("Skipped:")
                             print(nmea_sentence)
                             print(decoded)
                             print("Because field validation failed")
+                            end = time.time()
+                            print(f"ms: {(end - start) * 1000:.2f}")
+                            print("-" * 50)
+                            total_time += end - start
+                            skipped += 1
+                            continue
                     else:
-                        print("Skipped:")
+                        print("Failed:")
                         print(nmea_sentence)
                         print(decoded)
                         print("Because it has an invalid mssi")
+                        end = time.time()
+                        print(f"ms: {(end - start) * 1000:.2f}")
+                        print("-" * 50)
+                        total_time += end - start
+                        failed += 1
+                        continue
                 except Exception as e:
                     print("Failed to decode:", nmea_sentence)
                     print("Error:", e)
+                    end = time.time()
+                    print(f"ms: {(end - start) * 1000:.2f}")
                     print("-" * 50)
+                    total_time += end - start
+                    continue
+        conn.commit()
         conn.close()
+        print(f"Passed: {passed} | Failed: {failed} | Skipped: {skipped} | Time(ms): {total_time * 1000:.2f}")
 
 
 def ValidateFields(decoded) -> bool:
@@ -201,10 +212,12 @@ def ValidateFields(decoded) -> bool:
         print(e)
         return False
     
+def InRange(boat_id, range = 6.0):
+    NotImplementedError
+    
+    
 
-print("file 1")
-print("--------------------------------------------------")
-Decode_file1()
-print("file 2")
-print("--------------------------------------------------")
-Decode_file2()
+
+
+
+
