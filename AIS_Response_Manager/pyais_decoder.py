@@ -9,6 +9,9 @@ ais_file1 = os.path.join(BASE_DIR, "Data/ais_arca.txt")
 ais_file2 = os.path.join(BASE_DIR, "Data/ais_rp42.txt")
 FileRoute_sql3 = os.path.join(BASE_DIR, "Data/AIS-Responder_DB.db")
 
+def OpenDB():
+        NotImplementedError
+
 def Decode_file(file):
     with open(ais_file1, "r", encoding="utf-8", errors="ignore") as file:
         for line in file:
@@ -212,10 +215,51 @@ def ValidateFields(decoded) -> bool:
         print(e)
         return False
     
-def InRange(boat_id, range = 6.0):
-    NotImplementedError
+# 0.009 is 1KM 
+def InRangeHelper(boat_id, range=0.009):
+    conn = sqlite3.connect(FileRoute_sql3)
+    c = conn.cursor()
+
+    myBoat = c.execute('''
+        SELECT *
+        FROM AIS_Decoder
+        WHERE id = ?
+    ''', (boat_id,)).fetchone()
+
+    if myBoat == None:
+        print("Boat not found")
+        return
     
-    
+    # mmsi = 3
+    # lon = 9
+    # lat = 10
+    mmsi = myBoat[3]
+    lon = myBoat[8]
+    lat = myBoat[9]
+    otherBoats = c.execute('''
+        SELECT *
+        FROM AIS_Decoder
+        WHERE Mmsi != ?
+        AND ABS(Longitude - ?) <= ?
+        AND ABS(Latitude - ?) <= ?
+    ''', 
+    (myBoat[3], lon, range, lat, range)).fetchall()
+    print("YourBoat:")
+    print(myBoat)
+    print()
+    print(f"Other boats in range of {range} lon and lat:")
+    for boat in otherBoats:
+        print(boat)
+
+    print()
+    conn.close()
+
+InRangeHelper(1)
+# InRangeHelper(1, 9)
+# InRangeHelper(1, 12)
+# InRangeHelper(1, 16)
+# InRangeHelper(1, 30)
+
 
 
 
