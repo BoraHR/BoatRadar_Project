@@ -39,3 +39,7 @@ project.lock.json
 
 # Template
 template.gitignore
+
+# DataFiles
+*.db
+*.xlsx
