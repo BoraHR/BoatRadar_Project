@@ -223,11 +223,12 @@ def ValidateFields(decoded) -> bool:
             print("Validation failed one or more fields are None")
             return False
         if(
-            decoded.lon == 181.00 or
-            decoded.lat == 91.00 or
-            decoded.course == 360.00 or
-            decoded.heading == 511 or
-            decoded.second == 63
+            decoded.lon > 180.00 or decoded.lon < 0.00 or
+            decoded.lat > 90.00 or decoded.lat < 0.00 or
+            decoded.course >= 360.00 or decoded.course < 0.00 or
+            decoded.heading >= 360.00 or decoded.heading < 0.00 or
+            decoded.second > 60 or decoded.second < 0
+            # decoded.turn > 127.00 or decoded.turn < -127.00
         ):
             print("Validation failed one or more fields have invalid data")
             return False
@@ -344,18 +345,23 @@ def InRangeHelper(boat_id, range=0.009, timeWindow = 10.00):
             print("Boat: ", otherBoatsNoTime)
             print("Failed datetime operation:")
             print(e)
+
             
     print("YourBoat:")
     print(dataTuple)
     print(myBoat)
     print(f"lon: {myBoat[9]}, lat: {myBoat[10]}")
     print()
+    if len(otherBoats) == 0:
+        print(F"NO BOATS IN RANGE OF {range} CONTACT YOUR AIS PROVIDER FOR ANY UPDATES")
+        return
+    
     print(f"Other boats in range of {range} lon and lat:")
     print(dataTuple)
     for boat in otherBoats:
         print(boat)
         print(f"lon: {boat[9]}, lat: {boat[10]}")
-        print(f"Distance from myBoat in meters: {haversine(lat, lon, boat[9], boat[10])}")
+        print(f"Distance from myBoat in KM: {haversine(lat, lon, boat[10], boat[9])}")
 
     print()
     conn.close()
@@ -363,6 +369,6 @@ def InRangeHelper(boat_id, range=0.009, timeWindow = 10.00):
 
 # Save_DecodedData(ais_file1)
 # Save_DecodedData(ais_file2)
-# InRangeHelper(1, 3, 5)
-Decode_file(ais_file1)
-Decode_file(ais_file2)
+InRangeHelper(1, 0.05, 5)
+# Decode_file(ais_file1)
+# Decode_file(ais_file2)
