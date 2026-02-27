@@ -3,6 +3,7 @@ import sqlite3
 from pyais import decode
 from pyais.stream import FileReaderStream
 import time
+from RadarDrawing import draw_radar_Custom, plot_otherBoat, KeepRadarAlive
 from datetime import datetime, timedelta
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -13,7 +14,7 @@ FileRoute_sql3 = os.path.join(BASE_DIR, "Data/AIS-Responder_DB.db")
 import math
 
 def OpenDB():
-        NotImplementedError
+    NotImplementedError
 
 def Decode_file(file):
     with open(ais_file1, "r", encoding="utf-8", errors="ignore") as file:
@@ -314,15 +315,31 @@ def haversine(lat1, lon1, lat2, lon2):
     c = 2 * math.asin(math.sqrt(a))
     return rad * c
 
-def ConvertToX_Y(lat1, lon1, lat2, lon2):
-    print(math.pi * lat1/180)
-    print(math.pi * lon1/180)
-    print(math.pi * lat2/180)
-    print(math.pi * lon2/180)
-
+def ConvertToX_Y(lat1, lon1, lat2, lon2, debug=False):
+    aardstraal = 6371000
+    X1 = math.pi * lat1/180
+    Y1 = math.pi * lon1/180
+    X2 = math.pi * lat2/180
+    Y2 = math.pi * lon2/180
+    DeltaPhi = X1 - X2
+    DeltaL = Y1 - Y2
+    average = (X1 + X2) / 2
+    Y = DeltaPhi * aardstraal
+    X = DeltaL * aardstraal * math.cos(average)
+    distance = math.sqrt(X*X+Y*Y)
+    mesurements = (X, Y, distance)
+    if(debug):
+        print(f"X = {X}")
+        print(f"Y = {Y}")
+        print(f"Afstand = {distance}")
+        print(f"return value: {mesurements}")
+    
+    return mesurements
+    
 # range = distance between your boat and other boat in both Lad and long
 # timeWindow = how far appart the received message is allowed to be shown in the list of other Boats
 def InRangeHelper(boat_id, range=0.009, timeWindow = 10.00):
+    draw_radar_Custom(range)
     dataTuple = "(id, Date, MsgType, Repeat, Mmsi, Status, Turn, Speed, Accuracy, Longitude, Latitude, Course, Heading, Second, Manuever, Spare_1, Raim, Radio)"
     conn = sqlite3.connect(FileRoute_sql3)
     c = conn.cursor()
@@ -392,7 +409,6 @@ def InRangeHelper(boat_id, range=0.009, timeWindow = 10.00):
     print(dataTuple)
     for boat in otherBoats:
         distance = haversine(lat, lon, boat[10], boat[9])
-
         if distance <= range:
             heading_to_target = bearing_deg(lat, lon, boat[10], boat[9])
             print(boat)
@@ -400,13 +416,21 @@ def InRangeHelper(boat_id, range=0.009, timeWindow = 10.00):
             print(f"Distance from myBoat in KM: {distance:.2f}")
             print(f"Bearing to boat: {heading_to_target:.1f}°")
             print("-" * 50)
+            X_Y = ConvertToX_Y(lat, lon, boat[10], boat[9]) # tuple(X, Y, Distance)
+            range_meters = range * 1000
+            radar_radius_pixels = 250
+
+            scale = radar_radius_pixels / range_meters
+            plot_otherBoat(X_Y[0], X_Y[1], scale)
+
     print()
     conn.close()
+    KeepRadarAlive()
+
 
 
 # Save_DecodedData(ais_file1)
 # Save_DecodedData(ais_file2)
-# InRangeHelper(1, 5, 5)
-ConvertToX_Y(51.990935, 4.050667, 51.957192, 4.076493)
+InRangeHelper(1, 5, 5)
 # Decode_file(ais_file1)
 # Decode_file(ais_file2)
