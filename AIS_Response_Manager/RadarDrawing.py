@@ -1,21 +1,35 @@
 import turtle
 import math
+import os
+from PIL import Image
+import time
 
-t = turtle.Turtle()
+t = turtle.Turtle(visible=False)
 t.hideturtle()
 t.speed(0)
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ps_loc = os.path.join(BASE_DIR, "Radar/drawing.ps")
+img_loc = os.path.join(BASE_DIR, "Radar/img.png")
+
 # KM the amount of lines represent keep in mind it must be an int.
 def draw_radar_Custom(KM):
-    if int(math.ceil(KM)) == 3:
-        draw_radar_3KM()
-        return 
-    if int(math.ceil(KM)) == 6:
-        draw_radar_6KM()
-        return
-    if int(math.ceil(KM)) == 10:
-        draw_radar_10KM()
-        return
+    start = time.time()
+    # if int(math.ceil(KM)) == 3:
+    #     draw_radar_3KM()
+    #     end = time.time()
+    #     print(f"ms: {end - start}")
+    #     return 
+    # if int(math.ceil(KM)) == 6:
+    #     draw_radar_6KM()
+    #     end = time.time()
+    #     print(f"ms: {end - start}")
+    #     return
+    # if int(math.ceil(KM)) == 10:
+    #     draw_radar_10KM()
+    #     end = time.time()
+    #     print(f"ms: {end - start}")
+    #     return
     
     KM = int(math.ceil(KM))
 
@@ -32,48 +46,12 @@ def draw_radar_Custom(KM):
         t.goto(0, -r)
         t.pendown()
         t.circle(r)
-        plot_myBoat()
     draw_crosshair(radius_list[-1])
     t.write(str(KM), align="center", font=("Consolas", 16, "bold"))
-
-def draw_radar_3KM():
-    radius_list = [(250/3), (250/3)*2, 250]
-    for r in radius_list:
-        t.penup()
-        t.goto(0, -r)
-        t.pendown()
-        t.circle(r)
-        plot_myBoat()
-    draw_crosshair(radius_list[-1])
-    t.write("3", align="center", font=("Consolas", 16, "bold"))
-
-def draw_radar_10KM():
-    radius_list = [
-        25, 50, 75, 100, 125,
-        150, 175, 200, 225, 250
-    ]
-    for r in radius_list:
-        t.penup()
-        t.goto(0, -r)
-        t.pendown()
-        t.circle(r)
-        plot_myBoat()
-    draw_crosshair(radius_list[-1])
-    t.write("10", align="center", font=("Consolas", 16, "bold"))
-
-def draw_radar_6KM():
-    devided = 250/6
-    radius_list = [
-        devided, (devided) * 2, (devided) * 3, (devided) * 4, (devided) * 5, 250
-    ]
-    for r in radius_list:
-        t.penup()
-        t.goto(0, -r)
-        t.pendown()
-        t.circle(r)
-        draw_crosshair(radius_list[-1])
-        t.write("6", align="center", font=("Consolas", 16, "bold"))
-        plot_myBoat()
+    plot_myBoat()
+    end = time.time()
+    SaveImg()
+    return end - start # returns the a time it took to create the img in seconds.
 
 def draw_crosshair(range):
     max_radius = range
@@ -104,9 +82,18 @@ def KeepRadarAlive():
     while(True):
         input("Press ENTER to close radar.")
         break
-    turtle.done
+    turtle.done()
 
-# draw_radar_Custom(10)
+def SaveImg():
+    # get screents
+    ts = turtle.Screen()
+    # save as PostScript
+    ts.getcanvas().postscript(file=ps_loc)
+    img = Image.open(ps_loc)
+    img.save(img_loc)
+    turtle.done()
+
+draw_radar_Custom(10)
 # draw_radar_3KM()
 # draw_radar_6KM()
 # draw_radar_10KM()
