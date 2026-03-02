@@ -1,4 +1,5 @@
 import turtle
+import math
 
 t = turtle.Turtle()
 t.hideturtle()
@@ -6,15 +7,17 @@ t.speed(0)
 
 # KM the amount of lines represent keep in mind it must be an int.
 def draw_radar_Custom(KM):
-    if int(KM) == 3:
+    if int(math.ceil(KM)) == 3:
         draw_radar_3KM()
         return 
-    if int(KM) == 6:
+    if int(math.ceil(KM)) == 6:
         draw_radar_6KM()
         return
-    if int(KM) == 10:
+    if int(math.ceil(KM)) == 10:
         draw_radar_10KM()
         return
+    
+    KM = int(math.ceil(KM))
 
     radius_list = [250]
     multiplier = 0
