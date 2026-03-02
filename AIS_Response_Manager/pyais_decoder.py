@@ -248,6 +248,9 @@ def km_to_lon_deg(km, lat):
 def ValidateDate(strDate, isDebug = False) -> bool:
     # https://docs.python.org/3/library/datetime.html
     try:
+        if "T" not in strDate:
+            return False
+
         date = datetime.fromisoformat(strDate)
         Y = date.year
         M = date.month
@@ -431,6 +434,6 @@ def InRangeHelper(boat_id, range=0.009, timeWindow = 10.00):
 
 # Save_DecodedData(ais_file1)
 # Save_DecodedData(ais_file2)
-InRangeHelper(1, 5, 5)
+# InRangeHelper(1, 10, 5)
 # Decode_file(ais_file1)
 # Decode_file(ais_file2)
