@@ -144,7 +144,12 @@ def InRangeHelper(boat_id, range=0.009, timeWindow = 10.00):
     # 🔥 CONVERT KM → DEGREE BOUNDING BOX
     lat_range = km_to_lat_deg(range)
     lon_range = km_to_lon_deg(range, lat)
-    
+
+    min_lon = lon - lon_range
+    max_lon = lon + lon_range
+    min_lat = lat - lat_range
+    max_lat = lat + lat_range
+        
     try:
         dateOfPosition = datetime.fromisoformat(myBoat[1])
     except Exception as e:
@@ -152,29 +157,23 @@ def InRangeHelper(boat_id, range=0.009, timeWindow = 10.00):
         print(myBoat)
         print(e)
         return
-    otherBoatsNoTime = c.execute('''
-        SELECT *
-        FROM AIS_Decoder
-        WHERE Mmsi != ?
-        AND ABS(Longitude - ?) <= ?
-        AND ABS(Latitude - ?) <= ?
-    ''', 
-    (mmsi, lon, lon_range, lat, lat_range)).fetchall()
-    otherBoats = []
-    for boat in otherBoatsNoTime:
-        try:
-            otherDate = datetime.fromisoformat(boat[1])
-            minDateTime = otherDate + timedelta(seconds=-timeWindow)
-            maxDateTime = otherDate + timedelta(seconds=timeWindow)
-            if (timeWindow <= 0.0):
-                otherBoats.append(boat)
-            elif(dateOfPosition > minDateTime and dateOfPosition < maxDateTime):
-                otherBoats.append(boat)
-        except Exception as e:
-            print("Boat: ", otherBoatsNoTime)
-            print("Failed datetime operation:")
-            print(e)
-
+    
+    min_time = (dateOfPosition - timedelta(seconds=timeWindow)).isoformat()
+    max_time = (dateOfPosition + timedelta(seconds=timeWindow)).isoformat() 
+    otherBoats = c.execute('''
+    SELECT *
+    FROM AIS_Decoder
+    WHERE Mmsi != ?
+    AND Longitude BETWEEN ? AND ?
+    AND Latitude BETWEEN ? AND ?
+    AND Date BETWEEN ? AND ?
+    ''',
+    (
+        mmsi,
+        min_lon, max_lon,
+        min_lat, max_lat,
+        min_time, max_time
+    )).fetchall()
             
     print("YourBoat:")
     print(dataTuple)

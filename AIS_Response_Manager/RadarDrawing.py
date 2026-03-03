@@ -17,12 +17,13 @@ radar_t.speed(0)
 boats_t = turtle.Turtle(visible=False)
 boats_t.speed(0)
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ps_loc = os.path.join(BASE_DIR, "Radar/drawing.ps")
-img_loc = os.path.join(BASE_DIR, "Radar/img.png")
-
 # radar_built = False
 KM_build = -1
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ps_loc = os.path.join(BASE_DIR, f"Radar/drawing_{KM_build}.ps")
+img_loc = os.path.join(BASE_DIR, f"Radar/img_{KM_build}.png")
+
+
 
 # KM the amount of lines represent keep in mind it must be an int.
 def draw_radar_Custom(KM):
@@ -100,6 +101,8 @@ def KeepRadarAlive():
     turtle.done()
 
 def SaveImg(close=False):
+    ps_loc = os.path.join(BASE_DIR, f"Radar/drawing_{KM_build}.ps")
+    img_loc = os.path.join(BASE_DIR, f"Radar/img_{KM_build}.png")
     """Write the current turtle screen to disk.
 
     By default the window is left open so that subsequent plotting calls
