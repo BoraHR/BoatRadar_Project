@@ -4,33 +4,37 @@ import os
 from PIL import Image
 import time
 
-t = turtle.Turtle(visible=False)
-t.hideturtle()
-t.speed(0)
+# t = turtle.Turtle(visible=False)
+# t.hideturtle()
+# t.speed(0)
+
+screen = turtle.Screen()
+screen.tracer(0)
+
+radar_t = turtle.Turtle(visible=False)
+radar_t.speed(0)
+
+boats_t = turtle.Turtle(visible=False)
+boats_t.speed(0)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ps_loc = os.path.join(BASE_DIR, "Radar/drawing.ps")
 img_loc = os.path.join(BASE_DIR, "Radar/img.png")
 
+# radar_built = False
+KM_build = -1
+
 # KM the amount of lines represent keep in mind it must be an int.
 def draw_radar_Custom(KM):
     start = time.time()
-    # if int(math.ceil(KM)) == 3:
-    #     draw_radar_3KM()
-    #     end = time.time()
-    #     print(f"ms: {end - start}")
-    #     return 
-    # if int(math.ceil(KM)) == 6:
-    #     draw_radar_6KM()
-    #     end = time.time()
-    #     print(f"ms: {end - start}")
-    #     return
-    # if int(math.ceil(KM)) == 10:
-    #     draw_radar_10KM()
-    #     end = time.time()
-    #     print(f"ms: {end - start}")
-    #     return
-    
+    if KM < 1:
+        KM = 1
+    global KM_build
+    if KM_build == KM:
+        end = time.time()
+        return end - start
+
+    radar_t.clear()
     KM = int(math.ceil(KM))
 
     radius_list = [250]
@@ -42,41 +46,52 @@ def draw_radar_Custom(KM):
     
     radius_list.reverse()
     for r in radius_list:
-        t.penup()
-        t.goto(0, -r)
-        t.pendown()
-        t.circle(r)
+        radar_t.penup()
+        radar_t.goto(0, -r)
+        radar_t.pendown()
+        radar_t.circle(r)
     draw_crosshair(radius_list[-1])
-    t.write(str(KM), align="center", font=("Consolas", 16, "bold"))
+    radar_t.write(str(KM), align="center", font=("Consolas", 16, "bold"))
     plot_myBoat()
     end = time.time()
-    SaveImg()
+    KM_build = KM
     return end - start # returns the a time it took to create the img in seconds.
 
 def draw_crosshair(range):
     max_radius = range
-    t.penup()
-    t.goto(-max_radius, 0)
-    t.pendown()
-    t.goto(max_radius, 0)  # horizontal line
+    radar_t.penup()
+    radar_t.goto(-max_radius, 0)
+    radar_t.pendown()
+    radar_t.goto(max_radius, 0)  # horizontal line
 
-    t.penup()
-    t.goto(0, -max_radius)
-    t.pendown()
-    t.goto(0, max_radius)  # vertical line
+    radar_t.penup()
+    radar_t.goto(0, -max_radius)
+    radar_t.pendown()
+    radar_t.goto(0, max_radius)  # vertical line
+
+def clear_otherBoats():
+    # if the canvas has already been closed (e.g. after a SaveImg() call)
+    # the turtle module will raise a TclError/TurtleGraphicsError.
+    # We catch it here and simply ignore it – the next draw operation will
+    # either recreate the screen or fail later if not recreated.
+    try:
+        boats_t.clear()
+    except Exception:
+        # screen or turtle may have been destroyed; nothing we can do now
+        pass
 
 def plot_otherBoat(x_meters, y_meters, scale=0.050):
     px = x_meters * scale
     py = y_meters * scale
 
-    t.penup()
-    t.goto(px, py) # px(x): ←→   py(y): ↑↓
-    t.dot(8, "red")
+    boats_t.penup()
+    boats_t.goto(px, py) # px(x): ←→  py(y): ↑↓
+    boats_t.dot(8, "red")
 
 def plot_myBoat():
-    t.penup()
-    t.goto(0, 0) # Your boat is always in center of radar
-    t.dot(8, "Green")
+    radar_t.penup()
+    radar_t.goto(0, 0) # Your boat is always in center of radar
+    radar_t.dot(8, "Green")
 
 def KeepRadarAlive():
     while(True):
@@ -84,16 +99,24 @@ def KeepRadarAlive():
         break
     turtle.done()
 
-def SaveImg():
-    # get screents
+def SaveImg(close=False):
+    """Write the current turtle screen to disk.
+
+    By default the window is left open so that subsequent plotting calls
+    can continue.  Pass ``close=True`` if you want the canvas to be torn
+    down (for example at the very end of a batch of drawings).
+    """
     ts = turtle.Screen()
     # save as PostScript
     ts.getcanvas().postscript(file=ps_loc)
     img = Image.open(ps_loc)
     img.save(img_loc)
-    turtle.done()
+    
+    screen.update()
+    if close:
+        screen.bye()
 
-draw_radar_Custom(10)
+# draw_radar_Custom(10)
 # draw_radar_3KM()
 # draw_radar_6KM()
 # draw_radar_10KM()
