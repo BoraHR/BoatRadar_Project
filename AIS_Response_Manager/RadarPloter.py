@@ -7,10 +7,12 @@ from RadarDrawing import SaveImg, draw_radar_Custom, plot_otherBoat, clear_other
 from datetime import datetime, timedelta
 import math
 
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ais_file1 = os.path.join(BASE_DIR, "Data/ais_arca.txt")
 ais_file2 = os.path.join(BASE_DIR, "Data/ais_rp42.txt")
 FileRoute_sql3 = os.path.join(BASE_DIR, "Data/AIS-Responder_DB.db")
+Range_setting = 3
 
 def km_to_lat_deg(km):
     return km / 111.0
@@ -118,7 +120,6 @@ def InRangeHelper(boat_id, range=0.009, timeWindow = 10.00):
     clear_otherBoats()
     start = time.time()
     performance = draw_radar_Custom(range)
-    print(f"Radar generated in {performance} seconds")
     
     dataTuple = "(id, Date, MsgType, Repeat, Mmsi, Status, Turn, Speed, Accuracy, Longitude, Latitude, Course, Heading, Second, Manuever, Spare_1, Raim, Radio)"
     conn = sqlite3.connect(FileRoute_sql3)
@@ -204,6 +205,11 @@ def InRangeHelper(boat_id, range=0.009, timeWindow = 10.00):
 
     end = time.time()
     fin_performance = end - start
+    # when new KM setting is selected it takes longer to generate because it has to redraw radar reading chached drawing is almost always instant
+    print(f"Radar generated in {performance} seconds") 
+    # this also includes radar generation time, the time it takes to have radar with all the other boats ploted transmited for monitor display for the plot device.
+    # it ussaly takes longer with higher KM settings and crowded traffic because it has to plot multiple boats in the area. 
+    # So limiting KM is recomended for optimal performance.
     print(f"Radar data trasmited in {fin_performance} seconds")
     print()
     conn.close()
@@ -213,17 +219,17 @@ def InRangeHelper(boat_id, range=0.009, timeWindow = 10.00):
     SaveImg()
 
 
-# time.sleep(1)
-InRangeHelper(1, 5, 5)
-InRangeHelper(1, 4, 5)
-# time.sleep(1)
-InRangeHelper(1, 3, 5)
-InRangeHelper(1, 6, 5)
-InRangeHelper(1, 7, 5)
-InRangeHelper(1, 8, 5)
-InRangeHelper(1, 9, 5)
-# time.sleep(1)
-InRangeHelper(1, 10, 5)
-InRangeHelper(1, 10, 5)
+# InRangeHelper(1, 5, 5)
+# InRangeHelper(1, 4, 5)
+# InRangeHelper(1, 3, 5)
+# InRangeHelper(1, 6, 5)
+# InRangeHelper(1, 7, 5)
+# InRangeHelper(1, 8, 5)
+# InRangeHelper(1, 9, 5)
+# InRangeHelper(1, 10, 5)
+# InRangeHelper(1, 10, 5)
+# InRangeHelper(1, 10, 5)
+# InRangeHelper(1, 10, 5)
+# InRangeHelper(1, 10, 5)
 # Decode_file(ais_file1)
 # Decode_file(ais_file2)
