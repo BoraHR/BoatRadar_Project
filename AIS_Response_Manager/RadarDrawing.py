@@ -81,13 +81,27 @@ def clear_otherBoats():
         # screen or turtle may have been destroyed; nothing we can do now
         pass
 
-def plot_otherBoat(x_meters, y_meters, scale=0.050):
+def plot_otherBoat_dot(x_meters, y_meters, scale=0.050):
     px = x_meters * scale
     py = y_meters * scale
 
     boats_t.penup()
     boats_t.goto(px, py) # px(x): ←→  py(y): ↑↓
     boats_t.dot(8, "red")
+
+def plot_otherBoat(x_meters, y_meters, scale=0.050, heading=0.00):
+    px = x_meters * scale
+    py = y_meters * scale
+    heading += 90 # 
+    heading = heading % 360 # fail save 
+    
+    boats_t.penup()
+    boats_t.goto(px, py) # px(x): ←→  py(y): ↑↓
+    boats_t.shape("arrow")
+    boats_t.shapesize(0.25, 1)
+    boats_t.color("red")
+    boats_t.setheading(heading)
+    boats_t.stamp()
 
 def plot_myBoat():
     radar_t.penup()
@@ -98,7 +112,7 @@ def KeepRadarAlive():
     while(True):
         input("Press ENTER to close radar.")
         break
-    turtle.done()
+    # turtle.done()
 
 def SaveImg(close=False):
     ps_loc = os.path.join(BASE_DIR, f"Radar/drawing_{KM_build}.ps")
@@ -119,6 +133,9 @@ def SaveImg(close=False):
     if close:
         screen.bye()
 
+
+    
+# plot_otherBoat(0,0,0.0)
 # draw_radar_Custom(10)
 # draw_radar_3KM()
 # draw_radar_6KM()

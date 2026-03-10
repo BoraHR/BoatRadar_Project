@@ -183,6 +183,7 @@ def InRangeHelper(boat_id, range=0.009, timeWindow = 10.00):
     print()
     if len(otherBoats) == 0:
         print(f"NO BOATS IN RANGE OF {range}KM CONTACT YOUR AIS PROVIDER FOR ANY UPDATES")
+        SaveImg()
         return
     
     print(f"Other boats in range of {range} lon and lat:")
@@ -201,7 +202,7 @@ def InRangeHelper(boat_id, range=0.009, timeWindow = 10.00):
             radar_radius_pixels = 250
 
             scale = radar_radius_pixels / range_meters
-            plot_otherBoat(X_Y[0], X_Y[1], scale)
+            plot_otherBoat(X_Y[0], X_Y[1], scale, boat[12]) # "(id, Date, MsgType, Repeat, Mmsi, Status, Turn, Speed, Accuracy, Longitude, Latitude, Course, Heading, Second, Manuever, Spare_1, Raim, Radio)"
 
     end = time.time()
     fin_performance = end - start

@@ -4,6 +4,7 @@ from functools import partial
 import threading
 from RadarPloter import InRangeHelper  # adjust import!
 import os
+import asyncio
 
 class RadarConsole:
     def __init__(self, window):
@@ -77,7 +78,8 @@ class RadarConsole:
                command=self.scan
                ).pack(pady=10)
         
-        self.update_label()
+        self.radar_loop()
+            
 
     def update_label(self):
         self.range_var.set(f"{self.km_range} KM")
@@ -106,6 +108,7 @@ class RadarConsole:
         )
 
         self.update_label()
+        self.update_image()
 
     def _run_scan(self):
         InRangeHelper(
@@ -127,6 +130,16 @@ class RadarConsole:
                 print("at update_image")
         # otherwise do nothing; the new image hasn't been generated yet
 
-    async def UpdateIMG():
-        
-        pass
+    def radar_loop(self):
+        self.update_label()
+
+        InRangeHelper(
+            self.boat_id,
+            self.km_range,
+            self.time_window
+        )
+
+        self.update_image()
+
+        # run again after 1000 ms (1 second)
+        self.window.after(1000, self.radar_loop)
