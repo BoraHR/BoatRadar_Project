@@ -92,7 +92,10 @@ def plot_otherBoat_dot(x_meters, y_meters, scale=0.050):
 def plot_otherBoat(x_meters, y_meters, scale=0.050, heading=0.00):
     px = x_meters * scale
     py = y_meters * scale
-    heading += 90 # 
+    if heading is None or heading >= 360 or heading < 0:
+        plot_otherBoat_dot(x_meters, y_meters, scale)
+        return
+    heading += 90
     heading = heading % 360 # fail save 
     
     boats_t.penup()

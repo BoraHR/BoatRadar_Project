@@ -223,8 +223,8 @@ def ValidateFields(decoded) -> bool:
             print("Validation failed one or more fields are None")
             return False
         if(
-            decoded.lon > 180.00 or decoded.lon < 0.00 or
-            decoded.lat > 90.00 or decoded.lat < 0.00 or
+            decoded.lon > 180.00 or decoded.lon < -180.00 or
+            decoded.lat > 90.00 or decoded.lat < -90.00 or
             decoded.course >= 360.00 or decoded.course < 0.00 or
             decoded.heading >= 360.00 or decoded.heading < 0.00 or
             decoded.second > 60 or decoded.second < 0

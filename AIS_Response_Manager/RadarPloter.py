@@ -5,7 +5,7 @@ from pyais.stream import FileReaderStream
 import time
 from RadarDrawing import SaveImg, draw_radar_Custom, plot_otherBoat, clear_otherBoats
 from datetime import datetime, timedelta
-import math
+from Algorithm import km_to_lat_deg,  km_to_lon_deg, bearing_deg, haversine, ConvertToX_Y
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -13,12 +13,6 @@ ais_file1 = os.path.join(BASE_DIR, "Data/ais_arca.txt")
 ais_file2 = os.path.join(BASE_DIR, "Data/ais_rp42.txt")
 FileRoute_sql3 = os.path.join(BASE_DIR, "Data/AIS-Responder_DB.db")
 Range_setting = 3
-
-def km_to_lat_deg(km):
-    return km / 111.0
-
-def km_to_lon_deg(km, lat):
-    return km / (111.0 * math.cos(math.radians(lat)))
     
 def ValidateDate(strDate, isDebug = False) -> bool:
     # https://docs.python.org/3/library/datetime.html
@@ -54,66 +48,7 @@ def ValidateDate(strDate, isDebug = False) -> bool:
         return False
     return True
 
-def bearing_deg(lat1, lon1, lat2, lon2):
-    # convert to radians
-    lat1 = math.radians(lat1)
-    lat2 = math.radians(lat2)
-    dLon = math.radians(lon2 - lon1)
 
-    x = math.sin(dLon) * math.cos(lat2)
-    y = (math.cos(lat1) * math.sin(lat2) -
-         math.sin(lat1) * math.cos(lat2) * math.cos(dLon))
-
-    bearing = math.degrees(math.atan2(x, y))
-
-    # normalize to 0–360
-    return (bearing + 360) % 360
-
-
-# https://www.geeksforgeeks.org/dsa/haversine-formula-to-find-distance-between-two-points-on-a-sphere/
-# ----------------------------------------------------------------------------------------------------
-# Python 3 program for the
-# haversine formula
-def haversine(lat1, lon1, lat2, lon2):
-    
-    # distance between latitudes
-    # and longitudes
-    dLat = (lat2 - lat1) * math.pi / 180.0
-    dLon = (lon2 - lon1) * math.pi / 180.0
-
-    # convert to radians
-    lat1 = (lat1) * math.pi / 180.0
-    lat2 = (lat2) * math.pi / 180.0
-
-    # apply formulae
-    a = (pow(math.sin(dLat / 2), 2) + 
-         pow(math.sin(dLon / 2), 2) * 
-             math.cos(lat1) * math.cos(lat2));
-    rad = 6371
-    c = 2 * math.asin(math.sqrt(a))
-    return rad * c
-
-def ConvertToX_Y(lat1, lon1, lat2, lon2, debug=False):
-    aardstraal = 6371000
-    X1 = math.pi * lat1/180
-    Y1 = math.pi * lon1/180
-    X2 = math.pi * lat2/180
-    Y2 = math.pi * lon2/180
-    DeltaPhi = X1 - X2
-    DeltaL = Y1 - Y2
-    average = (X1 + X2) / 2
-    Y = DeltaPhi * aardstraal
-    X = DeltaL * aardstraal * math.cos(average)
-    distance = math.sqrt(X*X+Y*Y)
-    mesurements = (X, Y, distance)
-    if(debug):
-        print(f"X = {X}")
-        print(f"Y = {Y}")
-        print(f"Afstand = {distance}")
-        print(f"return value: {mesurements}")
-    
-    return mesurements
-    
 # range = distance between your boat and other boat in both Lad and long
 # timeWindow = how far appart the received message is allowed to be shown in the list of other Boats
 def InRangeHelper(boat_id, range=0.009, timeWindow = 10.00):
