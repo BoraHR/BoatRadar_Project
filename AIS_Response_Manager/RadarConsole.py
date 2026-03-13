@@ -1,16 +1,18 @@
 from tkinter import *
 import tkinter as tk
+from tkinter import ttk
 from functools import partial
-import threading
-from RadarPloter import InRangeHelper  # adjust import!
+from RadarPloter import RadarPlotter
 import os
-import asyncio
 
 class RadarConsole:
     def __init__(self, window):
+        self.myBoat = None
+        self.plotter = RadarPlotter()
         self.BASE_DIR = os.path.dirname(os.path.abspath(__file__))
         self.window = window
         self.window.title("AIS Radar Console")
+        self.window.attributes('-fullscreen', True)
 
         # ---- state ----
         self.boat_id = 1
@@ -72,12 +74,23 @@ class RadarConsole:
                ).pack(side=LEFT, padx=5)
 
         Button(window,
-               text="SCAN",
+               text="KILL TERMINAL",
                font=("Consolas", 14),
-               bg="green",
-               command=self.scan
+               bg="red",
+               command=window.destroy,
                ).pack(pady=10)
         
+        # Create a Combobox widget for option selection
+        # Create a Combobox widget for option selection
+        self.combo_box = ttk.Combobox(
+            window,
+            values=["RANGE", "CPA", "TCPA"],
+            state="readonly"
+        )
+
+        self.combo_box.pack(side=RIGHT)
+        self.combo_box.set("RANGE")
+                    
         self.radar_loop()
             
 
@@ -101,7 +114,7 @@ class RadarConsole:
         self.range_var.set("Scanning...")
         self.window.update()  # keep UI responsive
 
-        InRangeHelper(
+        self.plotter.InRangeHelper(
             self.boat_id,
             self.km_range,
             self.time_window
@@ -111,7 +124,7 @@ class RadarConsole:
         self.update_image()
 
     def _run_scan(self):
-        InRangeHelper(
+        self.plotter.InRangeHelper(
             self.boat_id,
             self.km_range,
             self.time_window
@@ -133,7 +146,7 @@ class RadarConsole:
     def radar_loop(self):
         self.update_label()
 
-        InRangeHelper(
+        self.plotter.InRangeHelper(
             self.boat_id,
             self.km_range,
             self.time_window
@@ -143,3 +156,6 @@ class RadarConsole:
 
         # run again after 1000 ms (1 second)
         self.window.after(1000, self.radar_loop)
+
+    def get_boat_data(self, id):
+        return self.plotter.GetBoat(id)

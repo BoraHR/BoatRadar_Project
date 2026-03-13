@@ -200,6 +200,39 @@ def Save_DecodedData(_file):
         conn.close()
         print(f"Passed: {passed} | Failed: {failed} | Skipped: {skipped} | Time(ms): {total_time * 1000:.2f}")
 
+def ValidateDate(strDate, isDebug = False) -> bool:
+    # https://docs.python.org/3/library/datetime.html
+    try:
+        if "T" not in strDate:
+            return False
+
+        date = datetime.fromisoformat(strDate)
+        Y = date.year
+        M = date.month
+        D = date.day
+        h = date.hour
+        m = date.minute
+        s = date.second
+        ms = date.microsecond
+        if(isDebug is True):
+            if len(str(D)) == 1:
+                D = "0" + str(D)
+            if len(str(M)) == 1:
+                M = "0" + str(M)
+            if len(str(h)) == 1:
+                h = "0" + str(h)
+            if len(str(m)) == 1:
+                m = "0" + str(m)
+            if len(str(s)) == 1:
+                s = "0" + str(s)
+            print(f"{D}-{M}-{Y} | {h}:{m}:{s}:{ms}")
+            print("Passed validation")
+        return True
+    except Exception as e:
+        print("Date vaidation failed do to exception:")
+        print(e)
+        return False
+    return True
 
 def ValidateFields(decoded) -> bool:
     try:
@@ -238,5 +271,5 @@ def ValidateFields(decoded) -> bool:
         print(e)
         return False
 
-# Save_DecodedData(ais_file1)
-# Save_DecodedData(ais_file2)
+Save_DecodedData(ais_file1)
+Save_DecodedData(ais_file2)
