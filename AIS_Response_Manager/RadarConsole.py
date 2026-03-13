@@ -4,6 +4,7 @@ from tkinter import ttk
 from functools import partial
 from RadarPloter import RadarPlotter
 import os
+from PIL import Image, ImageTk
 
 class RadarConsole:
     def __init__(self, window):
@@ -19,28 +20,18 @@ class RadarConsole:
         self.km_range = 3
         self.time_window = 10
         self.img_loc = os.path.join(self.BASE_DIR, f"Radar/img_{self.km_range}.png")
+        self.img_compas = os.path.join(self.BASE_DIR, f"Radar/Compas/Compas_Remix.png")
 
         # ---- radar image ----
-        # load radar snapshot if it exists; associate image with our window
-        # so the TK interpreter doesn't complain later about a missing
-        # ``pyimageX`` handle.  ``PhotoImage`` must be created after the root
-        # window is instantiated, and we keep ``self.image`` alive to prevent
-        # garbage collection.
-        if os.path.isfile(self.img_loc):
-            try:
-                self.image = tk.PhotoImage(master=self.window, file=self.img_loc)
-                self.image_label = tk.Label(self.window, image=self.image)
-                self.image_label.pack()
-            except Exception as e:
-                print("Radar load failed:")
-                print(e)
-                print("at __init__ (loading)")
-        else:
-            # file isn't there yet; create an empty placeholder label and fill
-            # it later when the PNG appears
-            self.image = None
-            self.image_label = tk.Label(self.window)
-            self.image_label.pack()
+        # Create a placeholder label now; we'll populate it (and keep a reference to
+        # the PhotoImage) later in `update_image`.
+        self.image = None
+        self.composite = None
+        self.image_label = tk.Label(self.window)
+        self.image_label.pack()
+
+        # Load any existing images immediately (transparent overlay is handled)
+        self.update_image()
 
         # ---- UI ----
         self.range_var = StringVar(self.window)
@@ -97,6 +88,7 @@ class RadarConsole:
     def update_label(self):
         self.range_var.set(f"{self.km_range} KM")
         self.img_loc = os.path.join(self.BASE_DIR, f"Radar/img_{self.km_range}.png")
+        self.img_compas = os.path.join(self.BASE_DIR, f"Radar/Compas/Compas_Remix.png")
 
     def change_range(self, delta):
         self.km_range += delta
@@ -132,7 +124,35 @@ class RadarConsole:
         self.window.after(0, self.update_label)
 
     def update_image(self):
-        # only reload if the image file actually exists
+        # only reload if the radar image file actually exists
+        # if not self.window.winfo_exists():
+        #     return
+
+        # if not self.image_label.winfo_exists():
+        #     return
+
+        # if not os.path.isfile(self.img_loc):
+        #     return
+        
+        # if os.path.isfile(self.img_loc):
+        #     try:
+        #         base = Image.open(self.img_loc).convert("RGBA")
+
+        #         # overlay semi-transparent compass if available
+        #         if os.path.isfile(self.img_compas):
+        #             overlay = Image.open(self.img_compas).convert("RGBA")
+        #             if overlay.size != base.size:
+        #                 overlay = overlay.resize(base.size, Image.Resampling.LANCZOS)
+        #             base.alpha_composite(overlay)
+
+        #         self.composite = ImageTk.PhotoImage(base)
+        #         self.image_label.configure(image=self.composite)
+        #         # keep reference so TK doesn't garbage collect it
+        #         self.image_label.image = self.composite
+        #     except Exception as e:
+        #         print("Radar reload failed:")
+        #         print(e)
+        #         print("at update_image")
         if os.path.isfile(self.img_loc):
             try:
                 self.image = tk.PhotoImage(master=self.window, file=self.img_loc)
@@ -141,8 +161,9 @@ class RadarConsole:
                 print("Radar reload failed:")
                 print(e)
                 print("at update_image")
-        # otherwise do nothing; the new image hasn't been generated yet
 
+
+       
     def radar_loop(self):
         self.update_label()
 

@@ -3,7 +3,6 @@ import sqlite3
 from pyais import decode
 from pyais.stream import FileReaderStream
 import time
-from RadarDrawing import draw_radar_Custom, plot_otherBoat, KeepRadarAlive
 from datetime import datetime, timedelta
 import math
 
@@ -101,6 +100,50 @@ def Save_DecodedData(_file):
                         if(ValidateFields(decoded) == True and ValidateDate(date) == True):
                             try:
                                 c.execute('''
+                                    UPDATE AIS_Decoder
+                                    SET
+                                        Date = ?,
+                                        MsgType = ?, 
+                                        Repeat = ?,
+                                        Mmsi = ?,
+                                        Status = ?,
+                                        Turn = ?,
+                                        Speed = ?,
+                                        Accuracy = ?,
+                                        Longitude = ?,
+                                        Latitude = ?,
+                                        Course = ?,
+                                        Heading = ?,
+                                        Second = ?,
+                                        Manuever = ?,
+                                        Spare_1 = ?,
+                                        Raim = ?,
+                                        Radio = ?
+                                    WHERE Mmsi = ?
+                                ''',
+                                (
+                                    date,
+                                    decoded.msg_type,
+                                    decoded.repeat,
+                                    decoded.mmsi,
+                                    decoded.status,
+                                    decoded.turn,
+                                    decoded.speed,
+                                    accuracyInt,
+                                    decoded.lon,
+                                    decoded.lat,
+                                    decoded.course,
+                                    decoded.heading,
+                                    decoded.second,
+                                    decoded.maneuver,
+                                    decoded.spare_1,
+                                    raimInt,
+                                    decoded.radio,
+                                    decoded.mmsi
+                                )   
+                                )
+                                if c.rowcount == 0:
+                                    c.execute('''
                                     INSERT INTO AIS_Decoder
                                     (
                                         Date,
@@ -141,8 +184,8 @@ def Save_DecodedData(_file):
                                     decoded.spare_1,
                                     raimInt,
                                     decoded.radio
-                                )   
-                            )
+                                )  
+                                )
                                 end = time.time()
                                 print("Passed:")
                                 print(date)

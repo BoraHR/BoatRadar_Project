@@ -5,7 +5,7 @@ from pyais.stream import FileReaderStream
 import time
 from RadarDrawing import RadarDrawing 
 from datetime import datetime, timedelta
-from Algorithm import km_to_lat_deg,  km_to_lon_deg, bearing_deg, haversine, ConvertToX_Y
+from Algorithm import km_to_lat_deg,  km_to_lon_deg, bearing_deg, haversine, ConvertToX_Y, calculate_cpa_tcpa
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ais_file1 = os.path.join(BASE_DIR, "Data/ais_arca.txt")
@@ -18,7 +18,7 @@ class RadarPlotter:
         self.draw = RadarDrawing()
         # targetId ensures that selected target from RadarController will be orange when the ID condition is met
         # DEFAULT is -1 instead of None to prefent potentioal None exeptions
-        self.targetId = 22
+        self.targetId = -1
         self.IsTarget = False
 
     def setTarget(self, id):
@@ -68,6 +68,8 @@ class RadarPlotter:
         mmsi = myBoat[4]
         lon = myBoat[9]
         lat = myBoat[10]
+        speed = myBoat[7]
+        heading = myBoat[12]
 
         # 🔥 CONVERT KM → DEGREE BOUNDING BOX
         lat_range = km_to_lat_deg(range)
@@ -123,10 +125,18 @@ class RadarPlotter:
                 print(f"lon: {boat[9]}, lat: {boat[10]}")
                 print(f"Distance from myBoat in KM: {distance:.2f}")
                 print(f"Bearing to boat: {heading_to_target:.1f}°")
-                print("-" * 50)
                 X_Y = ConvertToX_Y(lat, lon, boat[10], boat[9]) # tuple(X, Y, Distance)
                 range_meters = range * 1000
                 radar_radius_pixels = 250
+
+                cpa, tcpa = calculate_cpa_tcpa(
+                    0, 0, speed, heading,
+                    X_Y[0], X_Y[1], boat[7], boat[12]
+                )
+
+                print(f"CPA: {cpa:.1f} meters")
+                print(f"TCPA: {tcpa:.1f} seconds")
+                print("-" * 50)
 
                 scale = radar_radius_pixels / range_meters           
                 if boat[0] == self.targetId:
@@ -149,3 +159,4 @@ class RadarPlotter:
         # program if we want to tear the canvas down.
         self.draw.SaveImg()
         return myBoat
+

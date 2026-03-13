@@ -113,6 +113,8 @@ class RadarDrawing:
             boats_t.color("red")
         boats_t.setheading(heading)
         boats_t.stamp()
+        boats_t.color("black")
+        boats_t.write("1", align="center", font=("Consolas", 16, "bold"))
         
 
     def plot_myBoat(self):

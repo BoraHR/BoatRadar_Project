@@ -65,6 +65,35 @@ def ConvertToX_Y(lat1, lon1, lat2, lon2, debug=False):
     
     return mesurements
 
+def velocity_vector(speed_knots, heading_deg):
+    speed_mps = speed_knots * 0.514444  # knots → m/s
+    heading = math.radians(heading_deg)
 
-    
+    vx = speed_mps * math.sin(heading)
+    vy = speed_mps * math.cos(heading)
 
+    return vx, vy
+
+def calculate_cpa_tcpa(x1, y1, speed1, heading1, x2, y2, speed2, heading2):
+    vx1, vy1 = velocity_vector(speed1, heading1)
+    vx2, vy2 = velocity_vector(speed2, heading2)
+
+    rx = x2 - x1
+    ry = y2 - y1
+
+    rvx = vx2 - vx1
+    rvy = vy2 - vy1
+
+    rv2 = rvx**2 + rvy**2
+
+    if rv2 == 0:
+        return None, None
+
+    tcpa = -(rx*rvx + ry*rvy) / rv2
+
+    cpa_x = rx + rvx * tcpa
+    cpa_y = ry + rvy * tcpa
+
+    cpa = math.sqrt(cpa_x**2 + cpa_y**2)
+
+    return cpa, tcpa
