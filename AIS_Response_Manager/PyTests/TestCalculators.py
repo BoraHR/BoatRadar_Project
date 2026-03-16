@@ -6,7 +6,7 @@ import math
 # Add parent directory to path to import pyais_decoder
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from pyais_decoder import km_to_lat_deg, km_to_lon_deg, ConvertToX_Y
+from Algorithm import km_to_lat_deg, km_to_lon_deg, ConvertToX_Y
 
 def test_lat_conversion_basic():
     # 111 km ≈ 1 degree latitude

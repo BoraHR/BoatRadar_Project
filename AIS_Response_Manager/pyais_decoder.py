@@ -314,5 +314,5 @@ def ValidateFields(decoded) -> bool:
         print(e)
         return False
 
-Save_DecodedData(ais_file1)
-Save_DecodedData(ais_file2)
+# Save_DecodedData(ais_file1)
+# Save_DecodedData(ais_file2)

@@ -122,48 +122,47 @@ class RadarConsole:
             self.time_window
         )
         self.window.after(0, self.update_label)
-
+   
     def update_image(self):
-        # only reload if the radar image file actually exists
-        # if not self.window.winfo_exists():
-        #     return
 
-        # if not self.image_label.winfo_exists():
-        #     return
+        if not os.path.isfile(self.img_loc):
+            return
 
-        # if not os.path.isfile(self.img_loc):
-        #     return
-        
-        # if os.path.isfile(self.img_loc):
-        #     try:
-        #         base = Image.open(self.img_loc).convert("RGBA")
+        try:
+            base = Image.open(self.img_loc).convert("RGBA")
+            
 
-        #         # overlay semi-transparent compass if available
-        #         if os.path.isfile(self.img_compas):
-        #             overlay = Image.open(self.img_compas).convert("RGBA")
-        #             if overlay.size != base.size:
-        #                 overlay = overlay.resize(base.size, Image.Resampling.LANCZOS)
-        #             base.alpha_composite(overlay)
+            if os.path.isfile(self.img_compas):
+                overlay = Image.open(self.img_compas).convert("RGBA")
 
-        #         self.composite = ImageTk.PhotoImage(base)
-        #         self.image_label.configure(image=self.composite)
-        #         # keep reference so TK doesn't garbage collect it
-        #         self.image_label.image = self.composite
-        #     except Exception as e:
-        #         print("Radar reload failed:")
-        #         print(e)
-        #         print("at update_image")
-        if os.path.isfile(self.img_loc):
-            try:
-                self.image = tk.PhotoImage(master=self.window, file=self.img_loc)
-                self.image_label.configure(image=self.image)
-            except Exception as e:
-                print("Radar reload failed:")
-                print(e)
-                print("at update_image")
+                if overlay.size != base.size:
+                    overlay = overlay.resize(base.size, Image.Resampling.LANCZOS)
+                    
+                base = Image.alpha_composite(base, overlay)
 
+            # Convert to Tk image
+            img = ImageTk.PhotoImage(base, master=self.window)
 
-       
+            # Save reference
+            self.composite = img
+
+            # Update label
+            self.image_label.configure(image=self.composite)
+        except Exception as e:
+            print("Radar reload failed:")
+            print(e)
+
+    # def update_image(self):
+    
+    #     if os.path.isfile(self.img_loc):
+    #         try:
+    #             self.image = tk.PhotoImage(master=self.window, file=self.img_loc)
+    #             self.image_label.configure(image=self.image)
+    #         except Exception as e:
+    #             print("Radar reload failed:")
+    #             print(e)
+    #             print("at update_image")
+
     def radar_loop(self):
         self.update_label()
 
@@ -176,7 +175,8 @@ class RadarConsole:
         self.update_image()
 
         # run again after 1000 ms (1 second)
-        self.window.after(1000, self.radar_loop)
+        if self.window.winfo_exists():
+            self.window.after(1000, self.radar_loop)
 
     def get_boat_data(self, id):
         return self.plotter.GetBoat(id)
