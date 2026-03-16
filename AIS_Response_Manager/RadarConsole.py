@@ -13,14 +13,14 @@ class RadarConsole:
         self.BASE_DIR = os.path.dirname(os.path.abspath(__file__))
         self.window = window
         self.window.title("AIS Radar Console")
-        self.window.attributes('-fullscreen', True)
+        # self.window.attributes('-fullscreen', True)
 
         # ---- state ----
         self.boat_id = 1
         self.km_range = 3
         self.time_window = 10
-        self.img_loc = os.path.join(self.BASE_DIR, f"Radar/img_{self.km_range}.png")
-        self.img_compas = os.path.join(self.BASE_DIR, f"Radar/Compas/Compas_Remix.png")
+        self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img_{self.km_range}.png")
+        self.img_compas = os.path.join(self.BASE_DIR, f"Radar/Compas/Current/360_Rotation-TranparantCenter.png")
 
         # ---- radar image ----
         # Create a placeholder label now; we'll populate it (and keep a reference to
@@ -87,8 +87,8 @@ class RadarConsole:
 
     def update_label(self):
         self.range_var.set(f"{self.km_range} KM")
-        self.img_loc = os.path.join(self.BASE_DIR, f"Radar/img_{self.km_range}.png")
-        self.img_compas = os.path.join(self.BASE_DIR, f"Radar/Compas/Compas_Remix.png")
+        self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img_{self.km_range}.png")
+        self.img_compas = os.path.join(self.BASE_DIR, f"Radar/Compas/Current/360_Rotation-TranparantCenter.png")
 
     def change_range(self, delta):
         self.km_range += delta

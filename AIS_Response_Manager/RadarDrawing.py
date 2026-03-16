@@ -23,8 +23,8 @@ class RadarDrawing:
         self.KM_build = -1
         self.plotedBoats = []
         self.BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-        self.ps_loc = os.path.join(self.BASE_DIR, f"Radar/drawing_{self.KM_build}.ps")
-        self.img_loc = os.path.join(self.BASE_DIR, f"Radar/img_{self.KM_build}.png")
+        self.ps_loc = os.path.join(self.BASE_DIR, f"Radar/PostScript/drawing_{self.KM_build}.ps")
+        self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img_{self.KM_build}.png")
 
     # KM the amount of lines represent keep in mind it must be an int.
     def draw_radar_Custom(self, KM):
@@ -129,8 +129,8 @@ class RadarDrawing:
         # turtle.done()
 
     def SaveImg(self, close=False):
-        self.ps_loc = os.path.join(self.BASE_DIR, f"Radar/drawing_{self.KM_build}.ps")
-        self.img_loc = os.path.join(self.BASE_DIR, f"Radar/img_{self.KM_build}.png")
+        self.ps_loc = os.path.join(self.BASE_DIR, f"Radar/PostScript/drawing_{self.KM_build}.ps")
+        self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img_{self.KM_build}.png")
         """Write the current turtle screen to disk.
 
         By default the window is left open so that subsequent plotting calls
@@ -141,7 +141,7 @@ class RadarDrawing:
         # save as PostScript
         ts.getcanvas().postscript(file=self.ps_loc)
         img = Image.open(self.ps_loc)
-        img.save(self. img_loc)
+        img.save(self.img_loc)
         
         screen.update()
         if close:

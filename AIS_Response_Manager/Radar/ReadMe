@@ -1,0 +1,9 @@
+Information about the Folderstructure 
+
+         ╔═══ PostScript
+Radar ═══╬═══ Renders
+         ╚═══ Compas
+
+PostScript: When Python Turtle saves an Render img, the instructed Turtle operations are saved here by using GhostScript for debuging purposes.
+Renders: Generated images from RadarDrawing.cs are saved here for display in ConsoleRadar.py, a new Render will overwrite the previeus Render.
+Compas: The Compas is an Overlay over the Render so the user can view the heading when rendered on screen (when is not rotated is always T, R will rotate this overlay)
