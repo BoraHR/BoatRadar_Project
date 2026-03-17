@@ -117,7 +117,9 @@ class RadarPlotter:
         
         print(f"Other boats in range of {range} lon and lat:")
         print(dataTuple)
+        number = 0
         for boat in otherBoats:
+            number += 1
             distance = haversine(lat, lon, boat[10], boat[9])
             if distance <= range:
                 heading_to_target = bearing_deg(lat, lon, boat[10], boat[9])
@@ -140,23 +142,22 @@ class RadarPlotter:
 
                 scale = radar_radius_pixels / range_meters           
                 if boat[0] == self.targetId:
-                    self.draw.plot_otherBoat((boat_id, X_Y[0], X_Y[1]), X_Y[0], X_Y[1], scale, boat[12], True) # "(id, Date, MsgType, Repeat, Mmsi, Status, Turn, Speed, Accuracy, Longitude, Latitude, Course, Heading, Second, Manuever, Spare_1, Raim, Radio)"
+                    self.draw.plot_otherBoat((boat_id, X_Y[0], X_Y[1]), X_Y[0], X_Y[1], number, scale, boat[12],  True) # "(id, Date, MsgType, Repeat, Mmsi, Status, Turn, Speed, Accuracy, Longitude, Latitude, Course, Heading, Second, Manuever, Spare_1, Raim, Radio)"
                 else:
-                    self.draw.plot_otherBoat((boat_id, X_Y[0], X_Y[1]), X_Y[0], X_Y[1], scale, boat[12], False)
+                    self.draw.plot_otherBoat((boat_id, X_Y[0], X_Y[1]), X_Y[0], X_Y[1], number, scale, boat[12], False)
 
-        end = time.time()
-        fin_performance = end - start
+        
         # when new KM setting is selected it takes longer to generate because it has to redraw radar reading chached drawing is almost always instant
         print(f"Radar generated in {performance} seconds") 
-        # this also includes radar generation time, the time it takes to have radar with all the other boats ploted transmited for monitor display for the plot device.
-        # it ussaly takes longer with higher KM settings and crowded traffic because it has to plot multiple boats in the area. 
-        # So limiting KM is recomended for optimal performance.
-        print(f"Radar data trasmited in {fin_performance} seconds")
+        
         print()
         conn.close()
         # saving the image does not close the turtle window by default;
         # we may call ``SaveImg(close=True)`` at the very end of the
         # program if we want to tear the canvas down.
         self.draw.SaveImg()
+        end = time.time()
+        fin_performance = end - start
+        print(f"Radar data trasmited in {fin_performance} seconds")
         return myBoat
 

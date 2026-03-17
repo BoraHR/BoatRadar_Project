@@ -9,6 +9,10 @@ import time
 # t.speed(0)
 
 screen = turtle.Screen()
+resulotionScale = 630
+screen.setup(width=resulotionScale, height=resulotionScale)
+# turtle.bgpic(os.path.dirname(os.path.abspath(__file__)) + "/WorldWideMap_big.png")
+
 screen.tracer(0)
 
 radar_t = turtle.Turtle(visible=False)
@@ -25,10 +29,13 @@ class RadarDrawing:
         self.BASE_DIR = os.path.dirname(os.path.abspath(__file__))
         self.ps_loc = os.path.join(self.BASE_DIR, f"Radar/PostScript/drawing_{self.KM_build}.ps")
         self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img_{self.KM_build}.png")
+        
 
     # KM the amount of lines represent keep in mind it must be an int.
     def draw_radar_Custom(self, KM):
         start = time.time()
+        
+       
         if KM < 1:
             KM = 1
         self.KM_build
@@ -53,7 +60,7 @@ class RadarDrawing:
             radar_t.pendown()
             radar_t.circle(r)
         self.draw_crosshair(radius_list[-1])
-        radar_t.write(str(KM), align="center", font=("Consolas", 16, "bold"))
+        # radar_t.write(str(KM), align="center", font=("Consolas", 16, "bold"))
         self.plot_myBoat()
         end = time.time()
         self.KM_build = KM
@@ -93,7 +100,7 @@ class RadarDrawing:
         else:
             boats_t.color("red")
 
-    def plot_otherBoat(self, boatToSave, x_meters, y_meters, scale=0.050, heading=0.00, IsTarget = False):
+    def plot_otherBoat(self, boatToSave, x_meters, y_meters, number, scale=0.050, heading=0.00, IsTarget = False):
         px = x_meters * scale
         py = y_meters * scale
         self.plotedBoats.append((boatToSave, x_meters, y_meters))
@@ -114,7 +121,7 @@ class RadarDrawing:
         boats_t.setheading(heading)
         boats_t.stamp()
         boats_t.color("black")
-        boats_t.write("1", align="center", font=("Consolas", 16, "bold"))
+        boats_t.write(number, align="center", font=("Consolas", 12, "bold"))
         
 
     def plot_myBoat(self):

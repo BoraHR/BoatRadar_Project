@@ -10,4 +10,5 @@ if __name__ == "__main__":
     except Exception as e:
         print("TERMINAL HAS BEEN KILLED")
         print("TERMINATING PROGRAM")
+        print(e)
         
