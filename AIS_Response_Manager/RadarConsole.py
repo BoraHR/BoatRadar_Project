@@ -16,7 +16,7 @@ class RadarConsole:
         self.BASE_DIR = os.path.dirname(os.path.abspath(__file__))
         self.window = window
         self.window.title("AIS Radar Console")
-        self.window.attributes('-fullscreen', True)
+        # self.window.attributes('-fullscreen', True)
 
         # ---- state ----
         self.boat_id = 1
@@ -42,18 +42,32 @@ class RadarConsole:
         # menu
         self.range_var = StringVar(self.window)
         
-        # window = tk.Menu(root)
-        # window.config(menu=menu)
+        # ---- MENU BAR ----
+        menu_bar = tk.Menu(self.window)
 
-        # window.add_cascade(label="File", menu=filemenu)
-        # window.add_command(label="New")
-        # window.add_command(label="Open...")
-        # window.add_separator()
-        # window.add_command(label="Exit", command=root.quit)
+        # File menu - TEMPLATE
+        file_menu = tk.Menu(menu_bar, tearoff=0)
+        file_menu.add_command(label="New")
+        file_menu.add_command(label="Open...")
+        file_menu.add_separator()
+        file_menu.add_command(label="Exit", command=self.Quit)
 
-        # helpmenu = tk.Menu(menu)
-        # menu.add_cascade(label="Help", menu=helpmenu)
-        # helpmenu.add_command(label="About")
+        menu_bar.add_cascade(label="File", menu=file_menu)
+
+        # Help menu - TEMPLATE
+        help_menu = tk.Menu(menu_bar, tearoff=0)
+        help_menu.add_command(label="About")
+
+        menu_bar.add_cascade(label="Help", menu=help_menu)
+
+        setting_menu  = tk.Menu(menu_bar, tearoff=0)
+        setting_menu.add_command(label="RadaRGBColor", command=self.open_color_window)
+        
+        menu_bar.add_cascade(label="settings", menu=setting_menu)
+
+
+        # Attach menu bar to window
+        self.window.config(menu=menu_bar)
 
         # display
         Label(window,
@@ -87,7 +101,7 @@ class RadarConsole:
                text="KILL TERMINAL",
                font=("Consolas", 14),
                bg="red",
-               command=self.Detroy,
+               command=self.Quit,
                ).pack(pady=10)
         
         # Create a Combobox widget for option selection
@@ -103,13 +117,13 @@ class RadarConsole:
                     
         self.radar_loop()
 
-    def Detroy(self):
+    def Quit(self):
         self.killswitch = True
         print("Clossing program please wait...")
         time.sleep(2.1) # give self.radarloop time to register killswitch command, to ensure all files are closed before deletion.
         self.CleanFiles()
             
-    def CleanFiles(self):
+    def CleanFiles(self, attempt = 1):
         retry = False
         if self.BASE_DIR.endswith("AIS_Response_Manager"):
             toDelete = [os.path.join(self.BASE_DIR, f"Radar/PostScript/"), os.path.join(self.BASE_DIR, f"Radar/Renders/")]
@@ -124,14 +138,19 @@ class RadarConsole:
                     except Exception as e:
                         print('Failed to delete %s. Reason: %s' % (file_path, e))
                         retry = True
-                        print("Retrying...")
+                
         else:
             print("OS Dirrectory seems to be wrong")
             print("ensure BASE_DIR is setup properly")
         
-        if retry:
+        if retry and attempt <= 10:
+            print("Retrying...")
             time.sleep(1)
-            self.CleanFiles()
+            self.CleanFiles(attempt+1)
+        elif retry:
+            print("Max deletion attemts reached.")
+            print("terminating task.")
+            return
 
     def update_label(self):
         self.range_var.set(f"{self.km_range} KM")
@@ -201,7 +220,7 @@ class RadarConsole:
 
     def radar_loop(self):
         if self.killswitch == True:
-            self.window.destroy()
+            self.window.quit()
             self.plotter.draw.CloseDrawer()
             return
         
@@ -224,3 +243,33 @@ class RadarConsole:
 
     def get_boat_data(self, id):
         return self.plotter.GetBoat(id)
+    
+    def open_color_window(self):
+        color_win = tk.Toplevel(self.window)
+        color_win.title("Radar Background Color")
+
+        # Variables
+        # self.plotter.draw
+        r = tk.IntVar(value=self.plotter.draw.RGB[0])
+        b = tk.IntVar(value=self.plotter.draw.RGB[1])
+        g = tk.IntVar(value=self.plotter.draw.RGB[2])
+        
+
+        # # Update function
+        # color = f"#{r.get():02x}{g.get():02x}{b.get():02x}"
+        # self.window.configure(bg=color)
+        # self.image_label.configure(bg=color)
+
+        # # # Sliders
+        # R = r.get()
+        # B = b.get()
+        # G = g.get()
+        
+        tk.Label(color_win, text="Red").pack()
+        tk.Scale(color_win, from_=0, to=255, orient="horizontal", variable=r, command=lambda x: self.plotter.draw.setBGColor_RGB(r.get(), b.get(), g.get())).pack()
+
+        tk.Label(color_win, text="Green").pack()
+        tk.Scale(color_win, from_=0, to=255, orient="horizontal", variable=g, command=lambda x: self.plotter.draw.setBGColor_RGB(r.get(), b.get(), g.get())).pack()
+
+        tk.Label(color_win, text="Blue").pack()
+        tk.Scale(color_win, from_=0, to=255, orient="horizontal", variable=b, command=lambda x: self.plotter.draw.setBGColor_RGB(r.get(), b.get(), g.get())).pack()

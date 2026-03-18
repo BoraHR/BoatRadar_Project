@@ -29,9 +29,8 @@ class RadarDrawing:
         self.BASE_DIR = os.path.dirname(os.path.abspath(__file__))
         self.ps_loc = os.path.join(self.BASE_DIR, f"Radar/PostScript/drawing_{self.KM_build}.ps")
         self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img_{self.KM_build}.png")
-        self.RBG = [0, 0, 0]
+        self.RGB = (100,100,100)
         
-
     # KM the amount of lines represent keep in mind it must be an int.
     def draw_radar_Custom(self, KM):
         start = time.time()
@@ -66,20 +65,42 @@ class RadarDrawing:
         self.KM_build = KM
         return end - start # returns the a time it took to create the img in seconds.
     
-    def setBGColor_R(self, hex, index):
-        if hex < 0:
-            hex = 0
-        if hex > 255:
-            hex = 255 
-        if index < 0 or index > 2:
-            # index out of range
-            # 0 == Red
-            # 1 == Blue
-            # 2 == Green
-            return
-        self.RBG[index] = hex
-        screen.bgcolor(self.RBG[0], self.RBG[1], self.RBG[2])
+    # def setBGColor_R(self, hex, index):
+    #     if hex < 0:
+    #         hex = 0
+    #     if hex > 255:
+    #         hex = 255 
+    #     if index < 0 or index > 2:
+    #         # index out of range
+    #         # 0 == Red
+    #         # 1 == Blue
+    #         # 2 == Green
+    #         return
+    #     self.RGB[index] = hex
+    #     screen.bgcolor(self.RGB[0], self.RGB[1], self.RGB[2])
+    
+    def setBGColor_RGB(self, R, G, B):
+        print(R)
+        print(G)
+        print(B)
+        R = self.hexRangeCheck(R) 
+        G = self.hexRangeCheck(G)
+        B = self.hexRangeCheck(B)
+        screen.update()
+        # store it memory for config settings
+        try:
+            self.RGB = (R, G, B)
+            screen.bgcolor(float(R/255), float(G/255), float(B/255))
+        except Exception as e:
+            print("Error setting render color:")
+            print(e)
 
+    def hexRangeCheck(self, hex):
+        if hex < 0:
+            return 0
+        if hex > 255:
+            return 255 
+        return hex
 
     def draw_crosshair(self, range):
         max_radius = range
