@@ -29,13 +29,13 @@ class RadarDrawing:
         self.BASE_DIR = os.path.dirname(os.path.abspath(__file__))
         self.ps_loc = os.path.join(self.BASE_DIR, f"Radar/PostScript/drawing_{self.KM_build}.ps")
         self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img_{self.KM_build}.png")
+        self.RBG = [0, 0, 0]
         
 
     # KM the amount of lines represent keep in mind it must be an int.
     def draw_radar_Custom(self, KM):
         start = time.time()
         
-       
         if KM < 1:
             KM = 1
         self.KM_build
@@ -65,6 +65,21 @@ class RadarDrawing:
         end = time.time()
         self.KM_build = KM
         return end - start # returns the a time it took to create the img in seconds.
+    
+    def setBGColor_R(self, hex, index):
+        if hex < 0:
+            hex = 0
+        if hex > 255:
+            hex = 255 
+        if index < 0 or index > 2:
+            # index out of range
+            # 0 == Red
+            # 1 == Blue
+            # 2 == Green
+            return
+        self.RBG[index] = hex
+        screen.bgcolor(self.RBG[0], self.RBG[1], self.RBG[2])
+
 
     def draw_crosshair(self, range):
         max_radius = range
@@ -153,3 +168,8 @@ class RadarDrawing:
         screen.update()
         if close:
             screen.bye()
+
+    def CloseDrawer(self):
+        screen.bye()
+
+        

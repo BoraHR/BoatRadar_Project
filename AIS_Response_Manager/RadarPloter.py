@@ -119,9 +119,9 @@ class RadarPlotter:
         print(dataTuple)
         number = 0
         for boat in otherBoats:
-            number += 1
             distance = haversine(lat, lon, boat[10], boat[9])
             if distance <= range:
+                number += 1
                 heading_to_target = bearing_deg(lat, lon, boat[10], boat[9])
                 print(boat)
                 print(f"lon: {boat[9]}, lat: {boat[10]}")
@@ -149,8 +149,6 @@ class RadarPlotter:
         
         # when new KM setting is selected it takes longer to generate because it has to redraw radar reading chached drawing is almost always instant
         print(f"Radar generated in {performance} seconds") 
-        
-        print()
         conn.close()
         # saving the image does not close the turtle window by default;
         # we may call ``SaveImg(close=True)`` at the very end of the
@@ -160,4 +158,3 @@ class RadarPlotter:
         fin_performance = end - start
         print(f"Radar data trasmited in {fin_performance} seconds")
         return myBoat
-
