@@ -10,10 +10,11 @@ import time
 
 class RadarConsole:
     def __init__(self, window):
+        self.RBG = (100, 100, 100)
+        self.BASE_DIR = os.path.dirname(os.path.abspath(__file__))
         self.killswitch = False
         self.myBoat = None
         self.plotter = RadarPlotter()
-        self.BASE_DIR = os.path.dirname(os.path.abspath(__file__))
         self.window = window
         self.window.title("AIS Radar Console")
         # self.window.attributes('-fullscreen', True)
@@ -247,29 +248,29 @@ class RadarConsole:
     def open_color_window(self):
         color_win = tk.Toplevel(self.window)
         color_win.title("Radar Background Color")
-
-        # Variables
         # self.plotter.draw
         r = tk.IntVar(value=self.plotter.draw.RGB[0])
-        b = tk.IntVar(value=self.plotter.draw.RGB[1])
-        g = tk.IntVar(value=self.plotter.draw.RGB[2])
-        
+        g = tk.IntVar(value=self.plotter.draw.RGB[1])
+        b = tk.IntVar(value=self.plotter.draw.RGB[2])
 
-        # # Update function
-        # color = f"#{r.get():02x}{g.get():02x}{b.get():02x}"
-        # self.window.configure(bg=color)
-        # self.image_label.configure(bg=color)
-
-        # # # Sliders
-        # R = r.get()
-        # B = b.get()
-        # G = g.get()
-        
         tk.Label(color_win, text="Red").pack()
-        tk.Scale(color_win, from_=0, to=255, orient="horizontal", variable=r, command=lambda x: self.plotter.draw.setBGColor_RGB(r.get(), b.get(), g.get())).pack()
+        tk.Scale(color_win, from_=0, to=255, orient="horizontal", variable=r, command=lambda val: (self.plotter.draw.setBGColor_RGB(int(val), g.get(), b.get()), self.update_image())).pack()
 
         tk.Label(color_win, text="Green").pack()
-        tk.Scale(color_win, from_=0, to=255, orient="horizontal", variable=g, command=lambda x: self.plotter.draw.setBGColor_RGB(r.get(), b.get(), g.get())).pack()
+        tk.Scale(color_win, from_=0, to=255, orient="horizontal", variable=g, command=lambda val: (self.plotter.draw.setBGColor_RGB(r.get(), int(val), b.get()), self.update_image())).pack()
 
         tk.Label(color_win, text="Blue").pack()
-        tk.Scale(color_win, from_=0, to=255, orient="horizontal", variable=b, command=lambda x: self.plotter.draw.setBGColor_RGB(r.get(), b.get(), g.get())).pack()
+        tk.Scale(color_win, from_=0, to=255, orient="horizontal", variable=b, command=lambda val: (self.plotter.draw.setBGColor_RGB(r.get(), g.get(), int(val)), self.update_image())).pack()
+
+        # buttons frame
+        btn_frame = Frame(color_win)
+        btn_frame.pack(pady=10)
+
+        Button(btn_frame,
+                text="UPDATE RGB",
+                font=("Consolas", 14),
+                bg="Red",
+                command=lambda: self.plotter.draw.setBGColor_RGB(r.get(), g.get(), b.get()),
+            ).pack(pady=10)
+
+       

@@ -1,6 +1,7 @@
 import turtle
 import math
 import os
+# https://www.geeksforgeeks.org/python/python-pillow-colors-on-an-image/
 from PIL import Image
 import time
 
@@ -26,13 +27,16 @@ class RadarDrawing:
         # radar_built = False
         self.KM_build = -1
         self.plotedBoats = []
+        self.RGB = (24,255,24)
         self.BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+        self.bg_loc = os.path.join(self.BASE_DIR, f"Radar/Background/R={self.RGB[1]},G={self.RGB[1]},B={self.RGB[2]}")
         self.ps_loc = os.path.join(self.BASE_DIR, f"Radar/PostScript/drawing_{self.KM_build}.ps")
         self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img_{self.KM_build}.png")
-        self.RGB = (100,100,100)
+        
         
     # KM the amount of lines represent keep in mind it must be an int.
     def draw_radar_Custom(self, KM):
+        # screen.bgcolor(float(self.RGB[0]/255), float(self.RGB[1]/255), float(self.RGB[2]/255))
         start = time.time()
         
         if KM < 1:
@@ -64,20 +68,6 @@ class RadarDrawing:
         end = time.time()
         self.KM_build = KM
         return end - start # returns the a time it took to create the img in seconds.
-    
-    # def setBGColor_R(self, hex, index):
-    #     if hex < 0:
-    #         hex = 0
-    #     if hex > 255:
-    #         hex = 255 
-    #     if index < 0 or index > 2:
-    #         # index out of range
-    #         # 0 == Red
-    #         # 1 == Blue
-    #         # 2 == Green
-    #         return
-    #     self.RGB[index] = hex
-    #     screen.bgcolor(self.RGB[0], self.RGB[1], self.RGB[2])
     
     def setBGColor_RGB(self, R, G, B):
         print(R)
@@ -181,11 +171,55 @@ class RadarDrawing:
         down (for example at the very end of a batch of drawings).
         """
         ts = turtle.Screen()
+        ts.bgcolor(self.get_bgcolor())
         # save as PostScript
         ts.getcanvas().postscript(file=self.ps_loc)
-        img = Image.open(self.ps_loc)
-        img.save(self.img_loc)
+        img = Image.open(self.ps_loc).convert("RGBA")
+
+        if self.RGB[0] > 25 or self.RGB[1] > 25 or self.RGB[2] > 25:
+            # Create background
+            bg = Image.new("RGBA", img.size, (
+                self.RGB[0],
+                self.RGB[1],
+                self.RGB[2],
+                255
+            ))
+
+            # Combine background + drawing
+            final = Image.alpha_composite(bg, img)
+
+            final.save(self.img_loc)
+
+            img = Image.open(self.ps_loc).convert("RGBA")
+
         
+            new_data = []
+            for item in img.getdata():
+                # Detect white (or near white)
+                if item[0] > 240 and item[1] > 240 and item[2] > 240:
+                    # Make transparent
+                    new_data.append((255, 255, 255, 0))
+                else:
+                    new_data.append(item)
+
+            img.putdata(new_data)
+
+            # Now create background
+            bg = Image.new("RGBA", img.size, (
+                self.RGB[0],
+                self.RGB[1],
+                self.RGB[2],
+                255
+            ))
+
+            # Composite works NOW
+            final = Image.alpha_composite(bg, img)
+
+            final.save(self.img_loc)
+        else:
+            final = Image.open(self.ps_loc).convert("RGBA")
+            final.save(self.img_loc)
+            
         screen.update()
         if close:
             screen.bye()
@@ -193,4 +227,34 @@ class RadarDrawing:
     def CloseDrawer(self):
         screen.bye()
 
-        
+    def get_bgcolor(self):
+        return (self.RGB[0]/255, self.RGB[1]/255, self.RGB[2]/255)
+    
+    def color_bg(self):
+        # https://www.geeksforgeeks.org/python/python-pillow-colors-on-an-image/
+        self.bg_loc = os.path.join(self.BASE_DIR, f"Radar/Background/R={self.RGB[0]},G={self.RGB[1]},B={self.RGB[2]}.png")
+        # reuse color if already created
+        if os.path.exists(self.bg_loc) == False:
+            # try:
+            img = Image.open(os.path.join(self.BASE_DIR, f"Radar/Background/template/WhiteBG_1x1.png"))
+            img = img.convert("RGB")
+
+            d = img.getdata()
+
+            new_image = []
+            for item in d:
+
+                # change the white pixel to current set RGB color
+                img = Image.new("RGB", (1, 1), self.RGB)
+                img = img.resize((resulotionScale, resulotionScale), Image.LANCZOS)
+
+            # update image data
+            img.putdata(new_image)
+
+            # save new image
+            img.save(self.bg_loc)
+            # except Exception as e:
+            #     print("error generating background color:")
+            #     print(e)
+        # turtle.bgpic(self.bg_loc)
+

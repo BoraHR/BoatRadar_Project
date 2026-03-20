@@ -16,6 +16,7 @@ Range_setting = 3
 class RadarPlotter:
     def __init__(self):
         self.draw = RadarDrawing()
+        # self.draw.color_bg()
         # targetId ensures that selected target from RadarController will be orange when the ID condition is met
         # DEFAULT is -1 instead of None to prefent potentioal None exeptions
         self.targetId = -1
