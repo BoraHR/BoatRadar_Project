@@ -9,12 +9,81 @@ from PIL import Image, ImageTk
 import time
 
 class RadarConsole:
+    # https://www.adobe.com/creativecloud/design/discover/secondary-colors.html
+    
+    # -- SET Primary Colors -- #
+    # -- RED --
+    def set_R_primary(self, R):
+        self.RGB_Pri[0] = R
+    # -- GREEN --
+    def set_G_primary(self, G):
+        self.RGB_Pri[1] = G
+    # -- BLUE --
+    def set_B_primary(self, B):
+        self.RGB_Pri[2] = B
+
+    # -- SET Secondary Colors -- #
+    def set_R_secondary(self, R):
+        self.RGB_Sec[0] = R
+    def set_G_secondary(self, G):
+        self.RGB_Sec[1] = G
+    def set_B_secondary(self, B):
+        self.RGB_Sec[2] = B
+
+    # -- SET Tertiary Colors -- #
+    def set_R_tertiary(self, R):
+        self.RGB_Ter[0] = R
+    def set_G_tertiary(self, G):
+        self.RGB_Ter[1] = G
+    def set_B_tertiary(self, B):
+        self.RGB_Ter[2] = B
+    
+    # -- Helpers -- #    
+    def from_rgb(self, rgb):
+        # https://stackoverflow.com/questions/51591456/can-i-use-rgb-in-tkinter
+        """translates an rgb tuple of int to a tkinter friendly color code"""
+        r, g, b = rgb
+        return f'#{r:02x}{g:02x}{b:02x}'
+    
+    def set_2digit(self, value):
+        strValue = str(value)
+        if len(strValue) == 1:
+            return "0"+strValue
+        return strValue
+    
+    # -- Main Console Controller -- #
     def __init__(self, window):
-        self.RBG = (100, 100, 100)
+        self.plotter = RadarPlotter()
+
+        # -- Primary Colors -- #
+        self.RGB_Pri = [144,144,144]
+        # self.R_Pri = 255
+        # self.G_Pri = 255
+        # self.B_Pri = 255
+        
+        # -- Secondary Colors -- #
+        self.RGB_Sec = [141,199,130]
+        # self.R_Sec = 255
+        # self.G_Sec = 255
+        # self.B_Sec = 255
+
+        # -- Tertiary Colors -- #
+        self.RGB_Ter = [127,158,128]
+        # self.R_Tri = 255
+        # self.G_Tri = 255
+        # self.B_Tri = 255
+
+        self.plotter.draw.setBGColor_RGB(self.RGB_Pri[0], self.RGB_Pri[1], self.RGB_Pri[2])
+
+        # -- Name Conversion for thinker colorscheme -- #
+        self.primary_color = self.from_rgb(tuple(self.RGB_Pri))
+        self.secondary_color = self.from_rgb(tuple(self.RGB_Sec))
+        self.tertiary_color = self.from_rgb(tuple(self.RGB_Ter))
+
         self.BASE_DIR = os.path.dirname(os.path.abspath(__file__))
         self.killswitch = False
         self.myBoat = None
-        self.plotter = RadarPlotter()
+        
         self.window = window
         self.window.title("AIS Radar Console")
         # self.window.attributes('-fullscreen', True)
@@ -62,7 +131,7 @@ class RadarConsole:
         menu_bar.add_cascade(label="Help", menu=help_menu)
 
         setting_menu  = tk.Menu(menu_bar, tearoff=0)
-        setting_menu.add_command(label="RadaRGBColor", command=self.open_color_window)
+        setting_menu.add_command(label="Color Settings", command=self.open_color_window)
         
         menu_bar.add_cascade(label="settings", menu=setting_menu)
 
@@ -116,7 +185,18 @@ class RadarConsole:
         self.combo_box.pack(side=RIGHT)
         self.combo_box.set("RANGE")
                     
+        local_DT= time.localtime()
+
+        # hh:mm:ss  DD-MM-YYYY
+        self.time = Label(window,
+              text=f"{self.set_2digit(local_DT.tm_hour)}:{self.set_2digit(local_DT.tm_min)}:{self.set_2digit(local_DT.tm_sec)} | {self.set_2digit(local_DT.tm_mday)}-{self.set_2digit(local_DT.tm_mon)}-{self.set_2digit(local_DT.tm_year)}",
+              font=("Consolas", 20, "bold"),
+              bg=self.secondary_color)
+        self.time.pack(side='right')
+        
+
         self.radar_loop()
+
 
     def Quit(self):
         self.killswitch = True
@@ -158,6 +238,20 @@ class RadarConsole:
         self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img_{self.km_range}.png")
         if os.path.isfile(self.img_compas):
             self.overlay = Image.open(self.img_compas).convert("RGBA")
+        
+        # hh:mm:ss  DD-MM-YYYY
+        local_DT = time.localtime()
+
+        self.time.config(
+            text=f"{self.set_2digit(local_DT.tm_hour)}:"
+                f"{self.set_2digit(local_DT.tm_min)}:"
+                f"{self.set_2digit(local_DT.tm_sec)} | "
+                f"{self.set_2digit(local_DT.tm_mday)}-"
+                f"{self.set_2digit(local_DT.tm_mon)}-"
+                f"{self.set_2digit(local_DT.tm_year)}",
+            bg=self.secondary_color
+        )
+        
         
     def change_range(self, delta):
         self.km_range += delta
@@ -248,29 +342,53 @@ class RadarConsole:
     def open_color_window(self):
         color_win = tk.Toplevel(self.window)
         color_win.title("Radar Background Color")
-        # self.plotter.draw
-        r = tk.IntVar(value=self.plotter.draw.RGB[0])
-        g = tk.IntVar(value=self.plotter.draw.RGB[1])
-        b = tk.IntVar(value=self.plotter.draw.RGB[2])
-
-        tk.Label(color_win, text="Red").pack()
-        tk.Scale(color_win, from_=0, to=255, orient="horizontal", variable=r, command=lambda val: (self.plotter.draw.setBGColor_RGB(int(val), g.get(), b.get()), self.update_image())).pack()
-
-        tk.Label(color_win, text="Green").pack()
-        tk.Scale(color_win, from_=0, to=255, orient="horizontal", variable=g, command=lambda val: (self.plotter.draw.setBGColor_RGB(r.get(), int(val), b.get()), self.update_image())).pack()
-
-        tk.Label(color_win, text="Blue").pack()
-        tk.Scale(color_win, from_=0, to=255, orient="horizontal", variable=b, command=lambda val: (self.plotter.draw.setBGColor_RGB(r.get(), g.get(), int(val)), self.update_image())).pack()
 
         # buttons frame
         btn_frame = Frame(color_win)
         btn_frame.pack(pady=10)
 
-        Button(btn_frame,
+        color_button = Button(btn_frame,
                 text="UPDATE RGB",
                 font=("Consolas", 14),
-                bg="Red",
-                command=lambda: self.plotter.draw.setBGColor_RGB(r.get(), g.get(), b.get()),
-            ).pack(pady=10)
+                bg=self.primary_color,
+                command=lambda: self.plotter.draw.setBGColor_RGB(self.RGB_Pri[0], self.RGB_Pri[1], self.RGB_Pri[2])
+            )
+        color_button.pack(pady=10)
+        
+        # self.plotter.draw
+        r = tk.IntVar(value=self.plotter.draw.RGB[0])
+        g = tk.IntVar(value=self.plotter.draw.RGB[1])
+        b = tk.IntVar(value=self.plotter.draw.RGB[2])
+
+        rLabel = tk.Label(color_win, text=f"Red | Current: {self.RGB_Pri[0]}")
+        rLabel.pack()
+        tk.Scale(color_win, from_=0, to=255, orient="horizontal", variable=r, command=lambda val: 
+            (
+                self.set_R_primary(int(val)), 
+                color_button.config(bg=self.from_rgb(tuple(self.RGB_Pri))),
+                rLabel.config(text=f"Red | Current: {val}")
+            )
+        ).pack()
+
+        gLabel = tk.Label(color_win, text=f"Green | Current: {self.RGB_Pri[1]}")
+        gLabel.pack()
+        tk.Scale(color_win, from_=0, to=255, orient="horizontal", variable=g, command=lambda val: 
+            (
+                self.set_G_primary(int(val)), 
+                color_button.config(bg=self.from_rgb(tuple(self.RGB_Pri))),
+                gLabel.config(text=f"Red | Current: {val}")
+            )
+        ).pack()
+
+        bLabel = tk.Label(color_win, text=f"Blue | Current: {self.RGB_Pri[2]}")
+        bLabel.pack()
+        tk.Scale(color_win, from_=0, to=255, orient="horizontal", variable=b, command=lambda val: 
+            (
+                self.set_B_primary(int(val)), 
+                color_button.config(bg=self.from_rgb((tuple(self.RGB_Pri)))),
+                bLabel.config(text=f"Red | Current: {val}")
+            )
+        ).pack()
+        
 
        

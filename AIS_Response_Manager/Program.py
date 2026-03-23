@@ -13,12 +13,12 @@ if __name__ == "__main__":
         print("Consider freeing up memory to atleast 1 GB of DiskSpace")
         print()
 
-    # try:
-    window = Tk()
-    app = RadarConsole(window)
-    window.mainloop()
-    # except Exception as e:
-    #     print("TERMINAL HAS BEEN KILLED")
-    #     print("TERMINATING PROGRAM")
-    #     print(e)
+    try:
+        window = Tk()
+        app = RadarConsole(window)
+        window.mainloop()()
+    except Exception as e:
+        print("TERMINAL HAS BEEN KILLED")
+        print("TERMINATING PROGRAM")
+        print(e)
         

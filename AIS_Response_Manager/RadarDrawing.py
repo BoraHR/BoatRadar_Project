@@ -27,7 +27,7 @@ class RadarDrawing:
         # radar_built = False
         self.KM_build = -1
         self.plotedBoats = []
-        self.RGB = (24,255,24)
+        self.RGB = (255,255,255)
         self.BASE_DIR = os.path.dirname(os.path.abspath(__file__))
         self.bg_loc = os.path.join(self.BASE_DIR, f"Radar/Background/R={self.RGB[1]},G={self.RGB[1]},B={self.RGB[2]}")
         self.ps_loc = os.path.join(self.BASE_DIR, f"Radar/PostScript/drawing_{self.KM_build}.ps")
