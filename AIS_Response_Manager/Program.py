@@ -16,9 +16,10 @@ if __name__ == "__main__":
     try:
         window = Tk()
         app = RadarConsole(window)
-        window.mainloop()()
+        window.mainloop()
     except Exception as e:
-        print("TERMINAL HAS BEEN KILLED")
-        print("TERMINATING PROGRAM")
+        print()
+        print("AN ERROR HAS BEING CAUGHT BY MAIN:")
         print(e)
-        
+        print("CONTINUEING OPERATION...")
+        print()

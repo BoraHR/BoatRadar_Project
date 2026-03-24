@@ -25,6 +25,7 @@ boats_t.speed(0)
 class RadarDrawing:
     def __init__(self):
         # radar_built = False
+        self.hideScreen = False
         self.KM_build = -1
         self.plotedBoats = []
         self.RGB = (255,255,255)
@@ -162,6 +163,8 @@ class RadarDrawing:
         # turtle.done()
 
     def SaveImg(self, close=False):
+        if self.hideScreen:
+            screen.setup(width=resulotionScale, height=resulotionScale, startx=1800)
         self.ps_loc = os.path.join(self.BASE_DIR, f"Radar/PostScript/drawing_{self.KM_build}.ps")
         self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img_{self.KM_build}.png")
         """Write the current turtle screen to disk.
@@ -230,6 +233,14 @@ class RadarDrawing:
     def get_bgcolor(self):
         return (self.RGB[0]/255, self.RGB[1]/255, self.RGB[2]/255)
     
+    def screen_toggle(self):
+        if self.hideScreen:
+            self.hideScreen = False
+            screen.setup(width=resulotionScale, height=resulotionScale)
+        else:
+            self.hideScreen = True
+            screen.setup(width=resulotionScale, height=resulotionScale, startx=1800)
+            
     def color_bg(self):
         # https://www.geeksforgeeks.org/python/python-pillow-colors-on-an-image/
         self.bg_loc = os.path.join(self.BASE_DIR, f"Radar/Background/R={self.RGB[0]},G={self.RGB[1]},B={self.RGB[2]}.png")

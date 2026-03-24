@@ -15,6 +15,7 @@ Range_setting = 3
 
 class RadarPlotter:
     def __init__(self):
+        self.RadarConsoleData = []
         self.draw = RadarDrawing()
         # self.draw.color_bg()
         # targetId ensures that selected target from RadarController will be orange when the ID condition is met
@@ -29,6 +30,9 @@ class RadarPlotter:
         except Exception as e:
             print("Error Setting target:")
             print(e)
+
+    def clearConsoleData(self):
+        self.RadarConsoleData.clear()
 
     def clearTarget(self):
         self.targetId = -1
@@ -45,6 +49,7 @@ class RadarPlotter:
     # range = distance between your boat and other boat in both Lad and long
     # timeWindow = how far appart the received message is allowed to be shown in the list of other Boats
     def InRangeHelper(self, boat_id, range=0.009, timeWindow = 10.00):
+        self.clearConsoleData()
         self.draw.clear_otherBoats()
         start = time.time()
         performance = self.draw.draw_radar_Custom(range)
@@ -147,6 +152,8 @@ class RadarPlotter:
                 else:
                     self.draw.plot_otherBoat((boat_id, X_Y[0], X_Y[1]), X_Y[0], X_Y[1], number, scale, boat[12], False)
 
+                self.RadarConsoleData.append([(boat), number, distance, cpa, tcpa]) # tupletuple[0], int[1], float[2], float[3]
+
         
         # when new KM setting is selected it takes longer to generate because it has to redraw radar reading chached drawing is almost always instant
         print(f"Radar generated in {performance} seconds") 
@@ -159,3 +166,5 @@ class RadarPlotter:
         fin_performance = end - start
         print(f"Radar data trasmited in {fin_performance} seconds")
         return myBoat
+    
+    

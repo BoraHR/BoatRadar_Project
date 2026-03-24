@@ -3,7 +3,7 @@ from tkinter import *
 import tkinter as tk
 from tkinter import ttk
 from functools import partial
-from RadarPloter import RadarPlotter
+from RadarPlotter import RadarPlotter
 import os, shutil
 from PIL import Image, ImageTk
 import time
@@ -54,25 +54,22 @@ class RadarConsole:
     # -- Main Console Controller -- #
     def __init__(self, window):
         self.plotter = RadarPlotter()
+        
+        # RED == self.RGB_{Pri/Sec/Ter}[0]
+        # GREEN == self.RGB_{Pri/Sec/Ter}[1]
+        # BLUE == self.RGB_{Pri/Sec/Ter}[2]
+        # MIN 0, MAX 255
 
         # -- Primary Colors -- #
-        self.RGB_Pri = [144,144,144]
-        # self.R_Pri = 255
-        # self.G_Pri = 255
-        # self.B_Pri = 255
+        self.RGB_Pri = [144,144,144]#R=[0],#G=[1],
         
         # -- Secondary Colors -- #
         self.RGB_Sec = [141,199,130]
-        # self.R_Sec = 255
-        # self.G_Sec = 255
-        # self.B_Sec = 255
 
         # -- Tertiary Colors -- #
         self.RGB_Ter = [127,158,128]
-        # self.R_Tri = 255
-        # self.G_Tri = 255
-        # self.B_Tri = 255
 
+        
         self.plotter.draw.setBGColor_RGB(self.RGB_Pri[0], self.RGB_Pri[1], self.RGB_Pri[2])
 
         # -- Name Conversion for thinker colorscheme -- #
@@ -93,7 +90,7 @@ class RadarConsole:
         self.km_range = 3
         self.time_window = 10
         self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img_{self.km_range}.png")
-        self.img_compas = os.path.join(self.BASE_DIR, f"Radar/Compas/Current/360_Rotation-TranparantCenter (1).png")
+        self.img_compas = os.path.join(self.BASE_DIR, f"Radar/Compas/Current/360_Rotation-TranparantCenter (3).png")
 
         # ---- radar image ----
         # Create a placeholder label now; we'll populate it (and keep a reference to
@@ -108,8 +105,6 @@ class RadarConsole:
         self.update_image()
 
         # ---- UI ----
-
-        # menu
         self.range_var = StringVar(self.window)
         
         # ---- MENU BAR ----
@@ -134,7 +129,6 @@ class RadarConsole:
         setting_menu.add_command(label="Color Settings", command=self.open_color_window)
         
         menu_bar.add_cascade(label="settings", menu=setting_menu)
-
 
         # Attach menu bar to window
         self.window.config(menu=menu_bar)
@@ -168,11 +162,30 @@ class RadarConsole:
                ).pack(side=LEFT, padx=5)
 
         Button(window,
-               text="KILL TERMINAL",
+               text="HIDE DRAWER",
                font=("Consolas", 14),
-               bg="red",
-               command=self.Quit,
+               bg="silver",
+               command=self.plotter.draw.screen_toggle,
                ).pack(pady=10)
+        
+        # https://docs.python.org/3/library/tkinter.ttk.html#treeview
+        # https://docs.python.org/3/library/tkinter.ttk.html#ttk-styling
+        self.table = ttk.Treeview(window, columns=("ID", "Range", "CPA", "TCPA"), show="headings", height=9, )
+
+        self.table.heading("ID", text="ID")
+        self.table.heading("Range", text="KM")
+        self.table.heading("CPA", text="CPA (m)")
+        self.table.heading("TCPA", text="TCPA (s)")
+
+        # Set column widths and prevent resizing
+        self.table.column("ID", width=50, stretch=False)
+        self.table.column("Range", width=60, stretch=False)
+        self.table.column("CPA", width=80, stretch=False)
+        self.table.column("TCPA", width=80, stretch=False)
+
+        self.table.configure()
+
+        self.table.pack(side=RIGHT, fill=BOTH, expand=True)
         
         # Create a Combobox widget for option selection
         # Create a Combobox widget for option selection
@@ -192,17 +205,45 @@ class RadarConsole:
               text=f"{self.set_2digit(local_DT.tm_hour)}:{self.set_2digit(local_DT.tm_min)}:{self.set_2digit(local_DT.tm_sec)} | {self.set_2digit(local_DT.tm_mday)}-{self.set_2digit(local_DT.tm_mon)}-{self.set_2digit(local_DT.tm_year)}",
               font=("Consolas", 20, "bold"),
               bg=self.secondary_color)
-        self.time.pack(side='right')
+        self.time.pack(side='right', anchor='s')
         
-
+        self.style = ttk.Style(window)
         self.radar_loop()
 
+    # -- Radar loop updates plotting device every second -- #
+    def radar_loop(self):
+        if self.killswitch == True:
+            self.window.quit()
+            self.plotter.draw.CloseDrawer()
+            return
+        
+        start = time.time()
+        self.update_label()
+
+        self.plotter.InRangeHelper(
+            self.boat_id,
+            self.km_range,
+            self.time_window
+        )
+
+        self.update_image()
+        self.update_table()
+
+        # run again after 1000 ms (1 second)
+        if self.window.winfo_exists():
+            self.window.after(500, self.radar_loop)
+        end = time.time()
+        print(f"Loop performance: {end - start}")
 
     def Quit(self):
         self.killswitch = True
-        print("Clossing program please wait...")
-        time.sleep(2.1) # give self.radarloop time to register killswitch command, to ensure all files are closed before deletion.
+        print("Closing program...")
+        self.window.after(100, self._shutdown)
+
+    def _shutdown(self):
+        self.plotter.draw.CloseDrawer()
         self.CleanFiles()
+        self.window.destroy()
             
     def CleanFiles(self, attempt = 1):
         retry = False
@@ -233,108 +274,21 @@ class RadarConsole:
             print("terminating task.")
             return
 
-    def update_label(self):
-        self.range_var.set(f"{self.km_range} KM")
-        self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img_{self.km_range}.png")
-        if os.path.isfile(self.img_compas):
-            self.overlay = Image.open(self.img_compas).convert("RGBA")
-        
-        # hh:mm:ss  DD-MM-YYYY
-        local_DT = time.localtime()
+    def update_table(self):
+        # Clear old data
+        for row in self.table.get_children():
+            self.table.delete(row)
 
-        self.time.config(
-            text=f"{self.set_2digit(local_DT.tm_hour)}:"
-                f"{self.set_2digit(local_DT.tm_min)}:"
-                f"{self.set_2digit(local_DT.tm_sec)} | "
-                f"{self.set_2digit(local_DT.tm_mday)}-"
-                f"{self.set_2digit(local_DT.tm_mon)}-"
-                f"{self.set_2digit(local_DT.tm_year)}",
-            bg=self.secondary_color
-        )
-        
-        
-    def change_range(self, delta):
-        self.km_range += delta
+        # Insert new data
+        for entry in self.plotter.RadarConsoleData:
+            boat, number, distance, cpa, tcpa = entry
 
-        if self.km_range < 1:
-            self.km_range = 1
-        if self.km_range > 50:
-            self.km_range = 50
-
-        self.update_label()
-        self.update_image()
-
-    def scan(self):
-        print(f"Scanning at {self.km_range} KM...")
-        self.range_var.set("Scanning...")
-        self.window.update()  # keep UI responsive
-
-        self.plotter.InRangeHelper(
-            self.boat_id,
-            self.km_range,
-            self.time_window
-        )
-
-        self.update_label()
-        self.update_image()
-
-    def _run_scan(self):
-        self.plotter.InRangeHelper(
-            self.boat_id,
-            self.km_range,
-            self.time_window
-        )
-        self.window.after(0, self.update_label)
-   
-    def update_image(self):
-
-        if not os.path.isfile(self.img_loc):
-            return
-
-        try:
-            base = Image.open(self.img_loc).convert("RGBA")
-            # if os.path.isfile(self.img_compas):
-            #     overlay = Image.open(self.img_compas).convert("RGBA")
-
-            if self.overlay.size != base.size:
-                self.overlay = self.overlay.resize(base.size, Image.Resampling.LANCZOS)
-                
-            base = Image.alpha_composite(base, self.overlay)
-
-            # Convert to Tk image
-            img = ImageTk.PhotoImage(base, master=self.window)
-
-            # Save reference
-            self.composite = img
-
-            # Update label
-            self.image_label.configure(image=self.composite)
-        except Exception as e:
-            print("Radar reload failed:")
-            print(e)
-
-    def radar_loop(self):
-        if self.killswitch == True:
-            self.window.quit()
-            self.plotter.draw.CloseDrawer()
-            return
-        
-        start = time.time()
-        self.update_label()
-
-        self.plotter.InRangeHelper(
-            self.boat_id,
-            self.km_range,
-            self.time_window
-        )
-
-        self.update_image()
-
-        # run again after 1000 ms (1 second)
-        if self.window.winfo_exists():
-            self.window.after(500, self.radar_loop)
-        end = time.time()
-        print(f"Loop performance: {end - start}")
+            self.table.insert("", "end", values=(
+                number,
+                f"{distance:.2f}",
+                f"{cpa:.1f}",
+                f"{tcpa:.1f}" 
+            ))
 
     def get_boat_data(self, id):
         return self.plotter.GetBoat(id)
@@ -366,29 +320,108 @@ class RadarConsole:
             (
                 self.set_R_primary(int(val)), 
                 color_button.config(bg=self.from_rgb(tuple(self.RGB_Pri))),
-                rLabel.config(text=f"Red | Current: {val}")
+                rLabel.config(text=f"RED | Current: {val}")
             )
         ).pack()
 
-        gLabel = tk.Label(color_win, text=f"Green | Current: {self.RGB_Pri[1]}")
+        gLabel = tk.Label(color_win, text=f"GREEN | Current: {self.RGB_Pri[1]}")
         gLabel.pack()
         tk.Scale(color_win, from_=0, to=255, orient="horizontal", variable=g, command=lambda val: 
             (
                 self.set_G_primary(int(val)), 
                 color_button.config(bg=self.from_rgb(tuple(self.RGB_Pri))),
-                gLabel.config(text=f"Red | Current: {val}")
+                gLabel.config(text=f"GREEN | Current: {val}")
             )
         ).pack()
 
-        bLabel = tk.Label(color_win, text=f"Blue | Current: {self.RGB_Pri[2]}")
+        bLabel = tk.Label(color_win, text=f"BLUE | Current: {self.RGB_Pri[2]}")
         bLabel.pack()
         tk.Scale(color_win, from_=0, to=255, orient="horizontal", variable=b, command=lambda val: 
             (
                 self.set_B_primary(int(val)), 
                 color_button.config(bg=self.from_rgb((tuple(self.RGB_Pri)))),
-                bLabel.config(text=f"Red | Current: {val}")
+                bLabel.config(text=f"BLUE | Current: {val}")
             )
         ).pack()
-        
 
-       
+    def update_label(self):
+            self.range_var.set(f"{self.km_range} KM")
+            self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img_{self.km_range}.png")
+            if os.path.isfile(self.img_compas):
+                self.overlay = Image.open(self.img_compas).convert("RGBA")
+            
+            # hh:mm:ss  DD-MM-YYYY
+            local_DT = time.localtime()
+
+            self.time.config(
+                text=f"{self.set_2digit(local_DT.tm_hour)}:"
+                    f"{self.set_2digit(local_DT.tm_min)}:"
+                    f"{self.set_2digit(local_DT.tm_sec)} | "
+                    f"{self.set_2digit(local_DT.tm_mday)}-"
+                    f"{self.set_2digit(local_DT.tm_mon)}-"
+                    f"{self.set_2digit(local_DT.tm_year)}",
+                bg=self.secondary_color
+            )
+        
+    def change_range(self, delta):
+        self.km_range += delta
+
+        if self.km_range < 1:
+            self.km_range = 1
+        if self.km_range > 50:
+            self.km_range = 50
+
+        self.update_label()
+        self.update_image()
+
+    def scan(self):
+        print(f"Scanning at {self.km_range} KM...")
+        self.range_var.set("Scanning...")
+        self.window.update()  # keep UI responsive
+
+        self.plotter.InRangeHelper(
+            self.boat_id,
+            self.km_range,
+            self.time_window
+        )
+
+        self.update_label()
+        self.update_image()
+
+    def _run_scan(self):
+        self.plotter.InRangeHelper(
+        self.boat_id,
+        self.km_range,
+        self.time_window
+        )
+        self.window.after(0, self.update_image)
+    
+    def update_image(self):
+
+        if not os.path.isfile(self.img_loc):
+            return
+
+        try:
+            base = Image.open(self.img_loc).convert("RGBA")
+            # if os.path.isfile(self.img_compas):
+            #     overlay = Image.open(self.img_compas).convert("RGBA")
+
+            if self.overlay.size != base.size:
+                self.overlay = self.overlay.resize(base.size, Image.Resampling.LANCZOS)
+                
+            base = Image.alpha_composite(base, self.overlay)
+
+            # Convert to Tk image
+            img = ImageTk.PhotoImage(base, master=self.window)
+
+            # Save reference
+            self.composite = img
+
+            # Update label
+            self.image_label.configure(image=self.composite, relief='solid')
+        except Exception as e:
+            print("Radar reload failed:")
+            print(e)
+
+    def style_manager(self):
+        pass
