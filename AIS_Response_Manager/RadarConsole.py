@@ -133,12 +133,28 @@ class RadarConsole:
         # Attach menu bar to window
         self.window.config(menu=menu_bar)
 
+        # -- UI layer system -- #
+        left_frame = Frame(window)
+        left_frame.rowconfigure(1, weight=1)
+        left_frame.columnconfigure(0, weight=1)
+        left_frame.pack(side=LEFT, fill=Y)
+
+        center_frame = Frame(window)
+        center_frame.rowconfigure(1, weight=1)
+        center_frame.columnconfigure(0, weight=1)
+        center_frame.pack(fill=Y)
+
+        right_frame = Frame(window)
+        right_frame.rowconfigure(1, weight=1)
+        right_frame.columnconfigure(0, weight=1)
+        right_frame.pack(side=RIGHT, fill=Y)
+
         # display
-        Label(window,
+        Label(left_frame,
               text="Radar Range",
               font=("Consolas", 14)).pack(pady=(10, 0))
 
-        Label(window,
+        Label(left_frame,
               textvariable=self.range_var,
               font=("Consolas", 20, "bold"),
               fg="#00FF00").pack()
@@ -147,30 +163,29 @@ class RadarConsole:
         btn_frame = Frame(window)
         btn_frame.pack(pady=10)
 
-        Button(btn_frame,
+        Button(left_frame,
                text="<",
                width=5,
                font=("Consolas", 16),
                command=lambda: self.change_range(-1)
                ).pack(side=LEFT, padx=5)
 
-        Button(btn_frame,
+        Button(left_frame,
                text=">",
                width=5,
                font=("Consolas", 16),
                command=lambda: self.change_range(+1)
                ).pack(side=LEFT, padx=5)
 
-        Button(window,
+        Button(center_frame,
                text="HIDE DRAWER",
                font=("Consolas", 14),
                bg="silver",
                command=self.plotter.draw.screen_toggle,
                ).pack(pady=10)
+
         
-        # https://docs.python.org/3/library/tkinter.ttk.html#treeview
-        # https://docs.python.org/3/library/tkinter.ttk.html#ttk-styling
-        self.table = ttk.Treeview(window, columns=("ID", "Range", "CPA", "TCPA"), show="headings", height=9, )
+        self.table = ttk.Treeview(right_frame, columns=("ID", "Range", "CPA", "TCPA"), show="headings", height=10)
 
         self.table.heading("ID", text="ID")
         self.table.heading("Range", text="KM")
@@ -183,29 +198,37 @@ class RadarConsole:
         self.table.column("CPA", width=80, stretch=False)
         self.table.column("TCPA", width=80, stretch=False)
 
-        self.table.configure()
+        # self.table.configure(height=10)
 
-        self.table.pack(side=RIGHT, fill=BOTH, expand=True)
+        # self.table.pack(side=TOP, padx=20, pady=20)
         
         # Create a Combobox widget for option selection
-        # Create a Combobox widget for option selection
         self.combo_box = ttk.Combobox(
-            window,
+            right_frame,
             values=["RANGE", "CPA", "TCPA"],
             state="readonly"
         )
 
-        self.combo_box.pack(side=RIGHT)
+        # self.combo_box.pack(side=BOTTOM, padx=5, pady=2)
         self.combo_box.set("RANGE")
                     
         local_DT= time.localtime()
 
         # hh:mm:ss  DD-MM-YYYY
-        self.time = Label(window,
+        self.time = Label(right_frame,
               text=f"{self.set_2digit(local_DT.tm_hour)}:{self.set_2digit(local_DT.tm_min)}:{self.set_2digit(local_DT.tm_sec)} | {self.set_2digit(local_DT.tm_mday)}-{self.set_2digit(local_DT.tm_mon)}-{self.set_2digit(local_DT.tm_year)}",
               font=("Consolas", 20, "bold"),
               bg=self.secondary_color)
-        self.time.pack(side='right', anchor='s')
+        # self.time.pack(side=TOP, padx=5, pady=2)
+
+        # pack the items of rightframe
+        # self.time.pack(side=TOP, padx=5, pady=2)
+        # self.table.pack(side=TOP, padx=20, pady=20, fill=BOTH, expand=True)
+        # self.combo_box.pack(side=TOP, padx=5, pady=10)
+        
+        self.table.grid(row=1, column=0, sticky="nsew", padx=10)
+        self.combo_box.grid(row=2, column=0, pady=5)
+        self.time.grid(row=3, column=0, pady=5)
         
         self.style = ttk.Style(window)
         self.radar_loop()
@@ -278,7 +301,7 @@ class RadarConsole:
         # Clear old data
         for row in self.table.get_children():
             self.table.delete(row)
-
+        
         # Insert new data
         for entry in self.plotter.RadarConsoleData:
             boat, number, distance, cpa, tcpa = entry
@@ -289,6 +312,11 @@ class RadarConsole:
                 f"{cpa:.1f}",
                 f"{tcpa:.1f}" 
             ))
+
+        # Fill remaining rows with empty placeholders
+        remaining = 10 - len(self.plotter.RadarConsoleData)
+        for _ in range(max(0, remaining)):
+            self.table.insert("", "end", values=("", "", "", ""))
 
     def get_boat_data(self, id):
         return self.plotter.GetBoat(id)
@@ -405,11 +433,11 @@ class RadarConsole:
             base = Image.open(self.img_loc).convert("RGBA")
             # if os.path.isfile(self.img_compas):
             #     overlay = Image.open(self.img_compas).convert("RGBA")
-
-            if self.overlay.size != base.size:
-                self.overlay = self.overlay.resize(base.size, Image.Resampling.LANCZOS)
+            if self.overlay is not None:
+                if self.overlay.size != base.size:
+                    self.overlay = self.overlay.resize(base.size, Image.Resampling.LANCZOS)
                 
-            base = Image.alpha_composite(base, self.overlay)
+                base = Image.alpha_composite(base, self.overlay)
 
             # Convert to Tk image
             img = ImageTk.PhotoImage(base, master=self.window)
