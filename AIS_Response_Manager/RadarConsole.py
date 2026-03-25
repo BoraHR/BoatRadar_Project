@@ -1,4 +1,5 @@
 # https://www.geeksforgeeks.org/python/python-gui-tkinter/
+import traceback
 from tkinter import *
 import tkinter as tk
 from tkinter import ttk
@@ -83,24 +84,16 @@ class RadarConsole:
         
         self.window = window
         self.window.title("AIS Radar Console")
-        # self.window.attributes('-fullscreen', True)
+        self.window.attributes('-fullscreen', True)
 
         # ---- state ----
         self.boat_id = 1
         self.km_range = 3
         self.time_window = 10
         self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img_{self.km_range}.png")
-        self.img_compas = os.path.join(self.BASE_DIR, f"Radar/Compas/Current/360_Rotation-TranparantCenter (3).png")
+        self.img_compas = os.path.join(self.BASE_DIR, f"Radar/Compas/Current/360_Rotation-TranparantCenter.png")
 
-        # ---- radar image ----
-        # Create a placeholder label now; we'll populate it (and keep a reference to
-        # the PhotoImage) later in `update_image`.
-        self.image = None
-        self.overlay = None
-        self.composite = None
-        self.image_label = tk.Label(self.window)
-        self.image_label.pack()
-
+        
         # Load any existing images immediately (transparent overlay is handled)
         self.update_image()
 
@@ -134,58 +127,69 @@ class RadarConsole:
         self.window.config(menu=menu_bar)
 
         # -- UI layer system -- #
-        left_frame = Frame(window)
-        left_frame.rowconfigure(1, weight=1)
-        left_frame.columnconfigure(0, weight=1)
-        left_frame.pack(side=LEFT, fill=Y)
+        self.left_frame = Frame(window)
+        self.left_frame.rowconfigure(1, weight=1)
+        self.left_frame.columnconfigure(0, weight=1)
+        self.left_frame.pack(side=LEFT, fill=Y)
 
-        center_frame = Frame(window)
-        center_frame.rowconfigure(1, weight=1)
-        center_frame.columnconfigure(0, weight=1)
-        center_frame.pack(fill=Y)
+        self.center_frame = Frame(window)
+        self.center_frame.rowconfigure(1, weight=1)
+        self.center_frame.columnconfigure(0, weight=1)
+        self.center_frame.pack(fill=Y)
 
-        right_frame = Frame(window)
-        right_frame.rowconfigure(1, weight=1)
-        right_frame.columnconfigure(0, weight=1)
-        right_frame.pack(side=RIGHT, fill=Y)
+        self.right_frame = Frame(window)
+        self.right_frame.rowconfigure(1, weight=1)
+        self.right_frame.columnconfigure(0, weight=1)
+        self.right_frame.pack(side=RIGHT, fill=Y)
+
+        # ---- radar image ----
+        # Create a placeholder label now; we'll populate it (and keep a reference to
+        # the PhotoImage) later in `update_image`.
+        self.image = None
+        self.overlay = None
+        self.composite = None
+        self.image_label = tk.Label(self.center_frame)
+        self.image_label.pack()
+
 
         # display
-        Label(left_frame,
+        Label(self.left_frame,
               text="Radar Range",
               font=("Consolas", 14)).pack(pady=(10, 0))
 
-        Label(left_frame,
+        Label(self.left_frame,
               textvariable=self.range_var,
               font=("Consolas", 20, "bold"),
-              fg="#00FF00").pack()
+              fg="#268826").pack(pady=(10, 0))
 
         # buttons frame
         btn_frame = Frame(window)
         btn_frame.pack(pady=10)
 
-        Button(left_frame,
+        Button(self.left_frame,
                text="<",
                width=5,
                font=("Consolas", 16),
-               command=lambda: self.change_range(-1)
+               command=lambda: self.change_range(-1),
+               bg=self.secondary_color
                ).pack(side=LEFT, padx=5)
 
-        Button(left_frame,
+        Button(self.left_frame,
                text=">",
                width=5,
                font=("Consolas", 16),
-               command=lambda: self.change_range(+1)
+               command=lambda: self.change_range(+1),
+               bg=self.secondary_color
                ).pack(side=LEFT, padx=5)
 
-        Button(center_frame,
+        Button(self.center_frame,
                text="HIDE DRAWER",
                font=("Consolas", 14),
-               bg="silver",
+               bg=self.secondary_color,
                command=self.plotter.draw.screen_toggle,
                ).pack(pady=10)
-
         
-        self.table = ttk.Treeview(right_frame, columns=("ID", "Range", "CPA", "TCPA"), show="headings", height=10)
+        self.table = ttk.Treeview(self.right_frame, columns=("ID", "Range", "CPA", "TCPA"), show="headings", height=10)
 
         self.table.heading("ID", text="ID")
         self.table.heading("Range", text="KM")
@@ -204,7 +208,7 @@ class RadarConsole:
         
         # Create a Combobox widget for option selection
         self.combo_box = ttk.Combobox(
-            right_frame,
+            self.right_frame,
             values=["RANGE", "CPA", "TCPA"],
             state="readonly"
         )
@@ -215,10 +219,12 @@ class RadarConsole:
         local_DT= time.localtime()
 
         # hh:mm:ss  DD-MM-YYYY
-        self.time = Label(right_frame,
-              text=f"{self.set_2digit(local_DT.tm_hour)}:{self.set_2digit(local_DT.tm_min)}:{self.set_2digit(local_DT.tm_sec)} | {self.set_2digit(local_DT.tm_mday)}-{self.set_2digit(local_DT.tm_mon)}-{self.set_2digit(local_DT.tm_year)}",
-              font=("Consolas", 20, "bold"),
-              bg=self.secondary_color)
+        self.time = Label(self.right_frame,
+            text=f"{self.set_2digit(local_DT.tm_hour)}:{self.set_2digit(local_DT.tm_min)}:{self.set_2digit(local_DT.tm_sec)}|{self.set_2digit(local_DT.tm_mday)}-{self.set_2digit(local_DT.tm_mon)}-{self.set_2digit(local_DT.tm_year)}",
+            font=("Consolas", 20, "bold"),
+            bg=self.secondary_color,
+            relief=SUNKEN
+        )
         # self.time.pack(side=TOP, padx=5, pady=2)
 
         # pack the items of rightframe
@@ -283,7 +289,6 @@ class RadarConsole:
                     except Exception as e:
                         print('Failed to delete %s. Reason: %s' % (file_path, e))
                         retry = True
-                
         else:
             print("OS Dirrectory seems to be wrong")
             print("ensure BASE_DIR is setup properly")
@@ -384,7 +389,7 @@ class RadarConsole:
             self.time.config(
                 text=f"{self.set_2digit(local_DT.tm_hour)}:"
                     f"{self.set_2digit(local_DT.tm_min)}:"
-                    f"{self.set_2digit(local_DT.tm_sec)} | "
+                    f"{self.set_2digit(local_DT.tm_sec)}|"
                     f"{self.set_2digit(local_DT.tm_mday)}-"
                     f"{self.set_2digit(local_DT.tm_mon)}-"
                     f"{self.set_2digit(local_DT.tm_year)}",
@@ -450,6 +455,7 @@ class RadarConsole:
         except Exception as e:
             print("Radar reload failed:")
             print(e)
+            print(traceback.format_exc())
 
     def style_manager(self):
         pass
