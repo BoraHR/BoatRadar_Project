@@ -10,7 +10,7 @@ import time
 # t.speed(0)
 
 screen = turtle.Screen()
-resulotionScale = 630
+resulotionScale = 640
 screen.setup(width=resulotionScale, height=resulotionScale)
 # turtle.bgpic(os.path.dirname(os.path.abspath(__file__)) + "/WorldWideMap_big.png")
 

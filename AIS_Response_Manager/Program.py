@@ -1,6 +1,7 @@
 ﻿from RadarConsole import RadarConsole
 from tkinter import *
 import shutil
+import traceback
 
 if __name__ == "__main__":
     # ---- start app ----
@@ -20,6 +21,6 @@ if __name__ == "__main__":
     except Exception as e:
         print()
         print("AN ERROR HAS BEING CAUGHT BY MAIN:")
-        print(e)
+        print(traceback.format_exc())
         print("CONTINUEING OPERATION...")
         print()

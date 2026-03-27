@@ -1,5 +1,4 @@
 # https://www.geeksforgeeks.org/python/python-gui-tkinter/
-import traceback
 from tkinter import *
 import tkinter as tk
 from tkinter import ttk
@@ -69,7 +68,6 @@ class RadarConsole:
 
         # -- Tertiary Colors -- #
         self.RGB_Ter = [127,158,128]
-
         
         self.plotter.draw.setBGColor_RGB(self.RGB_Pri[0], self.RGB_Pri[1], self.RGB_Pri[2])
 
@@ -81,66 +79,48 @@ class RadarConsole:
         self.BASE_DIR = os.path.dirname(os.path.abspath(__file__))
         self.killswitch = False
         self.myBoat = None
+        self.Rotation = 360%360
         
         self.window = window
         self.window.title("AIS Radar Console")
-        self.window.attributes('-fullscreen', True)
+        # self.window.attributes('-fullscreen', True)
 
-        # ---- state ----
-        self.boat_id = 1
-        self.km_range = 3
-        self.time_window = 10
-        self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img_{self.km_range}.png")
+        # ---- STARTNG STATES ---- #
+        self.boat_id = 1 # Boat ID is assinged ID of your boat.
+        self.km_range = 3 # Startig Unit for Radar generation.
+        self.time_window = 10 # The window of time to consider plotting to be valid.
+
+        # ---- Directories for image loading and saving ----
+        self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img_{self.km_range}.png") # updates in update_image()
         self.img_compas = os.path.join(self.BASE_DIR, f"Radar/Compas/Current/360_Rotation-TranparantCenter.png")
-
-        
-        # Load any existing images immediately (transparent overlay is handled)
-        self.update_image()
 
         # ---- UI ----
         self.range_var = StringVar(self.window)
         
         # ---- MENU BAR ----
-        menu_bar = tk.Menu(self.window)
-
-        # File menu - TEMPLATE
-        file_menu = tk.Menu(menu_bar, tearoff=0)
-        file_menu.add_command(label="New")
-        file_menu.add_command(label="Open...")
-        file_menu.add_separator()
-        file_menu.add_command(label="Exit", command=self.Quit)
-
-        menu_bar.add_cascade(label="File", menu=file_menu)
-
-        # Help menu - TEMPLATE
-        help_menu = tk.Menu(menu_bar, tearoff=0)
-        help_menu.add_command(label="About")
-
-        menu_bar.add_cascade(label="Help", menu=help_menu)
-
-        setting_menu  = tk.Menu(menu_bar, tearoff=0)
-        setting_menu.add_command(label="Color Settings", command=self.open_color_window)
-        
-        menu_bar.add_cascade(label="settings", menu=setting_menu)
-
-        # Attach menu bar to window
-        self.window.config(menu=menu_bar)
+        self.menu_bar = tk.Menu(self.window)
+        self.conf_Menubar()
 
         # -- UI layer system -- #
+        self.window.columnconfigure(0, weight=1)  # left
+        self.window.columnconfigure(1, weight=1)  # center
+        self.window.columnconfigure(2, weight=1)  # right
+        self.window.rowconfigure(0, weight=1)
+
         self.left_frame = Frame(window)
+        self.left_frame.grid(row=0, column=0, sticky="nsew")
         self.left_frame.rowconfigure(1, weight=1)
         self.left_frame.columnconfigure(0, weight=1)
-        self.left_frame.pack(side=LEFT, fill=Y)
 
         self.center_frame = Frame(window)
+        self.center_frame.grid(row=0, column=1, sticky="nsew")
         self.center_frame.rowconfigure(1, weight=1)
         self.center_frame.columnconfigure(0, weight=1)
-        self.center_frame.pack(fill=Y)
 
         self.right_frame = Frame(window)
+        self.right_frame.grid(row=0, column=2, sticky="nsew")
         self.right_frame.rowconfigure(1, weight=1)
         self.right_frame.columnconfigure(0, weight=1)
-        self.right_frame.pack(side=RIGHT, fill=Y)
 
         # ---- radar image ----
         # Create a placeholder label now; we'll populate it (and keep a reference to
@@ -149,45 +129,46 @@ class RadarConsole:
         self.overlay = None
         self.composite = None
         self.image_label = tk.Label(self.center_frame)
-        self.image_label.pack()
+        self.image_label#.pack()
 
+        # self.image_label.grid(row=2, column=0, sticky="n", padx=10)
 
         # display
-        Label(self.left_frame,
+        self.unitInfo = Label(self.left_frame,
               text="Radar Range",
-              font=("Consolas", 14)).pack(pady=(10, 0))
+              font=("Consolas", 14))#.pack(pady=(10, 0))
 
-        Label(self.left_frame,
+        self.unit = Label(self.left_frame,
               textvariable=self.range_var,
               font=("Consolas", 20, "bold"),
-              fg="#268826").pack(pady=(10, 0))
+              fg="#268826")#.pack(pady=(10, 0))
 
         # buttons frame
-        btn_frame = Frame(window)
-        btn_frame.pack(pady=10)
+        # btn_frame = Frame(window)
+        # btn_frame.pack(pady=10)
 
-        Button(self.left_frame,
+        self.KM_prev = Button(self.left_frame,
                text="<",
-               width=5,
+               width=3,
                font=("Consolas", 16),
                command=lambda: self.change_range(-1),
                bg=self.secondary_color
-               ).pack(side=LEFT, padx=5)
+        )#.pack(side=LEFT, padx=5)
 
-        Button(self.left_frame,
+        self.KM_next = Button(self.left_frame,
                text=">",
-               width=5,
+               width=3,
                font=("Consolas", 16),
                command=lambda: self.change_range(+1),
                bg=self.secondary_color
-               ).pack(side=LEFT, padx=5)
+        )#.pack(side=LEFT, padx=5)
 
-        Button(self.center_frame,
+        self.turtle_togle = Button(self.center_frame,
                text="HIDE DRAWER",
                font=("Consolas", 14),
                bg=self.secondary_color,
                command=self.plotter.draw.screen_toggle,
-               ).pack(pady=10)
+        )#.pack(pady=10)
         
         self.table = ttk.Treeview(self.right_frame, columns=("ID", "Range", "CPA", "TCPA"), show="headings", height=10)
 
@@ -225,19 +206,53 @@ class RadarConsole:
             bg=self.secondary_color,
             relief=SUNKEN
         )
-        # self.time.pack(side=TOP, padx=5, pady=2)
+       
+        self.style = ttk.Style(window)
+        # -- generate UI -- #
+        self.update_image()
+        self.conf_LeftFrame()
+        self.conf_CenterFrame()
+        self.conf_RightFrame()
+        self.radar_loop()
 
-        # pack the items of rightframe
-        # self.time.pack(side=TOP, padx=5, pady=2)
-        # self.table.pack(side=TOP, padx=20, pady=20, fill=BOTH, expand=True)
-        # self.combo_box.pack(side=TOP, padx=5, pady=10)
+    def conf_Menubar(self):
+        # File menu - TEMPLATE
+        file_menu = tk.Menu(self.menu_bar, tearoff=0)
+        file_menu.add_command(label="New")
+        file_menu.add_command(label="Hide/Show Turtle", command=None)
+        file_menu.add_separator()
+        file_menu.add_command(label="Exit", command=self.Quit)
+
+        self.menu_bar.add_cascade(label="File", menu=file_menu)
+
+        # Help menu - TEMPLATE
+        help_menu = tk.Menu(self.menu_bar, tearoff=0)
+        help_menu.add_command(label="About")
+
+        self.menu_bar.add_cascade(label="Help", menu=help_menu)
+
+        setting_menu  = tk.Menu(self.menu_bar, tearoff=0)
+        setting_menu.add_command(label="Color Settings", command=self.open_color_window)
         
+        self.menu_bar.add_cascade(label="settings", menu=setting_menu)
+
+        # Attach menu bar to window
+        self.window.config(menu=self.menu_bar)
+
+    def conf_LeftFrame(self):
+        self.unitInfo.grid(row=0, column=0)
+        self.KM_prev.grid(row=1, column=0, padx=10, sticky="w")
+        self.unit.grid(row=1, column=1, padx=1, sticky="w")
+        self.KM_next.grid(row=1, column=2, padx=10, sticky="w")
+
+    def conf_CenterFrame(self):
+        self.image_label.grid(row=1, column=0, sticky="n", padx=10)
+
+    def conf_RightFrame(self):
         self.table.grid(row=1, column=0, sticky="nsew", padx=10)
         self.combo_box.grid(row=2, column=0, pady=5)
         self.time.grid(row=3, column=0, pady=5)
-        
-        self.style = ttk.Style(window)
-        self.radar_loop()
+
 
     # -- Radar loop updates plotting device every second -- #
     def radar_loop(self):
@@ -260,7 +275,7 @@ class RadarConsole:
 
         # run again after 1000 ms (1 second)
         if self.window.winfo_exists():
-            self.window.after(500, self.radar_loop)
+            self.window.after(100, self.radar_loop)
         end = time.time()
         print(f"Loop performance: {end - start}")
 
@@ -309,7 +324,7 @@ class RadarConsole:
         
         # Insert new data
         for entry in self.plotter.RadarConsoleData:
-            boat, number, distance, cpa, tcpa = entry
+            boat, number, distance, cpa, tcpa, consoleData = entry
 
             self.table.insert("", "end", values=(
                 number,
@@ -436,10 +451,12 @@ class RadarConsole:
 
         try:
             base = Image.open(self.img_loc).convert("RGBA")
+            self.Rotation = (self.Rotation + 1) % 360
             # if os.path.isfile(self.img_compas):
             #     overlay = Image.open(self.img_compas).convert("RGBA")
             if self.overlay is not None:
                 if self.overlay.size != base.size:
+                    self.overlay = self.overlay.rotate(0)
                     self.overlay = self.overlay.resize(base.size, Image.Resampling.LANCZOS)
                 
                 base = Image.alpha_composite(base, self.overlay)
@@ -455,7 +472,6 @@ class RadarConsole:
         except Exception as e:
             print("Radar reload failed:")
             print(e)
-            print(traceback.format_exc())
 
     def style_manager(self):
         pass
