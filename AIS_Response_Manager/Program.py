@@ -2,7 +2,7 @@
 from tkinter import *
 import shutil
 import traceback
-from pyais_decoder import Save_DecodedData, Create_AIS_Render_History
+from pyais_decoder import Save_DecodedData, Create_AIS_Render_History, DB_Exists
 import os
 
 if __name__ == "__main__":
@@ -20,9 +20,12 @@ if __name__ == "__main__":
         print()
 
     try:
-        # Save_DecodedData(ais_file1)
-        # Save_DecodedData(ais_file2)
-        Create_AIS_Render_History()
+        if DB_Exists() == False:
+            Save_DecodedData(ais_file1) # Passed: 26357 | Failed: 3092 | Skipped: 10878 | Time(ms): 16182.82
+            input("press ENTER to continue")
+            Save_DecodedData(ais_file2) # Passed: 13878 | Failed: 2842 | Skipped: 11857 | Time(ms): 9527.60
+            ("press ENTER to continue")
+            Create_AIS_Render_History()
         window = Tk()
         app = RadarConsole(window)
         window.mainloop()

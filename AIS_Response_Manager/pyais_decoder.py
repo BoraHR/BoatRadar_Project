@@ -11,8 +11,10 @@ ais_file1 = os.path.join(BASE_DIR, "Data/ais_arca.txt")
 ais_file2 = os.path.join(BASE_DIR, "Data/ais_rp42.txt")
 FileRoute_sql3 = os.path.join(BASE_DIR, "Data/AIS-Responder_DB.db")
 
-def OpenDB():
-    NotImplementedError
+def DB_Exists():
+    if os.path.exists(FileRoute_sql3):
+        return True
+    return False
 
 def Decode_file(file):
     with open(ais_file1, "r", encoding="utf-8", errors="ignore") as file:
