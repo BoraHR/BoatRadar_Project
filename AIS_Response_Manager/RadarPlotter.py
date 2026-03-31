@@ -6,6 +6,7 @@ import time
 from RadarDrawing import RadarDrawing 
 from datetime import datetime, timedelta
 from Algorithm import km_to_lat_deg,  km_to_lon_deg, bearing_deg, haversine, ConvertToX_Y, calculate_cpa_tcpa
+from pyais_decoder import Update_Row_AIS_Render_History
 from enum import Enum
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -26,6 +27,7 @@ class RadarPlotter:
     def __init__(self):
         self.Order = Order.RANGE
         self.RadarConsoleData = []
+        self.PrevRadarConsole_BoatID = []
         self.draw = RadarDrawing()
         # self.draw.color_bg()
         # targetId ensures that selected target from RadarController will be orange when the ID condition is met
@@ -53,6 +55,25 @@ class RadarPlotter:
 
     def clearConsoleData(self):
         self.RadarConsoleData.clear()
+
+    def saveBoatsOutOfRange(self, myBoat):
+        lon = myBoat[9]
+        lat = myBoat[10]
+        strDateTime = datetime.now().isoformat()
+        
+        for data2 in self.PrevRadarConsole_BoatID:
+            history = lambda id, RCD : any(item[0][0] == id for item in RCD)
+            if history(data2, self.RadarConsoleData) == False:
+                conn = sqlite3.connect(FileRoute_sql3)
+                c = conn.cursor()
+                Lat_Long = c.execute('''
+                    SELECT Longitude, Latitude
+                    FROM AIS_Decoder
+                    WHERE id = ?
+                ''', (data2,)).fetchone()
+                LastRange = ConvertToX_Y(lat, lon, Lat_Long[0], Lat_Long[1])
+                Update_Row_AIS_Render_History(strDateTime, LastRange[2], data2, True)
+                self.PrevRadarConsole_BoatID.remove(data2)
 
     def clearTarget(self):
         self.targetId = -1
@@ -122,7 +143,7 @@ class RadarPlotter:
         speed = myBoat[7]
         heading = myBoat[12]
 
-        # 🔥 CONVERT KM → DEGREE BOUNDING BOX
+        # CONVERT KM → DEGREE BOUNDING BOX
         lat_range = km_to_lat_deg(range)
         lon_range = km_to_lon_deg(range, lat)
 
@@ -166,7 +187,6 @@ class RadarPlotter:
             self.draw.SaveImg()
             return
         
-        
         print(f"Other boats in range of {range} lon and lat:")
         print(dataTuple)
         number = 0
@@ -194,12 +214,15 @@ class RadarPlotter:
 
                 scale = radar_radius_pixels / range_meters           
                 if boat[0] == self.targetId:
-                    # self.draw.plot_otherBoat((boat_id, X_Y[0], X_Y[1]), X_Y[0], X_Y[1], number, scale, boat[12],  True) # "(id, Date, MsgType, Repeat, Mmsi, Status, Turn, Speed, Accuracy, Longitude, Latitude, Course, Heading, Second, Manuever, Spare_1, Raim, Radio)"
                     self.RadarConsoleData.append([(boat), number, distance, cpa, tcpa, (boat_id, X_Y[0], X_Y[1], number, scale, boat[12], True)])
+                    if boat[0] not in self.PrevRadarConsole_BoatID:
+                        self.PrevRadarConsole_BoatID.append(boat[0])
                 else:
                     self.RadarConsoleData.append([(boat), number, distance, cpa, tcpa, (boat_id, X_Y[0], X_Y[1], number, scale, boat[12], False)])
+                    if boat[0] not in self.PrevRadarConsole_BoatID:
+                        self.PrevRadarConsole_BoatID.append(boat[0])
 
-                # tuple[0], int[1], float[2], float[3], float[4]
+        self.saveBoatsOutOfRange(myBoat)
         self.orderList()
         self.plot_boats()
             

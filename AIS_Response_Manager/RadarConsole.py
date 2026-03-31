@@ -99,7 +99,7 @@ class RadarConsole:
         
         # ---- MENU BAR ----
         self.menu_bar = tk.Menu(self.window)
-        self.conf_Menubar()
+        # self.conf_Menubar()
 
         # -- UI layer system -- #
         self.window.columnconfigure(0, weight=1)  # left
@@ -194,6 +194,8 @@ class RadarConsole:
             state="readonly"
         )
 
+        self.combo_box.bind("<<ComboboxSelected>>", self.on_select)
+
         # self.combo_box.pack(side=BOTTOM, padx=5, pady=2)
         self.combo_box.set("RANGE")
                     
@@ -209,6 +211,7 @@ class RadarConsole:
        
         self.style = ttk.Style(window)
         # -- generate UI -- #
+        self.conf_Menubar()
         self.update_image()
         self.conf_LeftFrame()
         self.conf_CenterFrame()
@@ -451,6 +454,7 @@ class RadarConsole:
 
         try:
             base = Image.open(self.img_loc).convert("RGBA")
+            base = base.resize((750, 750), Image.Resampling.LANCZOS)
             self.Rotation = (self.Rotation + 1) % 360
             # if os.path.isfile(self.img_compas):
             #     overlay = Image.open(self.img_compas).convert("RGBA")
@@ -472,6 +476,12 @@ class RadarConsole:
         except Exception as e:
             print("Radar reload failed:")
             print(e)
+
+    def on_select(self, event):
+        selected_value = self.combo_box.get()
+        print(f"Selected: {selected_value}")
+        self.plotter.setEnum(selected_value)
+        
 
     def style_manager(self):
         pass

@@ -29,10 +29,27 @@ def CreateDB():
             )
         ''')
         conn.commit()
-        conn.close()
         print("DB created")
     else:
         print("DB already exists")
+
+def create_LastRender_data():
+    if not os.path.exists(FileRoute_sql3):
+        conn = sqlite3.connect(FileRoute_sql3)
+        c = conn.cursor()
+        c. execute('''
+            CREATE TABLE IF NOT EXISTS AIS_Render_History (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                LastRange REAL,
+                IsKM INTEGER,
+                Boat_ID INTEGER,
+                FOREIGN KEY (Boat_ID) REFERENCES AIS_Responder(id) 
+            )
+        ''')
+        conn.commit()
+        print("AIS_Render_History.DB created")
+    else:
+        print("AIS_Render_History.DB already exists")
 
 def AddRowDB():
     shipName = input("Name: ")

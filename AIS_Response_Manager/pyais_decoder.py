@@ -242,6 +242,60 @@ def Save_DecodedData(_file):
         conn.commit()
         conn.close()
         print(f"Passed: {passed} | Failed: {failed} | Skipped: {skipped} | Time(ms): {total_time * 1000:.2f}")
+        
+def Create_AIS_Render_History():
+    try:
+        if os.path.exists(FileRoute_sql3):
+            conn = sqlite3.connect(FileRoute_sql3)
+            c = conn.cursor()
+            c. execute('''
+                CREATE TABLE IF NOT EXISTS AIS_Render_History (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    DateString TEXT,
+                    LastRange REAL,
+                    RangeIsKM INTEGER,
+                    Boat_ID INTEGER UNIQUE,
+                    FOREIGN KEY (Boat_ID) REFERENCES AIS_Decoder(id) 
+                )
+            ''')
+            conn.commit()
+            conn.close()
+            print("AIS_Render_History.DB created")
+        else:
+            print("AIS_Rsponder.DB.db not found")
+    except Exception as e:
+        print("Failed to create AIS_Render_History.db: ")
+        print(e)
+
+def Update_Row_AIS_Render_History(DateTime, LastRange, BoatID, IsKM=True):
+    try:    
+        if os.path.exists(FileRoute_sql3):
+            conn = sqlite3.connect(FileRoute_sql3)
+            c = conn.cursor()
+            count = c.execute('''
+                INSERT INTO AIS_Render_History (Boat_ID, DateString, LastRange, RangeIsKM)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(Boat_ID)
+                DO UPDATE SET
+                    DateString = excluded.DateString,
+                    LastRange = excluded.LastRange,
+                    RangeIsKM = excluded.RangeIsKM
+            ''',
+            (
+                BoatID,
+                DateTime,
+                LastRange,
+                int(IsKM) # True == 1, False == 0
+            )   
+            )
+            conn.commit()
+            conn.close()
+            # print("AIS_Render_History.DB created")
+        else:
+            print("AIS_Rsponder.DB.db not found")
+    except Exception as e:
+        print("Failed to Insert/update AIS_Render_History.db: ")
+        print(e)
 
 def ValidateDate(strDate, isDebug = False) -> bool:
     # https://docs.python.org/3/library/datetime.html
