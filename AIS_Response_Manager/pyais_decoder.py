@@ -9,7 +9,7 @@ import math
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ais_file1 = os.path.join(BASE_DIR, "Data/ais_arca.txt")
 ais_file2 = os.path.join(BASE_DIR, "Data/ais_rp42.txt")
-FileRoute_sql3 = os.path.join(BASE_DIR, "Data/AIS-Responder_DB.db")
+FileRoute_sql3 = os.path.join(BASE_DIR, "Data/AIS-Responder.db")
 
 def DB_Exists():
     if os.path.exists(FileRoute_sql3):
@@ -33,7 +33,7 @@ def Decode_file(file):
 
                 try:
                     decoded = decode(nmea_sentence)
-                    if(181.0 == float(decoded.lon) or 91.0 == float(decoded.lat) or 0.00 > float(decoded.lon) or 0.00 > float(decoded.lat)):
+                    if(181.0 > float(decoded.lon) and 91.0 > float(decoded.lat) and -181.00 < float(decoded.lon) or -91.00 < float(decoded.lat)):
                         print("Decoded message:")
                         print(decoded)
                         print("-" * 50)
@@ -262,9 +262,9 @@ def Create_AIS_Render_History():
             ''')
             conn.commit()
             conn.close()
-            print("AIS_Render_History.DB created")
+            print("AIS_Render_History created")
         else:
-            print("AIS_Rsponder.DB.db not found")
+            print("AIS_Responder.DB.db not found")
     except Exception as e:
         print("Failed to create AIS_Render_History.db: ")
         print(e)

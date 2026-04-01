@@ -140,21 +140,43 @@ class RadarDrawing:
         boats_t.penup()
         boats_t.goto(px, py) # px(x): ←→  py(y): ↑↓
         boats_t.shape("arrow")
-        boats_t.shapesize(0.25, 1)
+        W_L = 1.00
+        boats_t.shapesize(W_L, W_L*4.0)
         if(IsTarget):
             boats_t.color("orange")
         else:
             boats_t.color("red")
         boats_t.setheading(heading)
         boats_t.stamp()
+        boats_t.color("yellow")
+        boats_t.penup()
+        boats_t.forward(100)
+        boats_t.pendown()
+        boats_t.back(100)
         boats_t.color("black")
         boats_t.write(number, align="center", font=("Consolas", 12, "bold"))
         
 
-    def plot_myBoat(self):
-        radar_t.penup()
+    def plot_myBoat(self, heading=20.00):
+        heading += 90
+        heading = heading % 360 # fail save 
+        radar_t.shape("arrow")
+        
         radar_t.goto(0, 0) # Your boat is always in center of radar
-        radar_t.dot(8, "Green")
+        radar_t.setheading(heading)
+        radar_t.pendown()
+        radar_t.color("green")
+        W_L = 1.00
+        radar_t.shapesize(W_L, W_L*4.0)
+        radar_t.stamp()
+        radar_t.color("yellow")
+        radar_t.pendown()
+        radar_t.forward(100)
+        radar_t.setheading(0)
+        radar_t.penup()
+        radar_t.goto(0, 0)
+        radar_t.color("black")
+        
 
     def KeepRadarAlive(self):
         while(True):
