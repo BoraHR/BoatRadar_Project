@@ -8,12 +8,14 @@ from datetime import datetime, timedelta
 from Algorithm import km_to_lat_deg,  km_to_lon_deg, bearing_deg, haversine, ConvertToX_Y, calculate_cpa_tcpa
 from pyais_decoder import Update_Row_AIS_Render_History
 from enum import Enum
+from AIS_ResponderManager import AIS_ResponderManager
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ais_file1 = os.path.join(BASE_DIR, "Data/ais_arca.txt")
 ais_file2 = os.path.join(BASE_DIR, "Data/ais_rp42.txt")
-FileRoute_sql3 = os.path.join(BASE_DIR, "Data/AIS-Responder_DB.db")
+FileRoute_sql3 = os.path.join(BASE_DIR, "Data/AIS-Responder.db")
 Range_setting = 3
+ID = 1
 
 # https://www.geeksforgeeks.org/python/enum-in-python/
 class Order(Enum):
@@ -25,15 +27,17 @@ class Order(Enum):
 class RadarPlotter:
 
     def __init__(self):
+        self.ID = ID
         self.Order = Order.RANGE
         self.RadarConsoleData = []
         self.PrevRadarConsole_BoatID = []
         self.draw = RadarDrawing()
+        self.ARM = AIS_ResponderManager(ID)
         # self.draw.color_bg()
         # targetId ensures that selected target from RadarController will be orange when the ID condition is met
         # DEFAULT is -1 instead of None to prefent potentioal None exeptions
         self.targetId = -1
-        self.IsTarget = False
+        # self.IsTarget = False
 
     def setTarget(self, id):
         try:
@@ -110,7 +114,11 @@ class RadarPlotter:
             if boat[5] != None:
                 pd = boat[5] # (boat_id, X_Y[0], X_Y[1], number, scale, boat[12], False)
                 #  def plot_otherBoat(self, boatToSave, x_meters, y_meters, number, scale=0.050, heading=0.00, IsTarget = False):
-                self.draw.plot_otherBoat(boat[0], pd[1], pd[2], boat[1], pd[4], pd[5], pd[6])
+                if self.targetId == boat[0][0]:
+                    self.draw.plot_otherBoat(boat[0], pd[1], pd[2], boat[1], pd[4], pd[5], True)
+                else:
+                    self.draw.plot_otherBoat(boat[0], pd[1], pd[2], boat[1], pd[4], pd[5], False)
+
 
     # range = distance between your boat and other boat in both Lad and long
     # timeWindow = how far appart the received message is allowed to be shown in the list of other Boats
@@ -215,10 +223,12 @@ class RadarPlotter:
                 scale = radar_radius_pixels / range_meters           
                 if boat[0] == self.targetId:
                     self.RadarConsoleData.append([(boat), number, distance, cpa, tcpa, (boat_id, X_Y[0], X_Y[1], number, scale, boat[12], True)])
+                    self.ARM.Update_SubData_With_Value(boat[0], distance, cpa, tcpa)
                     if boat[0] not in self.PrevRadarConsole_BoatID:
                         self.PrevRadarConsole_BoatID.append(boat[0])
                 else:
                     self.RadarConsoleData.append([(boat), number, distance, cpa, tcpa, (boat_id, X_Y[0], X_Y[1], number, scale, boat[12], False)])
+                    self.ARM.Update_SubData_With_Value(boat[0], distance, cpa, tcpa)
                     if boat[0] not in self.PrevRadarConsole_BoatID:
                         self.PrevRadarConsole_BoatID.append(boat[0])
 

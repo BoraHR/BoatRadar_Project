@@ -78,7 +78,7 @@ class RadarConsole:
 
         self.BASE_DIR = os.path.dirname(os.path.abspath(__file__))
         self.killswitch = False
-        self.myBoat = None
+        self.myBoat = self.get_boat_data(self.plotter.ID)
         self.Rotation = 360%360
         
         self.window = window
@@ -107,20 +107,26 @@ class RadarConsole:
         self.window.columnconfigure(2, weight=1)  # right
         self.window.rowconfigure(0, weight=1)
 
+        # LEFT
         self.left_frame = Frame(window)
         self.left_frame.grid(row=0, column=0, sticky="nsew")
         self.left_frame.rowconfigure(1, weight=1)
         self.left_frame.columnconfigure(0, weight=1)
-
+        # CENTER
         self.center_frame = Frame(window)
         self.center_frame.grid(row=0, column=1, sticky="nsew")
         self.center_frame.rowconfigure(1, weight=1)
         self.center_frame.columnconfigure(0, weight=1)
-
+        # RIGHT
         self.right_frame = Frame(window)
         self.right_frame.grid(row=0, column=2, sticky="nsew")
         self.right_frame.rowconfigure(1, weight=1)
         self.right_frame.columnconfigure(0, weight=1)
+        self.top_frame = Frame(self.right_frame)
+        # RIGHT NESTED
+        self.top_frame.grid(row=0, column=0, sticky="ew")
+        self.top_frame.columnconfigure(0, weight=1)
+        self.top_frame.columnconfigure(1, weight=1)
 
         # ---- radar image ----
         # Create a placeholder label now; we'll populate it (and keep a reference to
@@ -141,8 +147,10 @@ class RadarConsole:
         self.unit = Label(self.left_frame,
               textvariable=self.range_var,
               font=("Consolas", 20, "bold"),
-              fg="#268826")#.pack(pady=(10, 0))
-
+              bg=self.primary_color,
+              relief=RAISED
+        )#.pack(pady=(10, 0))
+              
         # buttons frame
         # btn_frame = Frame(window)
         # btn_frame.pack(pady=10)
@@ -169,19 +177,49 @@ class RadarConsole:
                bg=self.secondary_color,
                command=self.plotter.draw.screen_toggle,
         )#.pack(pady=10)
+
         
-        self.table = ttk.Treeview(self.right_frame, columns=("ID", "Range", "CPA", "TCPA"), show="headings", height=10)
+        self.mySpeed = self.myBoat[7]
+        self.myHeading = self.myBoat[12]
+
+        self.speedLabel = Label(self.top_frame,
+            text=f"STW",
+            font=("Consolas", 20, "bold"),
+            bg=self.tertiary_color,
+            relief=RAISED
+        )
+        self.speedDisplay = Label(self.top_frame,
+            text=f"{self.mySpeed}",
+            font=("Consolas", 20, "bold"),
+            bg=self.secondary_color,
+            relief=RAISED
+        )
+
+        self.headingLabel = Label(self.top_frame,
+            text=f"HDG",
+            font=("Consolas", 20, "bold"),
+            bg=self.tertiary_color,
+            relief=RAISED
+        )
+        self.headingDisplay = Label(self.top_frame,
+            text=f"{self.heading_string_format()}",
+            font=("Consolas", 20, "bold"),
+            bg=self.secondary_color,
+            relief=RAISED
+        )
+        self.table = ttk.Treeview(self.right_frame, columns=("ID", "Range", "CPA", "TCPA", "BoatID"), show="headings", height=10)
 
         self.table.heading("ID", text="ID")
         self.table.heading("Range", text="KM")
         self.table.heading("CPA", text="CPA (m)")
         self.table.heading("TCPA", text="TCPA (s)")
-
         # Set column widths and prevent resizing
         self.table.column("ID", width=50, stretch=False)
         self.table.column("Range", width=60, stretch=False)
         self.table.column("CPA", width=80, stretch=False)
         self.table.column("TCPA", width=80, stretch=False)
+
+        self.table.bind("<<TreeviewSelect>>", self.setTarget)
 
         # self.table.configure(height=10)
 
@@ -199,7 +237,7 @@ class RadarConsole:
         # self.combo_box.pack(side=BOTTOM, padx=5, pady=2)
         self.combo_box.set("RANGE")
                     
-        local_DT= time.localtime()
+        local_DT = time.localtime()
 
         # hh:mm:ss  DD-MM-YYYY
         self.time = Label(self.right_frame,
@@ -243,16 +281,31 @@ class RadarConsole:
         self.window.config(menu=self.menu_bar)
 
     def conf_LeftFrame(self):
-        self.unitInfo.grid(row=0, column=0)
-        self.KM_prev.grid(row=1, column=0, padx=10, sticky="w")
-        self.unit.grid(row=1, column=1, padx=1, sticky="w")
-        self.KM_next.grid(row=1, column=2, padx=10, sticky="w")
+        # self.unitInfo.grid(row=0, column=0)
+        self.KM_prev.grid(row=0, column=0, sticky="e", padx= (10,0), pady=(20,0))
+        self.unit.grid(row=0, column=1, sticky="ew", pady=(20,0))
+        self.KM_next.grid(row=0, column=2, sticky="w", pady=(20,0))
 
     def conf_CenterFrame(self):
         self.image_label.grid(row=1, column=0, sticky="n", padx=10)
 
     def conf_RightFrame(self):
+        # Top frame for speed + heading
+        self.right_frame.rowconfigure(1, weight=1)  # table expands
+        self.right_frame.columnconfigure(0, weight=1)
+
+        # Speed
+        self.speedLabel.grid(row=0, column=0, sticky="ew", padx=(10,0), pady=(10,0))
+        self.speedDisplay.grid(row=0, column=1, sticky="ew", padx=(0,10), pady=(10,0))
+
+        # Heading
+        self.headingLabel.grid(row=1, column=0, sticky="ew", padx=(10,0), pady=(0,10))
+        self.headingDisplay.grid(row=1, column=1, sticky="ew", padx=(0,10), pady=(0,10))
+
+        # Table (takes all remaining space)
         self.table.grid(row=1, column=0, sticky="nsew", padx=10)
+
+        # Bottom controls
         self.combo_box.grid(row=2, column=0, pady=5)
         self.time.grid(row=3, column=0, pady=5)
 
@@ -297,16 +350,17 @@ class RadarConsole:
         if self.BASE_DIR.endswith("AIS_Response_Manager"):
             toDelete = [os.path.join(self.BASE_DIR, f"Radar/PostScript/"), os.path.join(self.BASE_DIR, f"Radar/Renders/")]
             for folder in toDelete:
-                for filename in os.listdir(folder):
-                    file_path = os.path.join(folder, filename)
-                    try:
-                        if os.path.isfile(file_path) or os.path.islink(file_path):
-                            os.unlink(file_path)
-                        elif os.path.isdir(file_path):
-                            shutil.rmtree(file_path)
-                    except Exception as e:
-                        print('Failed to delete %s. Reason: %s' % (file_path, e))
-                        retry = True
+                if "." not in folder:
+                    for filename in os.listdir(folder):
+                        file_path = os.path.join(folder, filename)
+                        try:
+                            if os.path.isfile(file_path) or os.path.islink(file_path):
+                                os.unlink(file_path)
+                            elif os.path.isdir(file_path):
+                                shutil.rmtree(file_path)
+                        except Exception as e:
+                            print('Failed to delete %s. Reason: %s' % (file_path, e))
+                            retry = True
         else:
             print("OS Dirrectory seems to be wrong")
             print("ensure BASE_DIR is setup properly")
@@ -413,6 +467,12 @@ class RadarConsole:
                     f"{self.set_2digit(local_DT.tm_year)}",
                 bg=self.secondary_color
             )
+
+    def heading_string_format(self):
+        strHeading = str(round(self.myHeading))
+        while len(strHeading) < 3:
+            strHeading = "0" + strHeading
+        return strHeading + "°"
         
     def change_range(self, delta):
         self.km_range += delta
@@ -481,7 +541,27 @@ class RadarConsole:
         selected_value = self.combo_box.get()
         print(f"Selected: {selected_value}")
         self.plotter.setEnum(selected_value)
-        
 
+    def setTarget(self, event):
+        boats = self.table.selection()
+        if boats == None or len(boats) == 0:
+            return
+        
+        boat = boats[0]
+        values = self.table.item(boat, "values")
+        
+        if not values[0]:  # skip empty placeholder rows
+            return
+        
+        boat_id = int(values[0])
+
+        if self.plotter.targetId == int(boat_id):
+            self.plotter.targetId = -1
+            return
+        self.plotter.targetId = int(boat_id)
+        
+    def clearTarget(self):
+        self.plotter.targetId = -1
+        
     def style_manager(self):
         pass

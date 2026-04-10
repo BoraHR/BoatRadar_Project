@@ -33,7 +33,7 @@ def Decode_file(file):
 
                 try:
                     decoded = decode(nmea_sentence)
-                    if(181.0 > float(decoded.lon) and 91.0 > float(decoded.lat) and -181.00 < float(decoded.lon) or -91.00 < float(decoded.lat)):
+                    if(181.0 > float(decoded.lon) and 91.0 > float(decoded.lat) and -181.00 < float(decoded.lon) and -91.00 < float(decoded.lat)):
                         print("Decoded message:")
                         print(decoded)
                         print("-" * 50)
@@ -264,7 +264,7 @@ def Create_AIS_Render_History():
             conn.close()
             print("AIS_Render_History created")
         else:
-            print("AIS_Responder.DB.db not found")
+            print("AIS_Responder.db not found")
     except Exception as e:
         print("Failed to create AIS_Render_History.db: ")
         print(e)
