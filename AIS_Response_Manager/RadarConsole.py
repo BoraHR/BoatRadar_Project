@@ -3,9 +3,11 @@ from tkinter import *
 import tkinter as tk
 from tkinter import ttk
 from functools import partial
+
+import numpy as np
 from RadarPlotter import RadarPlotter
 import os, shutil
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageDraw
 import time
 
 class RadarConsole:
@@ -71,6 +73,8 @@ class RadarConsole:
         
         self.plotter.draw.setBGColor_RGB(self.RGB_Pri[0], self.RGB_Pri[1], self.RGB_Pri[2])
 
+        self.IsRelativeHeading = False
+
         # -- Name Conversion for thinker colorscheme -- #
         self.primary_color = self.from_rgb(tuple(self.RGB_Pri))
         self.secondary_color = self.from_rgb(tuple(self.RGB_Sec))
@@ -79,14 +83,14 @@ class RadarConsole:
         self.BASE_DIR = os.path.dirname(os.path.abspath(__file__))
         self.killswitch = False
         self.myBoat = self.get_boat_data(self.plotter.ID)
-        self.Rotation = 360%360
+        self.Rotation = self.myBoat[7]
         
         self.window = window
         self.window.title("AIS Radar Console")
         # self.window.attributes('-fullscreen', True)
 
         # ---- STARTNG STATES ---- #
-        self.boat_id = 1 # Boat ID is assinged ID of your boat.
+        self.boat_id = self.plotter.ID # Boat ID is assinged ID of your boat.
         self.km_range = 3 # Startig Unit for Radar generation.
         self.time_window = 10 # The window of time to consider plotting to be valid.
 
@@ -207,14 +211,16 @@ class RadarConsole:
             bg=self.secondary_color,
             relief=RAISED
         )
-        self.table = ttk.Treeview(self.right_frame, columns=("ID", "Range", "CPA", "TCPA", "BoatID"), show="headings", height=10)
+        self.table = ttk.Treeview(self.right_frame, columns=("ID", "Mmsi", "Range", "CPA", "TCPA", "BoatID"), show="headings", height=10)
 
         self.table.heading("ID", text="ID")
+        self.table.heading("Mmsi", text="Mmsi")
         self.table.heading("Range", text="KM")
         self.table.heading("CPA", text="CPA (m)")
         self.table.heading("TCPA", text="TCPA (s)")
         # Set column widths and prevent resizing
         self.table.column("ID", width=50, stretch=False)
+        self.table.column("Mmsi", width=80, stretch=False)
         self.table.column("Range", width=60, stretch=False)
         self.table.column("CPA", width=80, stretch=False)
         self.table.column("TCPA", width=80, stretch=False)
@@ -255,12 +261,15 @@ class RadarConsole:
         self.conf_CenterFrame()
         self.conf_RightFrame()
         self.radar_loop()
+        self.Rot = 0
 
     def conf_Menubar(self):
         # File menu - TEMPLATE
         file_menu = tk.Menu(self.menu_bar, tearoff=0)
         file_menu.add_command(label="New")
-        file_menu.add_command(label="Hide/Show Turtle", command=None)
+        file_menu.add_command(label="Hide/Show Turtle", command=self.plotter.draw.screen_toggle)
+        file_menu.add_command(label="Render Reselution Config", command=self.open_resulotion_window)
+
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self.Quit)
 
@@ -385,9 +394,11 @@ class RadarConsole:
 
             self.table.insert("", "end", values=(
                 number,
+                boat[4], # Mmsi
                 f"{distance:.2f}",
                 f"{cpa:.1f}",
-                f"{tcpa:.1f}" 
+                f"{tcpa:.1f}",
+                boat[0]  # BoatId
             ))
 
         # Fill remaining rows with empty placeholders
@@ -398,6 +409,18 @@ class RadarConsole:
     def get_boat_data(self, id):
         return self.plotter.GetBoat(id)
     
+    def open_resulotion_window(self):
+        resulotion_win = tk.Toplevel(self.window)
+        resulotion_win.title("Thinker resolution config")
+
+        # Label (optional)
+        tk.Label(resulotion_win, text="Enter resolution:").pack()
+
+        # Input field
+        entry = tk.Entry(resulotion_win)
+        entry.pack()
+        tk.Button(resulotion_win, text="Confirm", command=lambda: self.plotter.draw.set_reselution(entry.get())).pack()
+
     def open_color_window(self):
         color_win = tk.Toplevel(self.window)
         color_win.title("Radar Background Color")
@@ -450,7 +473,7 @@ class RadarConsole:
         ).pack()
 
     def update_label(self):
-            self.range_var.set(f"{self.km_range} KM")
+            self.range_var.set(f"{self.km_range}KM")
             self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img_{self.km_range}.png")
             if os.path.isfile(self.img_compas):
                 self.overlay = Image.open(self.img_compas).convert("RGBA")
@@ -515,18 +538,44 @@ class RadarConsole:
         try:
             base = Image.open(self.img_loc).convert("RGBA")
             base = base.resize((750, 750), Image.Resampling.LANCZOS)
-            self.Rotation = (self.Rotation + 1) % 360
+            # self.Rotation = (self.Rotation + 1) % 360
             # if os.path.isfile(self.img_compas):
             #     overlay = Image.open(self.img_compas).convert("RGBA")
             if self.overlay is not None:
                 if self.overlay.size != base.size:
-                    self.overlay = self.overlay.rotate(0)
+                    if self.IsRelativeHeading:
+                        self.overlay = self.overlay.rotate(self.myHeading)
                     self.overlay = self.overlay.resize(base.size, Image.Resampling.LANCZOS)
-                
-                base = Image.alpha_composite(base, self.overlay)
+
+                offset_x = 0 # to allign with compas
+                offset_y = -2 # to allign with compas
+                shifted_base = Image.new("RGBA", base.size, (0, 0, 0, 0))
+                shifted_base.paste(base, (offset_x, offset_y), base)
+
+                base = Image.alpha_composite(shifted_base, self.overlay)
+                # draw = ImageDraw.Draw(base)
+
+                # # making circle on mask image using pieslice() function
+                # draw.pieslice([0,0,458,458],0,360,fill=255)
+
+                # # Converting the mask Image to numpy array
+                # np_new=np.array(base)
+
+                # # stack the array sequence
+                # # (original image array with mask image) depth wise
+                # npImage=np.dstack((npImage,np_new))
+
+                # # converting array to an image using fromarray() function
+                # final_img = Image.fromarray(npImage)
+
+                # # making thumbnail using thumbnail() 
+                # # function by passing the size in it
+                # final_img.thumbnail((458,458))
+
 
             # Convert to Tk image
             img = ImageTk.PhotoImage(base, master=self.window)
+            
 
             # Save reference
             self.composite = img
@@ -553,12 +602,12 @@ class RadarConsole:
         if not values[0]:  # skip empty placeholder rows
             return
         
-        boat_id = int(values[0])
-
-        if self.plotter.targetId == int(boat_id):
-            self.plotter.targetId = -1
-            return
-        self.plotter.targetId = int(boat_id)
+        boat_id = int(values[5])
+        self.plotter.setTarget(int(boat_id))
+        # if self.plotter.targetId == int(boat_id):
+        #     self.plotter.targetId = -1
+        #     return
+        # self.plotter.targetId = int(boat_id)
         
     def clearTarget(self):
         self.plotter.targetId = -1

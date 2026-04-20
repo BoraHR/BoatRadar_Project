@@ -10,7 +10,7 @@ import time
 # t.speed(0)
 
 screen = turtle.Screen()
-resulotionScale = 640
+resulotionScale = 612
 screen.setup(width=resulotionScale, height=resulotionScale)
 # turtle.bgpic(os.path.dirname(os.path.abspath(__file__)) + "/WorldWideMap_big.png")
 
@@ -30,13 +30,21 @@ class RadarDrawing:
         self.plotedBoats = []
         self.RGB = (255,255,255)
         self.BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-        self.bg_loc = os.path.join(self.BASE_DIR, f"Radar/Background/R={self.RGB[1]},G={self.RGB[1]},B={self.RGB[2]}")
+        self.bg_loc = os.path.join(self.BASE_DIR, f"Radar/Background/R={self.RGB[0]},G={self.RGB[1]},B={self.RGB[2]}")
         self.ps_loc = os.path.join(self.BASE_DIR, f"Radar/PostScript/drawing_{self.KM_build}.ps")
         self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img_{self.KM_build}.png")
+
+    def set_reselution(self, res):
+        try:
+            resulotionScale = int(res)
+            screen.setup(width=resulotionScale, height=resulotionScale)
+        except (TypeError, ValueError):
+            print(f"Invalid resolution value: {res}")
+            return
         
         
     # KM the amount of lines represent keep in mind it must be an int.
-    def draw_radar_Custom(self, KM):
+    def draw_radar_Custom(self, KM, heading, speed):
         # screen.bgcolor(float(self.RGB[0]/255), float(self.RGB[1]/255), float(self.RGB[2]/255))
         start = time.time()
         
@@ -65,7 +73,7 @@ class RadarDrawing:
             radar_t.circle(r)
         self.draw_crosshair(radius_list[-1])
         # radar_t.write(str(KM), align="center", font=("Consolas", 16, "bold"))
-        self.plot_myBoat()
+        self.plot_myBoat(heading, speed, KM)
         end = time.time()
         self.KM_build = KM
         return end - start # returns the a time it took to create the img in seconds.
@@ -134,7 +142,7 @@ class RadarDrawing:
         if heading is None or heading >= 360 or heading < 0:
             self.plot_otherBoat_dot(x_meters, y_meters, scale, IsTarget)
             return
-        heading += 90
+        # heading += 90
         heading = heading % 360 # fail save 
         
         boats_t.penup()
@@ -146,32 +154,67 @@ class RadarDrawing:
             boats_t.color("orange")
         else:
             boats_t.color("red")
-        boats_t.setheading(heading)
+        boats_t.setheading(90 - heading)
+        boats_t.back(10)
         boats_t.stamp()
+        boats_t.forward(10)
         boats_t.color("yellow")
         boats_t.penup()
-        boats_t.forward(100)
+        vector_length = 0
+        try:
+            if boatToSave[7] > 0.00:
+                speed = boatToSave[7]
+                vector_length = (speed * 1000) * scale   # meters → pixels
+
+                # minimum visible length
+                vector_length = max(10, vector_length)
+
+                boats_t.forward(vector_length)
+            else:
+                vector_length += 10
+                boats_t.forward(vector_length)
+        except Exception as e:
+            print(f"ERROR DRAWING VECTOR OF {boatToSave[0]}:")
+            print(e)
         boats_t.pendown()
-        boats_t.back(100)
+        boats_t.back(vector_length)
         boats_t.color("black")
         boats_t.write(number, align="center", font=("Consolas", 12, "bold"))
         
 
-    def plot_myBoat(self, heading=20.00):
-        heading += 90
+    def plot_myBoat(self, heading=0.00, speed=0.00, vectorRange=1.00):
+        # heading += 90
+        range_meters =  vectorRange * 1000
+        radar_radius_pixels = 250
+        scale = radar_radius_pixels / range_meters 
+
         heading = heading % 360 # fail save 
         radar_t.shape("arrow")
         
         radar_t.goto(0, 0) # Your boat is always in center of radar
-        radar_t.setheading(heading)
+        radar_t.setheading(90 - heading)
         radar_t.pendown()
         radar_t.color("green")
         W_L = 1.00
         radar_t.shapesize(W_L, W_L*4.0)
+        radar_t.back(10)
         radar_t.stamp()
+        radar_t.forward(10)
         radar_t.color("yellow")
         radar_t.pendown()
-        radar_t.forward(100)
+        try:
+            if speed > 0.00:
+                vector_length = (speed * 1000) * scale   # meters → pixels
+
+                # minimum visible length
+                vector_length = max(10, vector_length)
+                radar_t.forward(vector_length)
+            else:
+                vector_length += 10
+                radar_t.forward(vector_length)
+        except Exception as e:
+            print(f"ERROR DRAWING VECTOR OF MyBoat:")
+            print(e)
         radar_t.setheading(0)
         radar_t.penup()
         radar_t.goto(0, 0)

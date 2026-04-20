@@ -14,8 +14,8 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ais_file1 = os.path.join(BASE_DIR, "Data/ais_arca.txt")
 ais_file2 = os.path.join(BASE_DIR, "Data/ais_rp42.txt")
 FileRoute_sql3 = os.path.join(BASE_DIR, "Data/AIS-Responder.db")
-Range_setting = 3
-ID = 1
+# Range_setting = 3
+ID = 46
 
 # https://www.geeksforgeeks.org/python/enum-in-python/
 class Order(Enum):
@@ -41,8 +41,11 @@ class RadarPlotter:
 
     def setTarget(self, id):
         try:
-            if(id.isnumeric()):
-                self.targetId = id
+            if(str(id).isnumeric()):
+                if(self.targetId == id):
+                    self.targetId = -1 #self.clearTarget()
+                else:
+                    self.targetId = id
         except Exception as e:
             print("Error Setting target:")
             print(e)
@@ -79,8 +82,8 @@ class RadarPlotter:
                 Update_Row_AIS_Render_History(strDateTime, LastRange[2], data2, True)
                 self.PrevRadarConsole_BoatID.remove(data2)
 
-    def clearTarget(self):
-        self.targetId = -1
+    # def clearTarget(self):
+    #     self.targetId = -1
 
     def GetBoat(self, boat_id):
         conn = sqlite3.connect(FileRoute_sql3)
@@ -126,7 +129,7 @@ class RadarPlotter:
         self.clearConsoleData()
         self.draw.clear_otherBoats()
         start = time.time()
-        performance = self.draw.draw_radar_Custom(range)
+        
         
         dataTuple = "(id, Date, MsgType, Repeat, Mmsi, Status, Turn, Speed, Accuracy, Longitude, Latitude, Course, Heading, Second, Manuever, Spare_1, Raim, Radio)"
         conn = sqlite3.connect(FileRoute_sql3)
@@ -151,6 +154,7 @@ class RadarPlotter:
         speed = myBoat[7]
         heading = myBoat[12]
 
+        performance = self.draw.draw_radar_Custom(range, heading, speed)
         # CONVERT KM → DEGREE BOUNDING BOX
         lat_range = km_to_lat_deg(range)
         lon_range = km_to_lon_deg(range, lat)
@@ -208,6 +212,8 @@ class RadarPlotter:
                 print(f"Distance from myBoat in KM: {distance:.2f}")
                 print(f"Bearing to boat: {heading_to_target:.1f}°")
                 X_Y = ConvertToX_Y(lat, lon, boat[10], boat[9]) # tuple(X, Y, Distance)
+
+
                 range_meters = range * 1000
                 radar_radius_pixels = 250
 
