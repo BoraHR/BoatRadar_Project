@@ -102,7 +102,7 @@ class RadarPlotter:
             elif self.Order is Order.CPA:
                 self.RadarConsoleData = sorted(self.RadarConsoleData, key=lambda x: x[3], reverse=reverse)
             elif self.Order is Order.TCPA:
-                self.RadarConsoleData = sorted(self.RadarConsoleData, key=lambda x: x[4], reverse=reverse)
+                self.RadarConsoleData = sorted(self.RadarConsoleData, key=lambda x: abs(x[4]), reverse=reverse)
             else:
                 self.RadarConsoleData = sorted(self.RadarConsoleData, reverse=reverse)
         except Exception as e:

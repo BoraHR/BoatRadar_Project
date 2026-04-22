@@ -553,25 +553,12 @@ class RadarConsole:
                 shifted_base.paste(base, (offset_x, offset_y), base)
 
                 base = Image.alpha_composite(shifted_base, self.overlay)
-                # draw = ImageDraw.Draw(base)
 
-                # # making circle on mask image using pieslice() function
-                # draw.pieslice([0,0,458,458],0,360,fill=255)
-
-                # # Converting the mask Image to numpy array
-                # np_new=np.array(base)
-
-                # # stack the array sequence
-                # # (original image array with mask image) depth wise
-                # npImage=np.dstack((npImage,np_new))
-
-                # # converting array to an image using fromarray() function
-                # final_img = Image.fromarray(npImage)
-
-                # # making thumbnail using thumbnail() 
-                # # function by passing the size in it
-                # final_img.thumbnail((458,458))
-
+                # Create a circular alpha mask so the image appears round.
+                mask = Image.new("L", base.size, 0)
+                mask_draw = ImageDraw.Draw(mask)
+                mask_draw.ellipse([0, 0, base.size[0], base.size[1]], fill=255)
+                base.putalpha(mask)
 
             # Convert to Tk image
             img = ImageTk.PhotoImage(base, master=self.window)

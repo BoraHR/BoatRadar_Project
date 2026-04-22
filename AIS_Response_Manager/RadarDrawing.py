@@ -66,6 +66,7 @@ class RadarDrawing:
             radius_list.append((250/KM) * multiplier)
         
         radius_list.reverse()
+        radar_t.color("darkgray")
         for r in radius_list:
             radar_t.penup()
             radar_t.goto(0, -r)
@@ -148,12 +149,12 @@ class RadarDrawing:
         boats_t.penup()
         boats_t.goto(px, py) # px(x): ←→  py(y): ↑↓
         boats_t.shape("arrow")
-        W_L = 1.00
+        W_L = 0.50
         boats_t.shapesize(W_L, W_L*4.0)
         if(IsTarget):
-            boats_t.color("orange")
+            boats_t.color("aqua")
         else:
-            boats_t.color("red")
+            boats_t.color("black")
         boats_t.setheading(90 - heading)
         boats_t.back(10)
         boats_t.stamp()
@@ -210,6 +211,7 @@ class RadarDrawing:
                 vector_length = max(10, vector_length)
                 radar_t.forward(vector_length)
             else:
+                vector_length = 0
                 vector_length += 10
                 radar_t.forward(vector_length)
         except Exception as e:
@@ -333,4 +335,3 @@ class RadarDrawing:
             #     print("error generating background color:")
             #     print(e)
         # turtle.bgpic(self.bg_loc)
-
