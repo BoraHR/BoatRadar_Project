@@ -227,6 +227,18 @@ class RadarConsole:
 
         self.table.bind("<<TreeviewSelect>>", self.setTarget)
 
+        # details tree for selected target
+        self.details_tree = ttk.Treeview(
+            self.right_frame,
+            columns=("field", "value"),
+            show="headings",
+            height=1
+        )
+        self.details_tree.heading("field", text="Field")
+        self.details_tree.heading("value", text="Value")
+        self.details_tree.column("field", width=120, stretch=False)
+        self.details_tree.column("value", width=220, stretch=True)
+
         # self.table.configure(height=10)
 
         # self.table.pack(side=TOP, padx=20, pady=20)
@@ -313,10 +325,14 @@ class RadarConsole:
 
         # Table (takes all remaining space)
         self.table.grid(row=1, column=0, sticky="nsew", padx=10)
+        self.right_frame.rowconfigure(2, weight=0)
+
+        # Detailed target data
+        self.details_tree.grid(row=2, column=0, sticky="nsew", padx=10, pady=(5, 0))
 
         # Bottom controls
-        self.combo_box.grid(row=2, column=0, pady=5)
-        self.time.grid(row=3, column=0, pady=5)
+        self.combo_box.grid(row=3, column=0, pady=5)
+        self.time.grid(row=4, column=0, pady=5)
 
 
     # -- Radar loop updates plotting device every second -- #
@@ -404,11 +420,56 @@ class RadarConsole:
         # Fill remaining rows with empty placeholders
         remaining = 10 - len(self.plotter.RadarConsoleData)
         for _ in range(max(0, remaining)):
-            self.table.insert("", "end", values=("", "", "", ""))
+            self.table.insert("", "end", values=("", "", "", "", "", ""))
+
+        # Update target detail display after table refresh
+        self.update_target_details()
 
     def get_boat_data(self, id):
         return self.plotter.GetBoat(id)
-    
+
+    def update_target_details(self):
+        # Clear the previous details
+        for row in self.details_tree.get_children():
+            self.details_tree.delete(row)
+
+        target_id = self.plotter.targetId
+        if target_id == -1:
+            self.details_tree.config(height=1)
+            self.details_tree.insert("", "end", values=("Target", "No target selected"))
+            return
+
+        # Find the selected target in the current radar data
+        target_entry = next(
+            (entry for entry in self.plotter.RadarConsoleData if entry[0][0] == target_id),
+            None
+        )
+
+        if target_entry is None:
+            self.details_tree.config(height=1)
+            self.details_tree.insert("", "end", values=("Target", "Selected target not in current range"))
+            return
+
+        self.details_tree.config(height=12)
+        boat, number, distance, cpa, tcpa, consoleData = target_entry
+        details = [
+            ("Boat ID", boat[0]),
+            ("MMSI", boat[4]),
+            ("Status", boat[5]),
+            ("Latitude", f"{boat[10]:.6f}" if boat[10] is not None else ""),
+            ("Longitude", f"{boat[9]:.6f}" if boat[9] is not None else ""),
+            ("Speed", f"{boat[7]:.2f}"),
+            ("Course", f"{boat[11]:.1f}"),
+            ("Heading", f"{boat[12]:.1f}"),
+            ("Distance", f"{distance:.2f} km"),
+            ("CPA", f"{cpa:.1f} m"),
+            ("TCPA", f"{tcpa:.1f} s"),
+            ("Last AIS", boat[1])
+        ]
+
+        for field, value in details:
+            self.details_tree.insert("", "end", values=(field, value))
+
     def open_resulotion_window(self):
         resulotion_win = tk.Toplevel(self.window)
         resulotion_win.title("Thinker resolution config")
@@ -591,6 +652,7 @@ class RadarConsole:
         
         boat_id = int(values[5])
         self.plotter.setTarget(int(boat_id))
+        self.update_target_details()
         # if self.plotter.targetId == int(boat_id):
         #     self.plotter.targetId = -1
         #     return

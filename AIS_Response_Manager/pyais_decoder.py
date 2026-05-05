@@ -72,7 +72,7 @@ def Save_DecodedData(_file):
             Course REAL,
             Heading REAL,
             Second REAL,
-            Manuever TEXT,
+            Manuever INTERGER,
             Spare_1 TEXT,
             Raim INTEGER,
             Radio INTEGER
