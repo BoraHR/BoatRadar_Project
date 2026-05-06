@@ -9,6 +9,7 @@ from RadarPlotter import RadarPlotter
 import os, shutil
 from PIL import Image, ImageTk, ImageDraw
 import time
+import winsound
 
 class RadarConsole:
     # https://www.adobe.com/creativecloud/design/discover/secondary-colors.html
@@ -97,6 +98,7 @@ class RadarConsole:
         # ---- Directories for image loading and saving ----
         self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img_{self.km_range}.png") # updates in update_image()
         self.img_compas = os.path.join(self.BASE_DIR, f"Radar/Compas/Current/360_Rotation-TranparantCenter.png")
+        self.alarm = os.path.join(self.BASE_DIR, f"Sounds/Alarm.WAV")
 
         # ---- UI ----
         self.range_var = StringVar(self.window)
@@ -407,6 +409,8 @@ class RadarConsole:
         # Insert new data
         for entry in self.plotter.RadarConsoleData:
             boat, number, distance, cpa, tcpa, consoleData = entry
+            if tcpa > -0.5 and tcpa < 0.5:
+                winsound.PlaySound(self.alarm, winsound.SND_FILENAME | winsound.SND_ASYNC)
 
             self.table.insert("", "end", values=(
                 number,

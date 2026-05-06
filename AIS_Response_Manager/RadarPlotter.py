@@ -9,6 +9,7 @@ from Algorithm import km_to_lat_deg,  km_to_lon_deg, bearing_deg, haversine, Con
 from pyais_decoder import Update_Row_AIS_Render_History
 from enum import Enum
 from AIS_ResponderManager import AIS_ResponderManager
+import winsound
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ais_file1 = os.path.join(BASE_DIR, "Data/ais_arca.txt")

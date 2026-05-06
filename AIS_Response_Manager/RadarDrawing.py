@@ -179,8 +179,9 @@ class RadarDrawing:
             print(e)
         boats_t.pendown()
         boats_t.back(vector_length)
+        boats_t.color("yellow")
+        boats_t.write(number, align="center", font=("Consolas", 16, "bold"))
         boats_t.color("black")
-        boats_t.write(number, align="center", font=("Consolas", 12, "bold"))
         
 
     def plot_myBoat(self, heading=0.00, speed=0.00, vectorRange=1.00):
