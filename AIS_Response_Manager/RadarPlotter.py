@@ -110,7 +110,7 @@ class RadarPlotter:
             print(f"Failed to order by {self.order.name}")
             print(e)
 
-    def plot_boats(self):
+    def plot_boats(self, myBoat):
         for i, item in enumerate(self.RadarConsoleData, start=1):
             item[1] = i
 
@@ -119,9 +119,9 @@ class RadarPlotter:
                 pd = boat[5] # (boat_id, X_Y[0], X_Y[1], number, scale, boat[12], False)
                 #  def plot_otherBoat(self, boatToSave, x_meters, y_meters, number, scale=0.050, heading=0.00, IsTarget = False):
                 if self.targetId == boat[0][0]:
-                    self.draw.plot_otherBoat(boat[0], pd[1], pd[2], boat[1], pd[4], pd[5], True)
+                    self.draw.plot_otherBoat(myBoat, boat[0], pd[1], pd[2], boat[1], pd[4], pd[5], True)
                 else:
-                    self.draw.plot_otherBoat(boat[0], pd[1], pd[2], boat[1], pd[4], pd[5], False)
+                    self.draw.plot_otherBoat(myBoat, boat[0], pd[1], pd[2], boat[1], pd[4], pd[5], False)
 
 
     # range = distance between your boat and other boat in both Lad and long
@@ -241,7 +241,7 @@ class RadarPlotter:
 
         self.saveBoatsOutOfRange(myBoat)
         self.orderList()
-        self.plot_boats()
+        self.plot_boats(myBoat)
             
         # when new KM setting is selected it takes longer to generate because it has to redraw radar reading chached drawing is almost always instant
         print(f"Radar generated in {performance} seconds") 

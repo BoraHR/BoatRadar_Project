@@ -6,18 +6,20 @@ import time
 from datetime import datetime, timedelta
 import math
 
+# !!! DO NOT USE test_pyais_decoder.py IN ACTUAL PROGRAM USE pyais_decoder.py INSTEAD !!!
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ais_file1 = os.path.join(BASE_DIR, "Data/ais_arca.txt")
 ais_file2 = os.path.join(BASE_DIR, "Data/ais_rp42.txt")
-FileRoute_sql3 = os.path.join(BASE_DIR, "Data/AIS-Responder.db")
-test_FileRoute_sql3 = os.path.join(BASE_DIR, "Pytests/MockData/AIS-Responder.db")
+FileRoute_sql3 = os.path.join(BASE_DIR, "Pytests/MockData/AIS-Responder.db")
 
 def DB_Exists():
+    print("!!! DO NOT USE test_pyais_decoder.py IN ACTUAL PROGRAM USE pyais_decoder.py INSTEAD !!!")
     if os.path.exists(FileRoute_sql3):
         return True
     return False
 
 def Decode_file(file):
+    print("!!! DO NOT USE test_pyais_decoder.py IN ACTUAL PROGRAM USE pyais_decoder.py INSTEAD !!!")
     with open(ais_file1, "r", encoding="utf-8", errors="ignore") as file:
         for line in file:
             start = time.time()
@@ -47,8 +49,10 @@ def Decode_file(file):
                     # end = time.time()
                     # print(f"ms: {end - start}")
                     pass
+    print("!!! DO NOT USE test_pyais_decoder.py IN ACTUAL PROGRAM USE pyais_decoder.py INSTEAD !!!")
 
 def Save_DecodedData(_file):
+    print("!!! DO NOT USE test_pyais_decoder.py IN ACTUAL PROGRAM USE pyais_decoder.py INSTEAD !!!")
     total_time = 0.00
     failed = 0
     skipped = 0
@@ -245,8 +249,10 @@ def Save_DecodedData(_file):
         conn.commit()
         conn.close()
         print(f"Passed: {passed} | Failed: {failed} | Skipped: {skipped} | Time(ms): {total_time * 1000:.2f}")
+        print("!!! DO NOT USE test_pyais_decoder.py IN ACTUAL PROGRAM USE pyais_decoder.py INSTEAD !!!")
 
 def Save_DecodedData(_file):
+    print("!!! DO NOT USE test_pyais_decoder.py IN ACTUAL PROGRAM USE pyais_decoder.py INSTEAD !!!")
     total_time = 0.00
     failed = 0
     skipped = 0
@@ -443,8 +449,10 @@ def Save_DecodedData(_file):
         conn.commit()
         conn.close()
         print(f"Passed: {passed} | Failed: {failed} | Skipped: {skipped} | Time(ms): {total_time * 1000:.2f}")
+        print("!!! DO NOT USE test_pyais_decoder.py IN THE ACTUAL PROGRAM, USE pyais_decoder.py INSTEAD !!!")
         
 def Create_AIS_Render_History():
+    print("!!! DO NOT USE test_pyais_decoder.py IN ACTUAL PROGRAM USE pyais_decoder.py INSTEAD !!!")
     try:
         if os.path.exists(FileRoute_sql3):
             conn = sqlite3.connect(FileRoute_sql3)
@@ -467,8 +475,10 @@ def Create_AIS_Render_History():
     except Exception as e:
         print("Failed to create AIS_Render_History.db: ")
         print(e)
+    print("!!! DO NOT USE test_pyais_decoder.py IN ACTUAL PROGRAM USE pyais_decoder.py INSTEAD !!!")
 
 def Update_Row_AIS_Render_History(DateTime, LastRange, BoatID, IsKM=True):
+    print("!!! DO NOT USE test_pyais_decoder.py IN ACTUAL PROGRAM USE pyais_decoder.py INSTEAD !!!")
     try:    
         if os.path.exists(FileRoute_sql3):
             conn = sqlite3.connect(FileRoute_sql3)

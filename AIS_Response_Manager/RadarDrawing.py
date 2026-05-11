@@ -4,6 +4,7 @@ import os
 # https://www.geeksforgeeks.org/python/python-pillow-colors-on-an-image/
 from PIL import Image
 import time
+from Algorithm import calculate_cpa_tcpa
 
 # t = turtle.Turtle(visible=False)
 # t.hideturtle()
@@ -136,7 +137,11 @@ class RadarDrawing:
         else:
             boats_t.color("red")
 
-    def plot_otherBoat(self, boatToSave, x_meters, y_meters, number, scale=0.050, heading=0.00, IsTarget = False):
+    def plot_otherBoat(self, myBoat, boatToSave, x_meters, y_meters, number, scale=0.050, heading=0.00, IsTarget = False):
+        cpa, tcpa = calculate_cpa_tcpa(
+            0, 0, myBoat[7], myBoat[12],
+            x_meters, y_meters, boatToSave[7], boatToSave[12]
+        )
         px = x_meters * scale
         py = y_meters * scale
         self.plotedBoats.append((boatToSave, x_meters, y_meters))
@@ -153,6 +158,8 @@ class RadarDrawing:
         boats_t.shapesize(W_L, W_L*4.0)
         if(IsTarget):
             boats_t.color("aqua")
+        elif tcpa > -0.5 and tcpa < 0.5:
+            boats_t.color("red")
         else:
             boats_t.color("black")
         boats_t.setheading(90 - heading)

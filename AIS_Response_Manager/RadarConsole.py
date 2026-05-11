@@ -195,7 +195,7 @@ class RadarConsole:
             relief=RAISED
         )
         self.speedDisplay = Label(self.top_frame,
-            text=f"{self.mySpeed}",
+            text=f"{self.mySpeed} kn",
             font=("Consolas", 20, "bold"),
             bg=self.secondary_color,
             relief=RAISED
