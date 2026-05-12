@@ -81,9 +81,9 @@ class RadarDrawing:
         return end - start # returns the a time it took to create the img in seconds.
     
     def setBGColor_RGB(self, R, G, B):
-        print(R)
-        print(G)
-        print(B)
+        # print(R)
+        # print(G)
+        # print(B)
         R = self.hexRangeCheck(R) 
         G = self.hexRangeCheck(G)
         B = self.hexRangeCheck(B)

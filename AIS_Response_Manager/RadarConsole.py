@@ -55,7 +55,7 @@ class RadarConsole:
         return strValue
     
     # -- Main Console Controller -- #
-    def __init__(self, window):
+    def __init__(self, window, testMode = False):
         self.plotter = RadarPlotter()
         
         # RED == self.RGB_{Pri/Sec/Ter}[0]
@@ -87,195 +87,197 @@ class RadarConsole:
         self.Rotation = self.myBoat[7]
         
         self.window = window
-        self.window.title("AIS Radar Console")
-        # self.window.attributes('-fullscreen', True)
+        self.testMode = testMode
+        if not testMode:
+            self.window.title("AIS Radar Console")
+            # self.window.attributes('-fullscreen', True)
 
-        # ---- STARTNG STATES ---- #
-        self.boat_id = self.plotter.ID # Boat ID is assinged ID of your boat.
-        self.km_range = 3 # Startig Unit for Radar generation.
-        self.time_window = 10 # The window of time to consider plotting to be valid.
+            # ---- STARTNG STATES ---- #
+            self.boat_id = self.plotter.ID # Boat ID is assinged ID of your boat.
+            self.km_range = 3 # Startig Unit for Radar generation.
+            self.time_window = 10 # The window of time to consider plotting to be valid.
 
-        # ---- Directories for image loading and saving ----
-        self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img_{self.km_range}.png") # updates in update_image()
-        self.img_compas = os.path.join(self.BASE_DIR, f"Radar/Compas/Current/360_Rotation-TranparantCenter.png")
-        self.alarm = os.path.join(self.BASE_DIR, f"Sounds/Alarm.WAV")
+            # ---- Directories for image loading and saving ----
+            self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img_{self.km_range}.png") # updates in update_image()
+            self.img_compas = os.path.join(self.BASE_DIR, f"Radar/Compas/Current/360_Rotation-TranparantCenter.png")
+            self.alarm = os.path.join(self.BASE_DIR, f"Sounds/Alarm.WAV")
 
-        # ---- UI ----
-        self.range_var = StringVar(self.window)
+            # ---- UI ----
+            self.range_var = StringVar(self.window)
+            
+            # ---- MENU BAR ----
+            self.menu_bar = tk.Menu(self.window)
+            # self.conf_Menubar()
+
+            # -- UI layer system -- #
+            self.window.columnconfigure(0, weight=1)  # left
+            self.window.columnconfigure(1, weight=1)  # center
+            self.window.columnconfigure(2, weight=1)  # right
+            self.window.rowconfigure(0, weight=1)
+
+            # LEFT
+            self.left_frame = Frame(window)
+            self.left_frame.grid(row=0, column=0, sticky="nsew")
+            self.left_frame.rowconfigure(1, weight=1)
+            self.left_frame.columnconfigure(0, weight=1)
+            # CENTER
+            self.center_frame = Frame(window)
+            self.center_frame.grid(row=0, column=1, sticky="nsew")
+            self.center_frame.rowconfigure(1, weight=1)
+            self.center_frame.columnconfigure(0, weight=1)
+            # RIGHT
+            self.right_frame = Frame(window)
+            self.right_frame.grid(row=0, column=2, sticky="nsew")
+            self.right_frame.rowconfigure(1, weight=1)
+            self.right_frame.columnconfigure(0, weight=1)
+            self.top_frame = Frame(self.right_frame)
+            # RIGHT NESTED
+            self.top_frame.grid(row=0, column=0, sticky="ew")
+            self.top_frame.columnconfigure(0, weight=1)
+            self.top_frame.columnconfigure(1, weight=1)
+
+            # ---- radar image ----
+            # Create a placeholder label now; we'll populate it (and keep a reference to
+            # the PhotoImage) later in `update_image`.
+            self.image = None
+            self.overlay = None
+            self.composite = None
+            self.image_label = tk.Label(self.center_frame)
+            self.image_label#.pack()
+
+            # self.image_label.grid(row=2, column=0, sticky="n", padx=10)
+
+            # display
+            self.unitInfo = Label(self.left_frame,
+                text="Radar Range",
+                font=("Consolas", 14))#.pack(pady=(10, 0))
+
+            self.unit = Label(self.left_frame,
+                textvariable=self.range_var,
+                font=("Consolas", 20, "bold"),
+                bg=self.primary_color,
+                relief=RAISED
+            )#.pack(pady=(10, 0))
+                
+            # buttons frame
+            # btn_frame = Frame(window)
+            # btn_frame.pack(pady=10)
+
+            self.KM_prev = Button(self.left_frame,
+                text="<",
+                width=3,
+                font=("Consolas", 16),
+                command=lambda: self.change_range(-1),
+                bg=self.secondary_color
+            )#.pack(side=LEFT, padx=5)
+
+            self.KM_next = Button(self.left_frame,
+                text=">",
+                width=3,
+                font=("Consolas", 16),
+                command=lambda: self.change_range(+1),
+                bg=self.secondary_color
+            )#.pack(side=LEFT, padx=5)
+
+            self.turtle_togle = Button(self.center_frame,
+                text="HIDE DRAWER",
+                font=("Consolas", 14),
+                bg=self.secondary_color,
+                command=self.plotter.draw.screen_toggle,
+            )#.pack(pady=10)
+
+            
+            self.mySpeed = self.myBoat[7]
+            self.myHeading = self.myBoat[12]
+
+            self.speedLabel = Label(self.top_frame,
+                text=f"STW",
+                font=("Consolas", 20, "bold"),
+                bg=self.tertiary_color,
+                relief=RAISED
+            )
+            self.speedDisplay = Label(self.top_frame,
+                text=f"{self.mySpeed} kn",
+                font=("Consolas", 20, "bold"),
+                bg=self.secondary_color,
+                relief=RAISED
+            )
+
+            self.headingLabel = Label(self.top_frame,
+                text=f"HDG",
+                font=("Consolas", 20, "bold"),
+                bg=self.tertiary_color,
+                relief=RAISED
+            )
+            self.headingDisplay = Label(self.top_frame,
+                text=f"{self.heading_string_format()}",
+                font=("Consolas", 20, "bold"),
+                bg=self.secondary_color,
+                relief=RAISED
+            )
+            self.table = ttk.Treeview(self.right_frame, columns=("ID", "Mmsi", "Range", "CPA", "TCPA", "BoatID"), show="headings", height=10)
+
+            self.table.heading("ID", text="ID")
+            self.table.heading("Mmsi", text="Mmsi")
+            self.table.heading("Range", text="KM")
+            self.table.heading("CPA", text="CPA (m)")
+            self.table.heading("TCPA", text="TCPA (s)")
+            # Set column widths and prevent resizing
+            self.table.column("ID", width=50, stretch=False)
+            self.table.column("Mmsi", width=80, stretch=False)
+            self.table.column("Range", width=60, stretch=False)
+            self.table.column("CPA", width=80, stretch=False)
+            self.table.column("TCPA", width=80, stretch=False)
+
+            self.table.bind("<<TreeviewSelect>>", self.setTarget)
+
+            # details tree for selected target
+            self.details_tree = ttk.Treeview(
+                self.right_frame,
+                columns=("field", "value"),
+                show="headings",
+                height=1
+            )
+            self.details_tree.heading("field", text="Field")
+            self.details_tree.heading("value", text="Value")
+            self.details_tree.column("field", width=120, stretch=False)
+            self.details_tree.column("value", width=220, stretch=True)
+
+            # self.table.configure(height=10)
+
+            # self.table.pack(side=TOP, padx=20, pady=20)
+            
+            # Create a Combobox widget for option selection
+            self.combo_box = ttk.Combobox(
+                self.right_frame,
+                values=["RANGE", "CPA", "TCPA"],
+                state="readonly"
+            )
+
+            self.combo_box.bind("<<ComboboxSelected>>", self.on_select)
+
+            # self.combo_box.pack(side=BOTTOM, padx=5, pady=2)
+            self.combo_box.set("RANGE")
+                        
+            local_DT = time.localtime()
+
+            # hh:mm:ss  DD-MM-YYYY
+            self.time = Label(self.right_frame,
+                text=f"{self.set_2digit(local_DT.tm_hour)}:{self.set_2digit(local_DT.tm_min)}:{self.set_2digit(local_DT.tm_sec)}|{self.set_2digit(local_DT.tm_mday)}-{self.set_2digit(local_DT.tm_mon)}-{self.set_2digit(local_DT.tm_year)}",
+                font=("Consolas", 20, "bold"),
+                bg=self.secondary_color,
+                relief=SUNKEN
+            )
         
-        # ---- MENU BAR ----
-        self.menu_bar = tk.Menu(self.window)
-        # self.conf_Menubar()
-
-        # -- UI layer system -- #
-        self.window.columnconfigure(0, weight=1)  # left
-        self.window.columnconfigure(1, weight=1)  # center
-        self.window.columnconfigure(2, weight=1)  # right
-        self.window.rowconfigure(0, weight=1)
-
-        # LEFT
-        self.left_frame = Frame(window)
-        self.left_frame.grid(row=0, column=0, sticky="nsew")
-        self.left_frame.rowconfigure(1, weight=1)
-        self.left_frame.columnconfigure(0, weight=1)
-        # CENTER
-        self.center_frame = Frame(window)
-        self.center_frame.grid(row=0, column=1, sticky="nsew")
-        self.center_frame.rowconfigure(1, weight=1)
-        self.center_frame.columnconfigure(0, weight=1)
-        # RIGHT
-        self.right_frame = Frame(window)
-        self.right_frame.grid(row=0, column=2, sticky="nsew")
-        self.right_frame.rowconfigure(1, weight=1)
-        self.right_frame.columnconfigure(0, weight=1)
-        self.top_frame = Frame(self.right_frame)
-        # RIGHT NESTED
-        self.top_frame.grid(row=0, column=0, sticky="ew")
-        self.top_frame.columnconfigure(0, weight=1)
-        self.top_frame.columnconfigure(1, weight=1)
-
-        # ---- radar image ----
-        # Create a placeholder label now; we'll populate it (and keep a reference to
-        # the PhotoImage) later in `update_image`.
-        self.image = None
-        self.overlay = None
-        self.composite = None
-        self.image_label = tk.Label(self.center_frame)
-        self.image_label#.pack()
-
-        # self.image_label.grid(row=2, column=0, sticky="n", padx=10)
-
-        # display
-        self.unitInfo = Label(self.left_frame,
-              text="Radar Range",
-              font=("Consolas", 14))#.pack(pady=(10, 0))
-
-        self.unit = Label(self.left_frame,
-              textvariable=self.range_var,
-              font=("Consolas", 20, "bold"),
-              bg=self.primary_color,
-              relief=RAISED
-        )#.pack(pady=(10, 0))
-              
-        # buttons frame
-        # btn_frame = Frame(window)
-        # btn_frame.pack(pady=10)
-
-        self.KM_prev = Button(self.left_frame,
-               text="<",
-               width=3,
-               font=("Consolas", 16),
-               command=lambda: self.change_range(-1),
-               bg=self.secondary_color
-        )#.pack(side=LEFT, padx=5)
-
-        self.KM_next = Button(self.left_frame,
-               text=">",
-               width=3,
-               font=("Consolas", 16),
-               command=lambda: self.change_range(+1),
-               bg=self.secondary_color
-        )#.pack(side=LEFT, padx=5)
-
-        self.turtle_togle = Button(self.center_frame,
-               text="HIDE DRAWER",
-               font=("Consolas", 14),
-               bg=self.secondary_color,
-               command=self.plotter.draw.screen_toggle,
-        )#.pack(pady=10)
-
-        
-        self.mySpeed = self.myBoat[7]
-        self.myHeading = self.myBoat[12]
-
-        self.speedLabel = Label(self.top_frame,
-            text=f"STW",
-            font=("Consolas", 20, "bold"),
-            bg=self.tertiary_color,
-            relief=RAISED
-        )
-        self.speedDisplay = Label(self.top_frame,
-            text=f"{self.mySpeed} kn",
-            font=("Consolas", 20, "bold"),
-            bg=self.secondary_color,
-            relief=RAISED
-        )
-
-        self.headingLabel = Label(self.top_frame,
-            text=f"HDG",
-            font=("Consolas", 20, "bold"),
-            bg=self.tertiary_color,
-            relief=RAISED
-        )
-        self.headingDisplay = Label(self.top_frame,
-            text=f"{self.heading_string_format()}",
-            font=("Consolas", 20, "bold"),
-            bg=self.secondary_color,
-            relief=RAISED
-        )
-        self.table = ttk.Treeview(self.right_frame, columns=("ID", "Mmsi", "Range", "CPA", "TCPA", "BoatID"), show="headings", height=10)
-
-        self.table.heading("ID", text="ID")
-        self.table.heading("Mmsi", text="Mmsi")
-        self.table.heading("Range", text="KM")
-        self.table.heading("CPA", text="CPA (m)")
-        self.table.heading("TCPA", text="TCPA (s)")
-        # Set column widths and prevent resizing
-        self.table.column("ID", width=50, stretch=False)
-        self.table.column("Mmsi", width=80, stretch=False)
-        self.table.column("Range", width=60, stretch=False)
-        self.table.column("CPA", width=80, stretch=False)
-        self.table.column("TCPA", width=80, stretch=False)
-
-        self.table.bind("<<TreeviewSelect>>", self.setTarget)
-
-        # details tree for selected target
-        self.details_tree = ttk.Treeview(
-            self.right_frame,
-            columns=("field", "value"),
-            show="headings",
-            height=1
-        )
-        self.details_tree.heading("field", text="Field")
-        self.details_tree.heading("value", text="Value")
-        self.details_tree.column("field", width=120, stretch=False)
-        self.details_tree.column("value", width=220, stretch=True)
-
-        # self.table.configure(height=10)
-
-        # self.table.pack(side=TOP, padx=20, pady=20)
-        
-        # Create a Combobox widget for option selection
-        self.combo_box = ttk.Combobox(
-            self.right_frame,
-            values=["RANGE", "CPA", "TCPA"],
-            state="readonly"
-        )
-
-        self.combo_box.bind("<<ComboboxSelected>>", self.on_select)
-
-        # self.combo_box.pack(side=BOTTOM, padx=5, pady=2)
-        self.combo_box.set("RANGE")
-                    
-        local_DT = time.localtime()
-
-        # hh:mm:ss  DD-MM-YYYY
-        self.time = Label(self.right_frame,
-            text=f"{self.set_2digit(local_DT.tm_hour)}:{self.set_2digit(local_DT.tm_min)}:{self.set_2digit(local_DT.tm_sec)}|{self.set_2digit(local_DT.tm_mday)}-{self.set_2digit(local_DT.tm_mon)}-{self.set_2digit(local_DT.tm_year)}",
-            font=("Consolas", 20, "bold"),
-            bg=self.secondary_color,
-            relief=SUNKEN
-        )
-       
-        self.style = ttk.Style(window)
-        # -- generate UI -- #
-        self.conf_Menubar()
-        self.update_image()
-        self.conf_LeftFrame()
-        self.conf_CenterFrame()
-        self.conf_RightFrame()
-        self.radar_loop()
-        self.Rot = 0
+            self.style = ttk.Style(window)
+            # -- generate UI -- #
+            self.conf_Menubar()
+            self.update_image()
+            self.conf_LeftFrame()
+            self.conf_CenterFrame()
+            self.conf_RightFrame()
+            self.radar_loop()
+            self.Rot = 0
 
     def conf_Menubar(self):
         # File menu - TEMPLATE
@@ -297,6 +299,7 @@ class RadarConsole:
 
         setting_menu  = tk.Menu(self.menu_bar, tearoff=0)
         setting_menu.add_command(label="Color Settings", command=self.open_color_window)
+        setting_menu.add_command(label="DEBUG_mode (DEV Only)", command=self.toggle_print)
         
         self.menu_bar.add_cascade(label="settings", menu=setting_menu)
 
@@ -666,4 +669,7 @@ class RadarConsole:
         self.plotter.targetId = -1
         
     def style_manager(self):
+        pass
+
+    def togle_print(self):
         pass

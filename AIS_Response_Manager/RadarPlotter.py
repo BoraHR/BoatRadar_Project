@@ -16,6 +16,7 @@ ais_file1 = os.path.join(BASE_DIR, "Data/ais_arca.txt")
 ais_file2 = os.path.join(BASE_DIR, "Data/ais_rp42.txt")
 FileRoute_sql3 = os.path.join(BASE_DIR, "Data/AIS-Responder.db")
 # Range_setting = 3
+# ID = 1
 ID = 46
 
 # https://www.geeksforgeeks.org/python/enum-in-python/
@@ -27,8 +28,12 @@ class Order(Enum):
 
 class RadarPlotter:
 
-    def __init__(self):
+    def __init__(self, IsTest = False):
+        self.FileRoute_sql3 = FileRoute_sql3
         self.ID = ID
+        if IsTest:
+            self.FileRoute_sql3 = os.path.join(BASE_DIR, "PyTests/MockData/AIS-Responder.db")
+            self.ID = 1
         self.Order = Order.RANGE
         self.RadarConsoleData = []
         self.PrevRadarConsole_BoatID = []
@@ -239,7 +244,7 @@ class RadarPlotter:
                     if boat[0] not in self.PrevRadarConsole_BoatID:
                         self.PrevRadarConsole_BoatID.append(boat[0])
 
-        self.saveBoatsOutOfRange(myBoat)
+        # self.saveBoatsOutOfRange(myBoat)
         self.orderList()
         self.plot_boats(myBoat)
             

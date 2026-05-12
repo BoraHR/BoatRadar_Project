@@ -48,8 +48,10 @@ class AIS_ResponderManager:
             except Exception as e:
                 print("Error during AIS_SubData update:")
                 print(e)
+                conn.close()
         else:
             print("AIS-Responder.db not found")
+        conn.close()
         
     def Update_SubData_With_Tuple(self, data):
         if self.DB_Exists():
