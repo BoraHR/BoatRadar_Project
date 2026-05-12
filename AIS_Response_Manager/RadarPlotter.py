@@ -10,6 +10,7 @@ from pyais_decoder import Update_Row_AIS_Render_History
 from enum import Enum
 from AIS_ResponderManager import AIS_ResponderManager
 import winsound
+import sys
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ais_file1 = os.path.join(BASE_DIR, "Data/ais_arca.txt")
@@ -29,7 +30,9 @@ class Order(Enum):
 class RadarPlotter:
 
     def __init__(self, IsTest = False):
+        self.IsDebug = True
         self.FileRoute_sql3 = FileRoute_sql3
+        self.conn = sqlite3.connect(FileRoute_sql3)
         self.ID = ID
         if IsTest:
             self.FileRoute_sql3 = os.path.join(BASE_DIR, "PyTests/MockData/AIS-Responder.db")
@@ -44,6 +47,12 @@ class RadarPlotter:
         # DEFAULT is -1 instead of None to prefent potentioal None exeptions
         self.targetId = -1
         # self.IsTarget = False
+
+    def toglePrint(self):
+        if self.IsDebug:
+            self.IsDebug = False
+        else:
+            self.IsDebug = True
 
     def setTarget(self, id):
         try:
@@ -77,8 +86,7 @@ class RadarPlotter:
         for data2 in self.PrevRadarConsole_BoatID:
             history = lambda id, RCD : any(item[0][0] == id for item in RCD)
             if history(data2, self.RadarConsoleData) == False:
-                conn = sqlite3.connect(FileRoute_sql3)
-                c = conn.cursor()
+                c = self.conn.cursor()
                 Lat_Long = c.execute('''
                     SELECT Longitude, Latitude
                     FROM AIS_Decoder
@@ -92,8 +100,7 @@ class RadarPlotter:
     #     self.targetId = -1
 
     def GetBoat(self, boat_id):
-        conn = sqlite3.connect(FileRoute_sql3)
-        c = conn.cursor()
+        c = self.conn.cursor()
         return c.execute('''
             SELECT *
             FROM AIS_Decoder
@@ -138,8 +145,7 @@ class RadarPlotter:
         
         
         dataTuple = "(id, Date, MsgType, Repeat, Mmsi, Status, Turn, Speed, Accuracy, Longitude, Latitude, Course, Heading, Second, Manuever, Spare_1, Raim, Radio)"
-        conn = sqlite3.connect(FileRoute_sql3)
-        c = conn.cursor()
+        c = self.conn.cursor()
 
         myBoat = c.execute('''
             SELECT *
@@ -187,36 +193,40 @@ class RadarPlotter:
         AND Longitude BETWEEN ? AND ?
         AND Latitude BETWEEN ? AND ?
         AND Date BETWEEN ? AND ?
+        OR ID == ?
         ''',
         (
             mmsi,
             min_lon, max_lon,
             min_lat, max_lat,
-            min_time, max_time
+            min_time, max_time,
+            self.targetId
         )).fetchall()
-                
-        print("YourBoat:")
-        print(dataTuple)
-        print(myBoat)
-        print(f"lon: {myBoat[9]}, lat: {myBoat[10]}")
-        print()
+        if self.IsDebug:        
+            print("YourBoat:")
+            print(dataTuple)
+            print(myBoat)
+            print(f"lon: {myBoat[9]}, lat: {myBoat[10]}")
+            print()
         if len(otherBoats) == 0:
-            print(f"NO BOATS IN RANGE OF {range}KM CONTACT YOUR AIS PROVIDER FOR ANY UPDATES")
+            if self.IsDebug:
+                print(f"NO BOATS IN RANGE OF {range}KM CONTACT YOUR AIS PROVIDER FOR ANY UPDATES")
             self.draw.SaveImg()
             return
-        
-        print(f"Other boats in range of {range} lon and lat:")
-        print(dataTuple)
+        if self.IsDebug:
+            print(f"Other boats in range of {range} lon and lat:")
+            print(dataTuple)
         number = 0
         for boat in otherBoats:
             distance = haversine(lat, lon, boat[10], boat[9])
             if distance <= range:
                 number += 1
                 heading_to_target = bearing_deg(lat, lon, boat[10], boat[9])
-                print(boat)
-                print(f"lon: {boat[9]}, lat: {boat[10]}")
-                print(f"Distance from myBoat in KM: {distance:.2f}")
-                print(f"Bearing to boat: {heading_to_target:.1f}°")
+                if self.IsDebug:
+                    print(boat)
+                    print(f"lon: {boat[9]}, lat: {boat[10]}")
+                    print(f"Distance from myBoat in KM: {distance:.2f}")
+                    print(f"Bearing to boat: {heading_to_target:.1f}°")
                 X_Y = ConvertToX_Y(lat, lon, boat[10], boat[9]) # tuple(X, Y, Distance)
 
 
@@ -228,9 +238,10 @@ class RadarPlotter:
                     X_Y[0], X_Y[1], boat[7], boat[12]
                 )
 
-                print(f"CPA: {cpa:.1f} meters")
-                print(f"TCPA: {tcpa:.1f} seconds")
-                print("-" * 50)
+                if self.IsDebug:
+                    print(f"CPA: {cpa:.1f} meters")
+                    print(f"TCPA: {tcpa:.1f} seconds")
+                    print("-" * 50)
 
                 scale = radar_radius_pixels / range_meters           
                 if boat[0] == self.targetId:
@@ -249,8 +260,7 @@ class RadarPlotter:
         self.plot_boats(myBoat)
             
         # when new KM setting is selected it takes longer to generate because it has to redraw radar reading chached drawing is almost always instant
-        print(f"Radar generated in {performance} seconds") 
-        conn.close()
+        print(f"Radar generated in {performance} seconds")
         # saving the image does not close the turtle window by default;
         # we may call ``SaveImg(close=True)`` at the very end of the
         # program if we want to tear the canvas down.

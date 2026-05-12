@@ -18,7 +18,7 @@ sys.path.append(BASE_DIR)
 import AIS_ResponderManager
 from AIS_ResponderManager import AIS_ResponderManager
 from test_pyais_decoder import DB_Exists, Decode_file, Save_DecodedData
-from Algorithm import haversine, bearing_deg, ConvertToX_Y
+from Algorithm import haversine, bearing_deg, ConvertToX_Y, km_to_lat_deg, km_to_lon_deg
 
 from RadarConsole import RadarConsole
 from RadarPlotter import RadarPlotter
@@ -83,6 +83,80 @@ def test_initialize():
     # DB already exists because constructor creates it
     assert testARM.DB_Exists() == True
 
+def test_SQL_retrieve_all_bb():
+    print("\n")
+    print(f"---- SQL GET ALL BOATS WITH CONNECT ---- ")
+    start = time.perf_counter()
+    test_FileRoute_sql3 = os.path.join(BASE_DIR, "PyTests/MockData/AIS-Responder.db")
+    conn = sqlite3.connect(test_FileRoute_sql3)
+    c = conn.cursor()
+    boats = get_all_boats(c)
+    end = time.perf_counter()
+    result = end - start
+    print(f"Result: {result:.40f}")
+    print(f"Count: {len(boats)}")
+    assert result < 0.005
+    assert len(boats) == 750
+    print("\n")
+    print(f"---- SQL GET ALL BOATS WHILE CONNECT ---- ")
+    # retry without clossing
+    start = time.perf_counter()
+    boats = get_all_boats(c)
+    end = time.perf_counter()
+    result = end - start
+    print(f"Result (Connected): {result:.40f}")
+    print(f"Count (Connected): {len(boats)}")
+    assert result < 0.0025
+    assert len(boats) == 750
+
+
+
+
+
+    
+
+
+def test_SQL_retrieve_all_with_foreachLoop():
+    print("\n")
+    print(f"---- SQL GET ALL BOATS + foreachLoop ---- ")
+    start = time.perf_counter()
+    test_FileRoute_sql3 = os.path.join(BASE_DIR, "PyTests/MockData/AIS-Responder.db")
+    conn = sqlite3.connect(test_FileRoute_sql3)
+    c = conn.cursor()
+    boats = get_all_boats(c)
+    count = 0
+    for boat in boats:
+        count += 1
+    conn.close()
+    end = time.perf_counter()
+    result = end - start
+    print(f"Result: {result:.40f}")
+    print(f"ListCount: {len(boats)}")
+    print(f"LoopCount: {count}")
+    assert result < 0.005
+    assert len(boats) == 750
+    assert count == 750
+
+def test_lat_long_algorithm_speed():
+    i = 1
+    max = 0.000
+    min = 2147483647.000
+    total = 0.000
+    count = 0
+    while i < 750:
+        start = time.perf_counter()
+        lat = km_to_lat_deg(i)
+        lon = km_to_lon_deg(i, lat)
+        end = time.perf_counter()
+        result = end - start
+        if result > max:
+            max = result
+        if result < min:
+            min = result
+        total += result
+        count += 1
+        i += 1
+    GetResults("LAT_LON_PERFORMANCE", count, total, max, min)
 
 def test_convertX_Y_algorithm_speed():
     run_algorithm_speed_test("X_Y_CONVERSION", ConvertToX_Y)

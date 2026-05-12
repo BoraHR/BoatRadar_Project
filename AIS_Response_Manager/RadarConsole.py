@@ -368,6 +368,7 @@ class RadarConsole:
     def Quit(self):
         self.killswitch = True
         print("Closing program...")
+        self.plotter.conn.close()
         self.window.after(100, self._shutdown)
 
     def _shutdown(self):
@@ -671,5 +672,5 @@ class RadarConsole:
     def style_manager(self):
         pass
 
-    def togle_print(self):
-        pass
+    def toggle_print(self):
+        self.plotter.toglePrint()
