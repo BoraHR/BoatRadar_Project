@@ -219,7 +219,10 @@ class RadarPlotter:
         number = 0
         for boat in otherBoats:
             distance = haversine(lat, lon, boat[10], boat[9])
-            if distance <= range:
+            is_target = boat[0] == self.targetId
+            
+            # Always include target boat, or include if in range
+            if distance <= range or is_target:
                 number += 1
                 heading_to_target = bearing_deg(lat, lon, boat[10], boat[9])
                 if self.IsDebug:
@@ -244,7 +247,7 @@ class RadarPlotter:
                     print("-" * 50)
 
                 scale = radar_radius_pixels / range_meters           
-                if boat[0] == self.targetId:
+                if is_target:
                     self.RadarConsoleData.append([(boat), number, distance, cpa, tcpa, (boat_id, X_Y[0], X_Y[1], number, scale, boat[12], True)])
                     self.ARM.Update_SubData_With_Value(boat[0], distance, cpa, tcpa)
                     if boat[0] not in self.PrevRadarConsole_BoatID:

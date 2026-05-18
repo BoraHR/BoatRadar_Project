@@ -18,7 +18,7 @@ sys.path.append(BASE_DIR)
 import AIS_ResponderManager
 from AIS_ResponderManager import AIS_ResponderManager
 from test_pyais_decoder import DB_Exists, Decode_file, Save_DecodedData
-from Algorithm import haversine, bearing_deg, ConvertToX_Y, km_to_lat_deg, km_to_lon_deg
+from Algorithm import haversine, bearing_deg, ConvertToX_Y, velocity_vector, calculate_cpa_tcpa, km_to_lat_deg, km_to_lon_deg
 
 from RadarConsole import RadarConsole
 from RadarPlotter import RadarPlotter
@@ -82,6 +82,20 @@ def test_initialize():
 
     # DB already exists because constructor creates it
     assert testARM.DB_Exists() == True
+    print("\n")
+    print(f"---- SQL initilize ---- ")
+    start = time.perf_counter()
+    test_FileRoute_sql3 = os.path.join(BASE_DIR, "PyTests/MockData/AIS-Responder.db")
+    conn = sqlite3.connect(test_FileRoute_sql3)
+    c = conn.cursor()
+    boat = get_self(c)
+    conn.close()
+    end = time.perf_counter()
+    result = end - start
+    print(f"Result: {result:.40f}")
+    assert result < 0.005
+    assert boat != None
+    assert boat[0] == 1
 
 def test_SQL_retrieve_all_bb():
     print("\n")
@@ -98,7 +112,7 @@ def test_SQL_retrieve_all_bb():
     assert result < 0.005
     assert len(boats) == 750
     print("\n")
-    print(f"---- SQL GET ALL BOATS WHILE CONNECT ---- ")
+    print(f"---- SQL GET ALL BOATS WHILE CONNECTED ---- ")
     # retry without clossing
     start = time.perf_counter()
     boats = get_all_boats(c)
@@ -108,13 +122,7 @@ def test_SQL_retrieve_all_bb():
     print(f"Count (Connected): {len(boats)}")
     assert result < 0.0025
     assert len(boats) == 750
-
-
-
-
-
-    
-
+    conn.close()
 
 def test_SQL_retrieve_all_with_foreachLoop():
     print("\n")
@@ -125,6 +133,9 @@ def test_SQL_retrieve_all_with_foreachLoop():
     c = conn.cursor()
     boats = get_all_boats(c)
     count = 0
+    max = 0.000
+    min = 2147483647.000
+    total = 0.000
     for boat in boats:
         count += 1
     conn.close()
@@ -158,8 +169,64 @@ def test_lat_long_algorithm_speed():
         i += 1
     GetResults("LAT_LON_PERFORMANCE", count, total, max, min)
 
+def test_vector_calculation_speed():
+    test_FileRoute_sql3 = os.path.join(BASE_DIR, "PyTests/MockData/AIS-Responder.db")
+    testARM, testDrawer, testPlotter, testConsole = ProgramForEachTest(4)
+    myBoat = testConsole.get_boat_data(1)
+    conn = sqlite3.connect(test_FileRoute_sql3)
+    c = conn.cursor()
+    i = 1
+    max = 0.000
+    min = 2147483647.000
+    total = 0.000
+    count = 0
+    otherBoats = get_all_boats(c, 1)
+    for b in otherBoats:
+        start = time.perf_counter()
+        var =  velocity_vector(b[7], b[12])# function
+        end = time.perf_counter()
+        result = end - start
+        if result > max:
+            max = result
+        if result < min:
+            min = result
+        total += result
+        count += 1
+    GetResults("VECTOR_CALLCULATION (calculate_cpa_tcpa helper)", count, total, max, min)
+
 def test_convertX_Y_algorithm_speed():
-    run_algorithm_speed_test("X_Y_CONVERSION", ConvertToX_Y)
+    run_algorithm_speed_test("X_Y_CONVERSION (calculate_cpa_tcpa helper)", ConvertToX_Y)
+
+def test_calculate_cpa_tcpa():
+    test_FileRoute_sql3 = os.path.join(BASE_DIR, "PyTests/MockData/AIS-Responder.db")
+    testARM, testDrawer, testPlotter, testConsole = ProgramForEachTest(4)
+    myBoat = testConsole.get_boat_data(1)
+    conn = sqlite3.connect(test_FileRoute_sql3)
+    c = conn.cursor()
+    i = 1
+    max = 0.000
+    min = 2147483647.000
+    total = 0.000
+    count = 0
+
+    otherBoats = get_all_boats(c, 1)
+    for b in otherBoats:
+        start = time.perf_counter()
+        X_Y = ConvertToX_Y(myBoat[10], myBoat[9], b[10], b[9])
+        var = calculate_cpa_tcpa(
+            0, 0, myBoat[7], myBoat[12],
+            X_Y[0], X_Y[1], b[7], b[12]
+        ) # function
+        end = time.perf_counter()
+        result = end - start
+        if result > max:
+            max = result
+        if result < min:
+            min = result
+        total += result
+        count += 1
+
+    GetResults("CALCULATE_CPA_TCPA", count, total, max, min)
 
 def test_haversine_algorithm_speed():
     run_algorithm_speed_test("HAVERSINE", haversine)
@@ -205,7 +272,3 @@ def GetResults(testname, count, total, max, min):
     assert min != 2147483647.000
     assert avr < 0.0001
     assert total < 0.01
-
-
-    
-# def test_initialize_repeat():

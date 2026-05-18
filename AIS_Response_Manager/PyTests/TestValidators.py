@@ -39,3 +39,95 @@ def test_DateTest_False():
 
     for iso_date in invalid_date_obj:
         assert False == ValidateDate(iso_date)
+
+class MockDecoded:
+    def __init__(
+        self,
+        msg_type=1,
+        repeat=0,
+        mmsi=123456789,
+        status=0,
+        turn=0,
+        accuracy=True,
+        lon=5.1214,
+        lat=52.0907,
+        course=180.0,
+        heading=180,
+        second=30,
+        maneuver=0,
+        spare_1=0,
+        raim=False,
+        radio=0
+    ):
+        self.msg_type = msg_type
+        self.repeat = repeat
+        self.mmsi = mmsi
+        self.status = status
+        self.turn = turn
+        self.accuracy = accuracy
+        self.lon = lon
+        self.lat = lat
+        self.course = course
+        self.heading = heading
+        self.second = second
+        self.maneuver = maneuver
+        self.spare_1 = spare_1
+        self.raim = raim
+        self.radio = radio
+
+
+def test_ValidateFields_True():
+
+    valid_objects = [
+        MockDecoded(),
+        MockDecoded(lon=0.0, lat=0.0),
+        MockDecoded(lon=-180.0, lat=-90.0),
+        MockDecoded(lon=180.0, lat=90.0, course=359.9, heading=359),
+        MockDecoded(second=60),
+    ]
+
+    for obj in valid_objects:
+        assert True == ValidateFields(obj)
+
+
+def test_ValidateFields_False():
+
+    invalid_objects = [
+        MockDecoded(msg_type=None),
+        MockDecoded(repeat=None),
+        MockDecoded(mmsi=None),
+        MockDecoded(status=None),
+        MockDecoded(turn=None),
+        MockDecoded(accuracy=None),
+        MockDecoded(lon=None),
+        MockDecoded(lat=None),
+        MockDecoded(course=None),
+        MockDecoded(heading=None),
+        MockDecoded(second=None),
+        MockDecoded(maneuver=None),
+        MockDecoded(spare_1=None),
+        MockDecoded(raim=None),
+        MockDecoded(radio=None),
+
+        # Invalid longitude
+        MockDecoded(lon=180.1),
+
+        # Invalid latitude
+        MockDecoded(lat=90.1),
+        MockDecoded(lat=-90.1),
+
+        # Invalid course
+        MockDecoded(course=360.0),
+        MockDecoded(course=-1.0),
+
+        # Invalid heading
+        MockDecoded(heading=360),
+        MockDecoded(heading=-1),
+
+        # Invalid second
+        MockDecoded(second=61),
+        MockDecoded(second=-1),
+    ]
+
+    for obj in invalid_objects:
+        assert False == ValidateFields(obj)
