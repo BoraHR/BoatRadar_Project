@@ -32,8 +32,8 @@ class RadarDrawing:
         self.RGB = (255,255,255)
         self.BASE_DIR = os.path.dirname(os.path.abspath(__file__))
         self.bg_loc = os.path.join(self.BASE_DIR, f"Radar/Background/R={self.RGB[0]},G={self.RGB[1]},B={self.RGB[2]}")
-        self.ps_loc = os.path.join(self.BASE_DIR, f"Radar/PostScript/drawing_{self.KM_build}.ps")
-        self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img_{self.KM_build}.png")
+        self.ps_loc = os.path.join(self.BASE_DIR, f"Radar/PostScript/drawing.ps")
+        self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img.png")
 
     def set_reselution(self, res):
         try:
@@ -240,14 +240,9 @@ class RadarDrawing:
     def SaveImg(self, close=False):
         if self.hideScreen:
             screen.setup(width=resulotionScale, height=resulotionScale, startx=1800)
-        self.ps_loc = os.path.join(self.BASE_DIR, f"Radar/PostScript/drawing_{self.KM_build}.ps")
-        self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img_{self.KM_build}.png")
-        """Write the current turtle screen to disk.
-
-        By default the window is left open so that subsequent plotting calls
-        can continue.  Pass ``close=True`` if you want the canvas to be torn
-        down (for example at the very end of a batch of drawings).
-        """
+        self.ps_loc = os.path.join(self.BASE_DIR, f"Radar/PostScript/drawing.ps")
+        self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img.png")
+        
         ts = turtle.Screen()
         ts.bgcolor(self.get_bgcolor())
         # save as PostScript
@@ -266,9 +261,9 @@ class RadarDrawing:
             # Combine background + drawing
             final = Image.alpha_composite(bg, img)
 
-            final.save(self.img_loc)
+            # final.save(self.img_loc)
 
-            img = Image.open(self.ps_loc).convert("RGBA")
+            # img = Image.open(self.ps_loc).convert("RGBA")
 
         
             new_data = []

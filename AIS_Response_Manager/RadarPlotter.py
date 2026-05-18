@@ -30,7 +30,7 @@ class Order(Enum):
 class RadarPlotter:
 
     def __init__(self, IsTest = False):
-        self.IsDebug = True
+        self.IsDebug = False
         self.FileRoute_sql3 = FileRoute_sql3
         self.conn = sqlite3.connect(FileRoute_sql3)
         self.ID = ID
@@ -119,7 +119,7 @@ class RadarPlotter:
             else:
                 self.RadarConsoleData = sorted(self.RadarConsoleData, reverse=reverse)
         except Exception as e:
-            print(f"Failed to order by {self.order.name}")
+            print(f"Failed to order by {self.Order.name}")
             print(e)
 
     def plot_boats(self, myBoat):
@@ -142,7 +142,6 @@ class RadarPlotter:
         self.clearConsoleData()
         self.draw.clear_otherBoats()
         start = time.time()
-        
         
         dataTuple = "(id, Date, MsgType, Repeat, Mmsi, Status, Turn, Speed, Accuracy, Longitude, Latitude, Course, Heading, Second, Manuever, Spare_1, Raim, Radio)"
         c = self.conn.cursor()

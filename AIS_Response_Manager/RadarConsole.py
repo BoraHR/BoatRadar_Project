@@ -98,7 +98,7 @@ class RadarConsole:
             self.time_window = 10 # The window of time to consider plotting to be valid.
 
             # ---- Directories for image loading and saving ----
-            self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img_{self.km_range}.png") # updates in update_image()
+            self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img.png") # updates in update_image()
             self.img_compas = os.path.join(self.BASE_DIR, f"Radar/Compas/Current/360_Rotation-TranparantCenter.png")
             self.alarm = os.path.join(self.BASE_DIR, f"Sounds/Alarm.WAV")
 
@@ -543,7 +543,7 @@ class RadarConsole:
 
     def update_label(self):
             self.range_var.set(f"{self.km_range}KM")
-            self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img_{self.km_range}.png")
+            self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img.png")
             if os.path.isfile(self.img_compas):
                 self.overlay = Image.open(self.img_compas).convert("RGBA")
             
