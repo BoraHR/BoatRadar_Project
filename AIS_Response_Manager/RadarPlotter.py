@@ -248,15 +248,16 @@ class RadarPlotter:
                 scale = radar_radius_pixels / range_meters           
                 if is_target:
                     self.RadarConsoleData.append([(boat), number, distance, cpa, tcpa, (boat_id, X_Y[0], X_Y[1], number, scale, boat[12], True)])
-                    self.ARM.Update_SubData_With_Value(boat[0], distance, cpa, tcpa)
+                    self.ARM.Update_SubData_With_Value(self.conn, boat[0], distance, cpa, tcpa)
                     if boat[0] not in self.PrevRadarConsole_BoatID:
                         self.PrevRadarConsole_BoatID.append(boat[0])
                 else:
                     self.RadarConsoleData.append([(boat), number, distance, cpa, tcpa, (boat_id, X_Y[0], X_Y[1], number, scale, boat[12], False)])
-                    self.ARM.Update_SubData_With_Value(boat[0], distance, cpa, tcpa)
+                    self.ARM.Update_SubData_With_Value(self.conn, boat[0], distance, cpa, tcpa)
+                    
                     if boat[0] not in self.PrevRadarConsole_BoatID:
                         self.PrevRadarConsole_BoatID.append(boat[0])
-
+            self.conn.commit()
         # self.saveBoatsOutOfRange(myBoat)
         self.orderList()
         self.plot_boats(myBoat)
