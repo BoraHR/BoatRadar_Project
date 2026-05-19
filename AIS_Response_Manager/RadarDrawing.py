@@ -6,10 +6,6 @@ from PIL import Image
 import time
 from Algorithm import calculate_cpa_tcpa
 
-# t = turtle.Turtle(visible=False)
-# t.hideturtle()
-# t.speed(0)
-
 screen = turtle.Screen()
 resulotionScale = 612
 screen.setup(width=resulotionScale, height=resulotionScale)
@@ -235,7 +231,6 @@ class RadarDrawing:
         while(True):
             input("Press ENTER to close radar.")
             break
-        # turtle.done()
 
     def SaveImg(self, close=False):
         if self.hideScreen:
@@ -260,11 +255,6 @@ class RadarDrawing:
 
             # Combine background + drawing
             final = Image.alpha_composite(bg, img)
-
-            # final.save(self.img_loc)
-
-            # img = Image.open(self.ps_loc).convert("RGBA")
-
         
             new_data = []
             for item in img.getdata():
@@ -334,7 +324,3 @@ class RadarDrawing:
 
             # save new image
             img.save(self.bg_loc)
-            # except Exception as e:
-            #     print("error generating background color:")
-            #     print(e)
-        # turtle.bgpic(self.bg_loc)

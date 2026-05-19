@@ -101,7 +101,6 @@ class AIS_ResponderManager:
                         TCPA = excluded.TCPA
                 ''',
                 (
-                    # True == 1, False == 0
                     Boat_ID,
                     distance,
                     CPA,

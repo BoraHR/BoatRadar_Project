@@ -64,7 +64,7 @@ class RadarConsole:
         # MIN 0, MAX 255
 
         # -- Primary Colors -- #
-        self.RGB_Pri = [144,144,144]#R=[0],#G=[1],
+        self.RGB_Pri = [144,144,144]
         
         # -- Secondary Colors -- #
         self.RGB_Sec = [141,199,130]

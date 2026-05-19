@@ -11,6 +11,7 @@ import os
 import sys
 from tkinter import *
 import time
+import math
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
@@ -148,6 +149,37 @@ def test_SQL_retrieve_all_with_foreachLoop():
     assert len(boats) == 750
     assert count == 750
 
+def test_SQL_update_SubData():
+    test_FileRoute_sql3 = os.path.join(BASE_DIR, "PyTests/MockData/AIS-Responder.db")
+    testARM, testDrawer, testPlotter, testConsole = ProgramForEachTest(4)
+    conn = sqlite3.connect(test_FileRoute_sql3)
+    c = conn.cursor()
+    count = 0
+    max = 0.000
+    min = 2147483647.000
+    total = 0.000
+    myBoat = get_self(c)
+    boats = get_all_boats(c,1)
+    conn.close()
+    for boat in boats:
+        distance = haversine(myBoat[10], myBoat[9], boat[10], boat[9])
+        X_Y = ConvertToX_Y(myBoat[10], myBoat[9], boat[10], boat[9]) # tuple(X, Y, Distance)
+        cpa, tcpa = calculate_cpa_tcpa(
+            0, 0, myBoat[7], myBoat[12],
+            X_Y[0], X_Y[1], boat[7], boat[12]
+        )
+        start = time.perf_counter()
+        testARM.Update_SubData_With_Value(boat[0], distance, cpa, tcpa)
+        end = time.perf_counter()
+        result = end - start
+        if result > max:
+            max = result
+        if result < min:
+            min = result
+        total += result
+        count += 1
+    GetResults("SQL UPDATE SUBDATA", count, total, max, min)
+
 def test_lat_long_algorithm_speed():
     i = 1
     max = 0.000
@@ -192,6 +224,7 @@ def test_vector_calculation_speed():
             min = result
         total += result
         count += 1
+    
     GetResults("VECTOR_CALLCULATION (calculate_cpa_tcpa helper)", count, total, max, min)
 
 def test_convertX_Y_algorithm_speed():
@@ -258,6 +291,68 @@ def run_algorithm_speed_test(testname, algorithm):
         count += 1
     GetResults(testname, count, total, max, min)
 
+def test_ImgSave_JustSelf_3KM():
+    ImageSaveLoop("RADAR LOOP NO TARGETS 3km", 3, False)
+
+def test_ImgSave_JustSelf_6KM():
+    ImageSaveLoop("RADAR LOOP NO TARGETS 6km", 6, False)
+
+def test_ImgSave_JustSelf_9KM():
+    ImageSaveLoop("RADAR LOOP NO TARGETS 9km", 9, False)
+
+def test_ImgSave_JustSelf_12KM():
+    ImageSaveLoop("RADAR LOOP NO TARGETS 12km", 12, False)
+
+def test_ImgSave_WithTargets_3KM():
+    ImageSaveLoop("RADAR LOOP WITH TARGETS 3km", 3, True)
+
+def test_ImgSave_WithTargets_6KM():
+    ImageSaveLoop("RADAR LOOP WITH TARGETS 6km", 6, True)
+
+def test_ImgSave_WithTargets_9KM():
+    ImageSaveLoop("RADAR LOOP WITH TARGETS 9km", 9, True)
+
+def test_ImgSave_WithTargets_12KM():
+    ImageSaveLoop("RADAR LOOP WITH TARGETS 12km", 12, True)
+
+
+def ImageSaveLoop(testname, KM, IncludeTargets):
+    test_FileRoute_sql3 = os.path.join(BASE_DIR, "PyTests/MockData/AIS-Responder.db")
+    testARM, testDrawer, testPlotter, testConsole = ProgramForEachTest(4)
+    # testDrawer.img_loc = os.path.join(BASE_DIR, f"Radar/Renders/imgTest.png")
+    myBoat = testConsole.get_boat_data(46)
+    conn = sqlite3.connect(test_FileRoute_sql3)
+    c = conn.cursor()
+    targets = []
+    if IncludeTargets:
+        testPlotter.InRangeHelper(46, KM)
+    max = 0.000
+    min = 2147483647.000
+    total = 0.000
+    count = 0
+    i = 0
+    print("\n Testing image loop...")
+    while i < 10:
+        start = time.perf_counter()
+        if not IncludeTargets:
+            testDrawer.draw_radar_Custom(KM, 0.00, 2.0)
+        testPlotter.plot_boats(myBoat)
+        testDrawer.SaveImg()
+        end = time.perf_counter()
+        result = end - start
+        if result > max:
+            max = result
+        if result < min:
+            min = result
+        total += result
+        count += 1 
+        i += 1
+    
+    if IncludeTargets:
+        GetResults_WithTargets(testname, count, total, max, min, 10, 1.2, 0.6, 6.00)
+    else:
+        GetResults_WithTargets(testname, count, total, max, min, 10, 1.0, 0.5, 5.00)
+
 def GetResults(testname, count, total, max, min):
     avr = total / count
     print("\n")
@@ -272,3 +367,21 @@ def GetResults(testname, count, total, max, min):
     assert min != 2147483647.000
     assert avr < 0.0001
     assert total < 0.01
+
+def GetResults_WithTargets(testname, count, total, max, min, TargetCount, TargetMax, TargetAvr, TargetTotal):
+    avr = total / count
+    print("\n")
+    print(f"---- {testname.upper()} ---- ")
+    print(f"Count: {count}")
+    print(f"Total: {total:.40f}")
+    print(f"Max: {max:.40f}, FPS({get_FPS(max)})")
+    print(f"Min: {min:.40f}, FPS({get_FPS(min)})")
+    print(f"Avr: {avr:.40f}, FPS({get_FPS(avr)})")
+    assert count == TargetCount
+    assert max < TargetMax
+    assert min != 2147483647.000
+    assert avr < TargetAvr
+    assert total < TargetTotal
+
+def get_FPS(seconds):
+    return math.floor(1 / seconds)
