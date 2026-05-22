@@ -4,6 +4,7 @@ import os
 # https://www.geeksforgeeks.org/python/python-pillow-colors-on-an-image/
 from PIL import Image
 import time
+import threading
 from Algorithm import calculate_cpa_tcpa
 
 screen = turtle.Screen()
@@ -30,6 +31,9 @@ class RadarDrawing:
         self.bg_loc = os.path.join(self.BASE_DIR, f"Radar/Background/R={self.RGB[0]},G={self.RGB[1]},B={self.RGB[2]}")
         self.ps_loc = os.path.join(self.BASE_DIR, f"Radar/PostScript/drawing.ps")
         self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img.png")
+        # Threading for async image saves
+        self._save_thread = None
+        self._save_lock = threading.Lock()
 
     def set_reselution(self, res):
         try:
@@ -77,9 +81,6 @@ class RadarDrawing:
         return end - start # returns the a time it took to create the img in seconds.
     
     def setBGColor_RGB(self, R, G, B):
-        # print(R)
-        # print(G)
-        # print(B)
         R = self.hexRangeCheck(R) 
         G = self.hexRangeCheck(G)
         B = self.hexRangeCheck(B)
@@ -233,59 +234,121 @@ class RadarDrawing:
             break
 
     def SaveImg(self, close=False):
-        if self.hideScreen:
-            screen.setup(width=resulotionScale, height=resulotionScale, startx=1800)
-        self.ps_loc = os.path.join(self.BASE_DIR, f"Radar/PostScript/drawing.ps")
-        self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img.png")
-        
-        ts = turtle.Screen()
-        ts.bgcolor(self.get_bgcolor())
-        # save as PostScript
-        ts.getcanvas().postscript(file=self.ps_loc)
-        img = Image.open(self.ps_loc).convert("RGBA")
-
-        if self.RGB[0] > 25 or self.RGB[1] > 25 or self.RGB[2] > 25:
-            # Create background
-            bg = Image.new("RGBA", img.size, (
-                self.RGB[0],
-                self.RGB[1],
-                self.RGB[2],
-                255
-            ))
-
-            # Combine background + drawing
-            final = Image.alpha_composite(bg, img)
-        
-            new_data = []
-            for item in img.getdata():
-                # Detect white (or near white)
-                if item[0] > 240 and item[1] > 240 and item[2] > 240:
-                    # Make transparent
-                    new_data.append((255, 255, 255, 0))
-                else:
-                    new_data.append(item)
-
-            img.putdata(new_data)
-
-            # Now create background
-            bg = Image.new("RGBA", img.size, (
-                self.RGB[0],
-                self.RGB[1],
-                self.RGB[2],
-                255
-            ))
-
-            # Composite works NOW
-            final = Image.alpha_composite(bg, img)
-
-            final.save(self.img_loc)
-        else:
-            final = Image.open(self.ps_loc).convert("RGBA")
-            final.save(self.img_loc)
+        """
+        Non-blocking image save. Captures PostScript immediately and processes
+        image in background thread to avoid freezing the GUI.
+        """
+        try:
+            import time as time_module
+            self.ps_loc = os.path.join(self.BASE_DIR, f"Radar/PostScript/drawing.ps")
+            self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img.png")
             
-        screen.update()
-        if close:
-            screen.bye()
+            ts = turtle.Screen()
+            ts.bgcolor(self.get_bgcolor())
+            
+            # Fast: Save PostScript (minimal blocking)
+            ts.getcanvas().postscript(file=self.ps_loc)
+            
+            # CRITICAL: Ensure file is flushed to disk before background thread reads it
+            # This prevents race condition where thread tries to open incomplete file
+            time_module.sleep(0.05)  # Small delay to ensure OS has flushed the file
+            
+            screen.update()
+            
+            # Defer heavy image processing to background thread
+            if self._save_thread and self._save_thread.is_alive():
+                # Wait for previous save to complete before starting a new one
+                self._save_thread.join(timeout=2.0)
+            
+            self._save_thread = threading.Thread(
+                target=self._process_image_async,
+                kwargs={'close': close},
+                daemon=True
+            )
+            self._save_thread.start()
+            
+        except Exception as e:
+            print(f"Error in SaveImg: {e}")
+            if close:
+                screen.bye()
+
+    def _process_image_async(self, close=False):
+        """
+        Background thread function for heavy image processing.
+        Runs asynchronously so GUI doesn't freeze.
+        Includes retry logic to handle race conditions.
+        """
+        import time as time_module
+        max_retries = 3
+        retry_count = 0
+        
+        while retry_count < max_retries:
+            try:
+                with self._save_lock:
+                    # Retry logic: wait a bit if file isn't ready
+                    if not os.path.exists(self.ps_loc):
+                        if retry_count < max_retries - 1:
+                            time_module.sleep(0.05)
+                            retry_count += 1
+                            continue
+                        else:
+                            raise FileNotFoundError(f"PostScript file not found: {self.ps_loc}")
+                    
+                    img = Image.open(self.ps_loc).convert("RGBA")
+
+                    if self.RGB[0] > 25 or self.RGB[1] > 25 or self.RGB[2] > 25:
+                        # Create background
+                        bg = Image.new("RGBA", img.size, (
+                            self.RGB[0],
+                            self.RGB[1],
+                            self.RGB[2],
+                            255
+                        ))
+
+                        # Combine background + drawing
+                        final = Image.alpha_composite(bg, img)
+                    
+                        # Process pixels - convert iterator to list first
+                        img_data = list(img.getdata())
+                        new_data = []
+                        for item in img_data:
+                            # Detect white (or near white)
+                            if item[0] > 240 and item[1] > 240 and item[2] > 240:
+                                # Make transparent
+                                new_data.append((255, 255, 255, 0))
+                            else:
+                                new_data.append(item)
+
+                        img.putdata(new_data)
+
+                        # Now create background
+                        bg = Image.new("RGBA", img.size, (
+                            self.RGB[0],
+                            self.RGB[1],
+                            self.RGB[2],
+                            255
+                        ))
+
+                        # Composite works NOW
+                        final = Image.alpha_composite(bg, img)
+
+                        final.save(self.img_loc)
+                    else:
+                        final = Image.open(self.ps_loc).convert("RGBA")
+                        final.save(self.img_loc)
+                    
+                    break  # Success - exit retry loop
+                    
+            except (FileNotFoundError, IOError, Exception) as e:
+                if retry_count < max_retries - 1:
+                    retry_count += 1
+                    time_module.sleep(0.05)
+                else:
+                    print(f"Error in background image processing (attempt {retry_count + 1}/{max_retries}): {e}")
+                    break
+            finally:
+                if close and retry_count >= max_retries - 1:
+                    screen.bye()
 
     def CloseDrawer(self):
         screen.bye()

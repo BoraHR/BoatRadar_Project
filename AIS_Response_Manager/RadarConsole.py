@@ -341,6 +341,9 @@ class RadarConsole:
 
 
     # -- Radar loop updates plotting device every second -- #
+    # NOTE: Image saving is now asynchronous - SaveImg() returns immediately
+    # and processes heavy image operations in a background thread.
+    # This keeps the GUI responsive while data refreshes.
     def radar_loop(self):
         if self.killswitch == True:
             self.window.quit()
@@ -359,7 +362,7 @@ class RadarConsole:
         self.update_image()
         self.update_table()
 
-        # run again after 1000 ms (1 second)
+        # run again after 100 ms
         if self.window.winfo_exists():
             self.window.after(100, self.radar_loop)
         end = time.time()
