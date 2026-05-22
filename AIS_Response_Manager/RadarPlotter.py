@@ -245,15 +245,16 @@ class RadarPlotter:
                     print(f"TCPA: {tcpa:.1f} seconds")
                     print("-" * 50)
 
-                scale = radar_radius_pixels / range_meters           
+                scale = radar_radius_pixels / range_meters    
+                
                 if is_target:
                     self.RadarConsoleData.append([(boat), number, distance, cpa, tcpa, (boat_id, X_Y[0], X_Y[1], number, scale, boat[12], True)])
-                    self.ARM.Update_SubData_With_Value(self.conn, boat[0], distance, cpa, tcpa)
+                    self.ARM.Update_SubData_With_Value(c, boat[0], distance, cpa, tcpa)
                     if boat[0] not in self.PrevRadarConsole_BoatID:
                         self.PrevRadarConsole_BoatID.append(boat[0])
                 else:
                     self.RadarConsoleData.append([(boat), number, distance, cpa, tcpa, (boat_id, X_Y[0], X_Y[1], number, scale, boat[12], False)])
-                    self.ARM.Update_SubData_With_Value(self.conn, boat[0], distance, cpa, tcpa)
+                    self.ARM.Update_SubData_With_Value(c, boat[0], distance, cpa, tcpa)
                     
                     if boat[0] not in self.PrevRadarConsole_BoatID:
                         self.PrevRadarConsole_BoatID.append(boat[0])
@@ -272,5 +273,3 @@ class RadarPlotter:
         fin_performance = end - start
         print(f"Radar data trasmited in {fin_performance} seconds")
         return myBoat
-    
-    

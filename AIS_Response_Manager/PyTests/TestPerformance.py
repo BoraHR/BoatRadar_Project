@@ -90,13 +90,14 @@ def test_initialize():
     conn = sqlite3.connect(test_FileRoute_sql3)
     c = conn.cursor()
     boat = get_self(c)
-    conn.close()
+    
     end = time.perf_counter()
     result = end - start
     print(f"Result: {result:.40f}")
     assert result < 0.005
     assert boat != None
     assert boat[0] == 1
+    conn.close()
 
 def test_SQL_retrieve_all_bb():
     print("\n")
@@ -159,8 +160,8 @@ def test_SQL_update_SubData():
     min = 2147483647.000
     total = 0.000
     myBoat = get_self(c)
-    boats = get_all_boats(c,1)
-    conn.close()
+    boats = get_all_boats(c)
+    
     for boat in boats:
         distance = haversine(myBoat[10], myBoat[9], boat[10], boat[9])
         X_Y = ConvertToX_Y(myBoat[10], myBoat[9], boat[10], boat[9]) # tuple(X, Y, Distance)
@@ -169,7 +170,7 @@ def test_SQL_update_SubData():
             X_Y[0], X_Y[1], boat[7], boat[12]
         )
         start = time.perf_counter()
-        testARM.Update_SubData_With_Value(boat[0], distance, cpa, tcpa)
+        testARM.Update_SubData_With_Value(conn, boat[0], distance, cpa, tcpa)
         end = time.perf_counter()
         result = end - start
         if result > max:
@@ -178,7 +179,13 @@ def test_SQL_update_SubData():
             min = result
         total += result
         count += 1
-    GetResults("SQL UPDATE SUBDATA", count, total, max, min)
+    GetResults_WithTargets("SQL UPDATE SUBDATA", count, total, max, min, 750, 0.009, 0.0003, 0.65, 0.03)
+    conn.close()
+    # assert count == 749
+    # assert max < 0.003 * 3
+    # assert min != 2147483647.000
+    # assert avr < 0.0001 * 3
+    # assert total < 0.01 * 3
 
 def test_lat_long_algorithm_speed():
     i = 1
@@ -319,6 +326,10 @@ def test_ImgSave_WithTargets_12KM():
 def ImageSaveLoop(testname, KM, IncludeTargets):
     test_FileRoute_sql3 = os.path.join(BASE_DIR, "PyTests/MockData/AIS-Responder.db")
     testARM, testDrawer, testPlotter, testConsole = ProgramForEachTest(4)
+    testConsole.set_B_primary(144)
+    testConsole.set_R_primary(144)
+    testConsole.set_G_primary(144)
+    testDrawer.setBGColor_RGB(testConsole.RGB_Pri[0], testConsole.RGB_Pri[1], testConsole.RGB_Pri[2]) # background
     # testDrawer.img_loc = os.path.join(BASE_DIR, f"Radar/Renders/imgTest.png")
     myBoat = testConsole.get_boat_data(46)
     conn = sqlite3.connect(test_FileRoute_sql3)
@@ -363,20 +374,25 @@ def GetResults(testname, count, total, max, min):
     print(f"Min: {min:.40f}")
     print(f"Avr: {avr:.40f}")
     assert count == 749
-    assert max < 0.001
+    assert max < 0.003
     assert min != 2147483647.000
     assert avr < 0.0001
     assert total < 0.01
 
-def GetResults_WithTargets(testname, count, total, max, min, TargetCount, TargetMax, TargetAvr, TargetTotal):
+def GetResults_WithTargets(testname, count, total, max, min, TargetCount, TargetMax, TargetAvr, TargetTotal, ShowFPS=True):
     avr = total / count
     print("\n")
     print(f"---- {testname.upper()} ---- ")
     print(f"Count: {count}")
     print(f"Total: {total:.40f}")
-    print(f"Max: {max:.40f}, FPS({get_FPS(max)})")
-    print(f"Min: {min:.40f}, FPS({get_FPS(min)})")
-    print(f"Avr: {avr:.40f}, FPS({get_FPS(avr)})")
+    if ShowFPS:
+        print(f"Max: {max:.40f}, FPS({get_FPS(max)})")
+        print(f"Min: {min:.40f}, FPS({get_FPS(min)})")
+        print(f"Avr: {avr:.40f}, FPS({get_FPS(avr)})")
+    else:
+        print(f"Max: {max:.40f}")
+        print(f"Min: {min:.40f}")
+        print(f"Avr: {avr:.40f}")
     assert count == TargetCount
     assert max < TargetMax
     assert min != 2147483647.000

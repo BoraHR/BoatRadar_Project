@@ -53,9 +53,8 @@ class AIS_ResponderManager:
             print("AIS-Responder.db not found")
         conn.close()
         
-    def Update_SubData_With_Value(self, conn, Boat_ID, distance, CPA, TCPA):
+    def Update_SubData_With_Value(self, c, Boat_ID, distance, CPA, TCPA):
         if self.DB_Exists():
-            c = conn.cursor()
             try:
                 # conn = sqlite3.connect(self.FileRoute_sql3)
                 c.execute('''
