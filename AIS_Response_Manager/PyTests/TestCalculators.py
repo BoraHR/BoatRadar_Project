@@ -91,3 +91,168 @@ def test_debug_flag_does_not_crash(capsys):
     ConvertToX_Y(52.0, 5.0, 52.1, 5.1, debug=True)
     captured = capsys.readouterr()
     assert "X =" in captured.out
+
+from Algorithm import (
+    bearing_deg,
+    haversine,
+    velocity_vector,
+    calculate_cpa_tcpa,
+)
+
+# -----------------------------
+# bearing_deg tests
+# -----------------------------
+
+def test_bearing_north():
+    b = bearing_deg(52.0, 5.0, 53.0, 5.0)
+    assert pytest.approx(b, abs=1) == 0
+
+
+def test_bearing_east():
+    b = bearing_deg(52.0, 5.0, 52.0, 6.0)
+    assert pytest.approx(b, abs=1) == 90
+
+
+def test_bearing_south():
+    b = bearing_deg(53.0, 5.0, 52.0, 5.0)
+    assert pytest.approx(b, abs=1) == 180
+
+
+def test_bearing_west():
+    b = bearing_deg(52.0, 6.0, 52.0, 5.0)
+    assert pytest.approx(b, abs=1) == 270
+
+
+# -----------------------------
+# haversine tests
+# -----------------------------
+
+def test_haversine_same_point():
+    d = haversine(52.0, 5.0, 52.0, 5.0)
+    assert pytest.approx(d, abs=1e-9) == 0
+
+
+def test_haversine_known_lat_distance():
+    """
+    1 degree latitude ≈ 111 km
+    """
+    d = haversine(52.0, 5.0, 53.0, 5.0)
+
+    assert 110 < d < 112
+
+
+def test_haversine_symmetry():
+    d1 = haversine(52.0, 5.0, 53.0, 6.0)
+    d2 = haversine(53.0, 6.0, 52.0, 5.0)
+
+    assert pytest.approx(d1, rel=1e-9) == d2
+
+
+# -----------------------------
+# ConvertToX_Y sign tests
+# -----------------------------
+
+def test_convert_x_positive_when_moving_east():
+    x, y, _ = ConvertToX_Y(52.0, 5.0, 52.0, 6.0)
+
+    # function subtracts coordinates internally
+    assert x < 0
+
+
+def test_convert_y_positive_when_moving_south():
+    x, y, _ = ConvertToX_Y(53.0, 5.0, 52.0, 5.0)
+
+    assert y > 0
+
+
+# -----------------------------
+# velocity_vector tests
+# -----------------------------
+
+def test_velocity_vector_north():
+    vx, vy = velocity_vector(10, 0)
+
+    assert pytest.approx(vx, abs=1e-6) == 0
+    assert vy > 0
+
+
+def test_velocity_vector_east():
+    vx, vy = velocity_vector(10, 90)
+
+    assert vx > 0
+    assert pytest.approx(vy, abs=1e-6) == 0
+
+
+def test_velocity_vector_speed_conversion():
+    """
+    1 knot = 0.514444 m/s
+    """
+    vx, vy = velocity_vector(1, 0)
+
+    assert pytest.approx(vy, rel=1e-6) == 0.514444
+
+
+# -----------------------------
+# CPA / TCPA tests
+# -----------------------------
+
+def test_cpa_parallel_same_speed():
+    """
+    Same course and speed => no relative velocity
+    """
+    cpa, tcpa = calculate_cpa_tcpa(
+        0, 0, 10, 0,
+        1000, 0, 10, 0
+    )
+
+    assert cpa is None
+    assert tcpa is None
+
+
+def test_cpa_head_on_collision():
+    """
+    Ships moving directly toward each other.
+    CPA should be ~0.
+    """
+    cpa, tcpa = calculate_cpa_tcpa(
+        0, 0, 10, 90,
+        1000, 0, 10, 270
+    )
+
+    assert cpa < 1e-6
+    assert tcpa > 0
+
+
+def test_cpa_already_past_each_other():
+    """
+    TCPA negative means closest point was in the past.
+    """
+    cpa, tcpa = calculate_cpa_tcpa(
+        0, 0, 10, 90,
+        -1000, 0, 10, 270
+    )
+
+    assert tcpa < 0
+
+
+# -----------------------------
+# Edge cases
+# -----------------------------
+
+def test_lon_conversion_near_pole():
+    """
+    Longitude degrees become very large near poles.
+    """
+    result = km_to_lon_deg(1, 89.999)
+
+    assert math.isfinite(result)
+    assert result > 100
+
+
+def test_haversine_large_distance():
+    """
+    Roughly half Earth circumference.
+    """
+    d = haversine(0, 0, 0, 180)
+
+    assert 20000 < d < 20150
