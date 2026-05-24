@@ -53,6 +53,15 @@ class RadarConsole:
         if len(strValue) == 1:
             return "0"+strValue
         return strValue
+
+    def current_range_km(self):
+        return self.km_range if self.IsKM else self.km_range * 1.609344
+
+    def current_unit_label(self):
+        return "KM" if self.IsKM else "MI"
+
+    def convert_display_distance(self, km_distance):
+        return km_distance if self.IsKM else km_distance * 0.621371
     
     # -- Main Console Controller -- #
     def __init__(self, window, testMode = False):
@@ -94,7 +103,8 @@ class RadarConsole:
 
             # ---- STARTNG STATES ---- #
             self.boat_id = self.plotter.ID # Boat ID is assinged ID of your boat.
-            self.km_range = 3 # Startig Unit for Radar generation.
+            self.km_range = 3 # Starting unit for Radar generation in current unit.
+            self.IsKM = True # Toggle between KM and MI display units.
             self.time_window = 10 # The window of time to consider plotting to be valid.
 
             # ---- Directories for image loading and saving ----
@@ -158,6 +168,7 @@ class RadarConsole:
                 bg=self.primary_color,
                 relief=RAISED
             )#.pack(pady=(10, 0))
+            self.unit.bind("<Button-1>", lambda event: self.toggle_unit())
                 
             # buttons frame
             # btn_frame = Frame(window)
@@ -355,7 +366,7 @@ class RadarConsole:
 
         self.plotter.InRangeHelper(
             self.boat_id,
-            self.km_range,
+            self.current_range_km(),
             self.time_window
         )
 
@@ -419,10 +430,11 @@ class RadarConsole:
             if tcpa > -0.5 and tcpa < 0.5:
                 winsound.PlaySound(self.alarm, winsound.SND_FILENAME | winsound.SND_ASYNC)
 
+            display_distance = self.convert_display_distance(distance)
             self.table.insert("", "end", values=(
                 number,
                 boat[4], # Mmsi
-                f"{distance:.2f}",
+                f"{display_distance:.2f}",
                 f"{cpa:.1f}",
                 f"{tcpa:.1f}",
                 boat[0]  # BoatId
@@ -463,6 +475,7 @@ class RadarConsole:
 
         self.details_tree.config(height=12)
         boat, number, distance, cpa, tcpa, consoleData = target_entry
+        current_unit = self.current_unit_label()
         details = [
             ("Boat ID", boat[0]),
             ("MMSI", boat[4]),
@@ -472,7 +485,7 @@ class RadarConsole:
             ("Speed", f"{boat[7]:.2f}"),
             ("Course", f"{boat[11]:.1f}"),
             ("Heading", f"{boat[12]:.1f}"),
-            ("Distance", f"{distance:.2f} km"),
+            ("Distance", f"{self.convert_display_distance(distance):.2f} {current_unit}"),
             ("CPA", f"{cpa:.1f} m"),
             ("TCPA", f"{tcpa:.1f} s"),
             ("Last AIS", boat[1])
@@ -545,7 +558,7 @@ class RadarConsole:
         ).pack()
 
     def update_label(self):
-            self.range_var.set(f"{self.km_range}KM")
+            self.range_var.set(f"{self.km_range}{self.current_unit_label()}")
             self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img.png")
             if os.path.isfile(self.img_compas):
                 self.overlay = Image.open(self.img_compas).convert("RGBA")
@@ -581,13 +594,13 @@ class RadarConsole:
         self.update_image()
 
     def scan(self):
-        print(f"Scanning at {self.km_range} KM...")
+        print(f"Scanning at {self.km_range} {self.current_unit_label()}...")
         self.range_var.set("Scanning...")
         self.window.update()  # keep UI responsive
 
         self.plotter.InRangeHelper(
             self.boat_id,
-            self.km_range,
+            self.current_range_km(),
             self.time_window
         )
 
@@ -596,9 +609,9 @@ class RadarConsole:
 
     def _run_scan(self):
         self.plotter.InRangeHelper(
-        self.boat_id,
-        self.km_range,
-        self.time_window
+            self.boat_id,
+            self.current_range_km(),
+            self.time_window
         )
         self.window.after(0, self.update_image)
     
@@ -674,6 +687,13 @@ class RadarConsole:
         
     def style_manager(self):
         pass
+
+    def toggle_unit(self):
+        self.IsKM = not self.IsKM
+        self.table.heading("Range", text=self.current_unit_label())
+        self.update_label()
+        self.update_image()
+        self.update_table()
 
     def toggle_print(self):
         self.plotter.toglePrint()
