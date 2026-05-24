@@ -54,6 +54,15 @@ class RadarConsole:
             return "0"+strValue
         return strValue
     
+    def current_range_km(self):
+        return self.km_range if self.IsKM else self.km_range * 1.609344
+
+    def current_unit_label(self):
+        return "KM" if self.IsKM else "MI"
+
+    def convert_display_distance(self, km_distance):
+        return km_distance if self.IsKM else km_distance * 0.621371
+    
     # -- Main Console Controller -- #
     def __init__(self, window, testMode = False):
         self.plotter = RadarPlotter()
@@ -677,3 +686,5 @@ class RadarConsole:
 
     def toggle_print(self):
         self.plotter.toglePrint()
+
+    
