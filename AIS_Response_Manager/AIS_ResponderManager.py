@@ -29,6 +29,7 @@ class AIS_ResponderManager:
                         distance REAL,
                         CPA REAL,
                         TCPA REAL,
+                        BRG REAL,
                         Boat_ID INTEGER UNIQUE,
                         FOREIGN KEY (Boat_ID) REFERENCES AIS_Decoder(id) 
                     )
@@ -53,24 +54,26 @@ class AIS_ResponderManager:
             print("AIS-Responder.db not found")
         conn.close()
         
-    def Update_SubData_With_Value(self, c, Boat_ID, distance, CPA, TCPA):
+    def Update_SubData_With_Value(self, c, Boat_ID, distance, CPA, TCPA, BRG):
         if self.DB_Exists():
             try:
                 # conn = sqlite3.connect(self.FileRoute_sql3)
                 c.execute('''
-                    INSERT INTO AIS_SubData (Boat_ID ,distance, CPA, TCPA)
-                    VALUES (?, ?, ?, ?)
+                    INSERT INTO AIS_SubData (Boat_ID ,distance, CPA, TCPA, BRG)
+                    VALUES (?, ?, ?, ?, ?)
                     ON CONFLICT(Boat_ID)
                     DO UPDATE SET
                         distance = excluded.distance,
                         CPA = excluded.CPA,
-                        TCPA = excluded.TCPA
+                        TCPA = excluded.TCPA,
+                        BRG = excluded.BRG
                 ''',
                 (
                     Boat_ID,
                     distance,
                     CPA,
-                    TCPA
+                    TCPA,
+                    BRG
                 )   
                 )
                 # print("AIS_Render_History.DB created")
@@ -80,40 +83,4 @@ class AIS_ResponderManager:
         else:
             print("AIS-Responder.db not found")
 
-    # def Update_SubData_With_Tuple(self, data):
-    #     if self.DB_Exists():
-    #         try:
-    #             conn = sqlite3.connect(self.FileRoute_sql3)
-    #             c = conn.cursor()
-    #             conn = sqlite3.connect(self.FileRoute_sql3)
-    #             c = conn.cursor()
-    #             count = c.execute('''
-    #                 INSERT INTO AIS_SubData (distance, CPA, TCPA)
-    #                 VALUES (?, ?, ?)
-    #                 ON CONFLICT(Boat_ID)
-    #                 DO UPDATE SET
-    #                     distance = excluded.distance,
-    #                     CPA = excluded.CPA,
-    #                     TCPA = excluded.TCPA
-    #             ''',
-    #             (
-    #                 # True == 1, False == 0
-    #                 data[0],
-    #                 data[1],
-    #                 data[2],
-    #                 data[3]
-    #             )   
-    #             )
-    #             conn.commit()
-    #             conn.close()
-    #             # print("AIS_Render_History.DB created")
-    #         except Exception as e:
-    #             print("Error during AIS_SubData update:")
-    #             print(e)
-    #     else:
-    #         print("AIS-Responder.db not found")
-
-
-# ARM = AIS_ResponderManager(1)
-# ARM.Create_Table()
         

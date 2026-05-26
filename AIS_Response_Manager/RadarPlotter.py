@@ -6,7 +6,7 @@ import time
 from RadarDrawing import RadarDrawing 
 from datetime import datetime, timedelta
 from Algorithm import km_to_lat_deg,  km_to_lon_deg, bearing_deg, haversine, ConvertToX_Y, calculate_cpa_tcpa
-from pyais_decoder import Update_Row_AIS_Render_History
+# from pyais_decoder import Update_Row_AIS_Render_History
 from enum import Enum
 from AIS_ResponderManager import AIS_ResponderManager
 import winsound
@@ -93,7 +93,7 @@ class RadarPlotter:
                     WHERE id = ?
                 ''', (data2,)).fetchone()
                 LastRange = ConvertToX_Y(lat, lon, Lat_Long[0], Lat_Long[1])
-                Update_Row_AIS_Render_History(strDateTime, LastRange[2], data2, True)
+                # Update_Row_AIS_Render_History(strDateTime, LastRange[2], data2, True)
                 self.PrevRadarConsole_BoatID.remove(data2)
 
     # def clearTarget(self):
@@ -223,12 +223,12 @@ class RadarPlotter:
             # Always include target boat, or include if in range
             if distance <= range or is_target:
                 number += 1
-                heading_to_target = bearing_deg(lat, lon, boat[10], boat[9])
+                brg = bearing_deg(lat, lon, boat[10], boat[9])
                 if self.IsDebug:
                     print(boat)
                     print(f"lon: {boat[9]}, lat: {boat[10]}")
                     print(f"Distance from myBoat in KM: {distance:.2f}")
-                    print(f"Bearing to boat: {heading_to_target:.1f}°")
+                    print(f"Bearing to boat: {brg:.1f}°")
                 X_Y = ConvertToX_Y(lat, lon, boat[10], boat[9]) # tuple(X, Y, Distance)
 
 
@@ -248,13 +248,13 @@ class RadarPlotter:
                 scale = radar_radius_pixels / range_meters    
                 
                 if is_target:
-                    self.RadarConsoleData.append([(boat), number, distance, cpa, tcpa, (boat_id, X_Y[0], X_Y[1], number, scale, boat[12], True)])
-                    self.ARM.Update_SubData_With_Value(c, boat[0], distance, cpa, tcpa)
+                    self.RadarConsoleData.append([(boat), number, distance, cpa, tcpa, (boat_id, X_Y[0], X_Y[1], number, scale, boat[12], True), brg])
+                    self.ARM.Update_SubData_With_Value(c, boat[0], distance, cpa, tcpa, brg)
                     if boat[0] not in self.PrevRadarConsole_BoatID:
                         self.PrevRadarConsole_BoatID.append(boat[0])
                 else:
-                    self.RadarConsoleData.append([(boat), number, distance, cpa, tcpa, (boat_id, X_Y[0], X_Y[1], number, scale, boat[12], False)])
-                    self.ARM.Update_SubData_With_Value(c, boat[0], distance, cpa, tcpa)
+                    self.RadarConsoleData.append([(boat), number, distance, cpa, tcpa, (boat_id, X_Y[0], X_Y[1], number, scale, boat[12], False), brg])
+                    self.ARM.Update_SubData_With_Value(c, boat[0], distance, cpa, tcpa, brg)
                     
                     if boat[0] not in self.PrevRadarConsole_BoatID:
                         self.PrevRadarConsole_BoatID.append(boat[0])

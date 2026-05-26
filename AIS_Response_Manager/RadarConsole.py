@@ -224,19 +224,21 @@ class RadarConsole:
                 bg=self.secondary_color,
                 relief=RAISED
             )
-            self.table = ttk.Treeview(self.right_frame, columns=("ID", "Mmsi", "Range", "CPA", "TCPA", "BoatID"), show="headings", height=10)
+            self.table = ttk.Treeview(self.right_frame, columns=("ID", "Mmsi", "Range", "CPA", "TCPA", "BRG", "BoatID"), show="headings", height=10)
 
             self.table.heading("ID", text="ID")
             self.table.heading("Mmsi", text="Mmsi")
             self.table.heading("Range", text="KM")
             self.table.heading("CPA", text="CPA (m)")
             self.table.heading("TCPA", text="TCPA (s)")
+            self.table.heading("BRG", text="T_BRG")
             # Set column widths and prevent resizing
             self.table.column("ID", width=50, stretch=False)
             self.table.column("Mmsi", width=80, stretch=False)
             self.table.column("Range", width=60, stretch=False)
             self.table.column("CPA", width=80, stretch=False)
             self.table.column("TCPA", width=80, stretch=False)
+            self.table.column("BRG", width=80, stretch=False)
 
             self.table.bind("<<TreeviewSelect>>", self.setTarget)
 
@@ -424,7 +426,7 @@ class RadarConsole:
         
         # Insert new data
         for entry in self.plotter.RadarConsoleData:
-            boat, number, distance, cpa, tcpa, consoleData = entry
+            boat, number, distance, cpa, tcpa, consoleData, brg = entry
             if tcpa > -0.5 and tcpa < 0.5:
                 winsound.PlaySound(self.alarm, winsound.SND_FILENAME | winsound.SND_ASYNC)
 
@@ -434,6 +436,7 @@ class RadarConsole:
                 f"{distance:.2f}",
                 f"{cpa:.1f}",
                 f"{tcpa:.1f}",
+                f"{brg:.0f}°",
                 boat[0]  # BoatId
             ))
 
@@ -470,8 +473,8 @@ class RadarConsole:
             self.details_tree.insert("", "end", values=("Target", "Selected target not in current range"))
             return
 
-        self.details_tree.config(height=12)
-        boat, number, distance, cpa, tcpa, consoleData = target_entry
+        self.details_tree.config(height=13)
+        boat, number, distance, cpa, tcpa, consoleData, brg = target_entry
         details = [
             ("Boat ID", boat[0]),
             ("MMSI", boat[4]),
@@ -484,6 +487,7 @@ class RadarConsole:
             ("Distance", f"{distance:.2f} km"),
             ("CPA", f"{cpa:.1f} m"),
             ("TCPA", f"{tcpa:.1f} s"),
+            ("T_BRG", f"{brg:.0f}°"),
             ("Last AIS", boat[1])
         ]
 
@@ -670,7 +674,7 @@ class RadarConsole:
         if not values[0]:  # skip empty placeholder rows
             return
         
-        boat_id = int(values[5])
+        boat_id = int(values[6])
         self.plotter.setTarget(int(boat_id))
         self.update_target_details()
         # if self.plotter.targetId == int(boat_id):
@@ -686,5 +690,3 @@ class RadarConsole:
 
     def toggle_print(self):
         self.plotter.toglePrint()
-
-    
