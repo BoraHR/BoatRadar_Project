@@ -31,6 +31,8 @@ class RadarDrawing:
         self.bg_loc = os.path.join(self.BASE_DIR, f"Radar/Background/R={self.RGB[0]},G={self.RGB[1]},B={self.RGB[2]}")
         self.ps_loc = os.path.join(self.BASE_DIR, f"Radar/PostScript/drawing.ps")
         self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img.png")
+        self.ps_RAM = None
+        self.img_RAM = None
         # Threading for async image saves
         self._save_thread = None
         self._save_lock = threading.Lock()
@@ -332,10 +334,12 @@ class RadarDrawing:
                         # Composite works NOW
                         final = Image.alpha_composite(bg, img)
 
-                        final.save(self.img_loc)
+                        # final.save(self.img_loc)
+                        self.img_RAM = final
                     else:
                         final = Image.open(self.ps_loc).convert("RGBA")
-                        final.save(self.img_loc)
+                        # final.save(self.img_loc)
+                        self.img_RAM = final
                     
                     break  # Success - exit retry loop
                     

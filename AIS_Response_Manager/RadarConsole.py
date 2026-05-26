@@ -617,11 +617,13 @@ class RadarConsole:
     
     def update_image(self):
 
-        if not os.path.isfile(self.img_loc):
+        if not self.plotter.draw.img_RAM:
+            print("Image load failed: Image is NONE refrence. Aboarting img reading")
+            print()
             return
 
         try:
-            base = Image.open(self.img_loc).convert("RGBA")
+            base = self.plotter.draw.img_RAM.convert("RGBA")
             base = base.resize((750, 750), Image.Resampling.LANCZOS)
             # self.Rotation = (self.Rotation + 1) % 360
             # if os.path.isfile(self.img_compas):
