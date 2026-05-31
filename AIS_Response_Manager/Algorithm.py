@@ -1,5 +1,11 @@
 import math
 
+def km_to_miles(km):
+    return km * 0.621371
+
+def miles_to_km(miles):
+    return miles * 1.609344
+
 def km_to_lat_deg(km):
     return km / 111.0
 

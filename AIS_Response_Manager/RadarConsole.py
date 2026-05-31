@@ -10,6 +10,7 @@ import os, shutil
 from PIL import Image, ImageTk, ImageDraw
 import time
 import winsound
+from Algorithm import km_to_miles
 
 class RadarConsole:
     # https://www.adobe.com/creativecloud/design/discover/secondary-colors.html
@@ -53,15 +54,6 @@ class RadarConsole:
         if len(strValue) == 1:
             return "0"+strValue
         return strValue
-    
-    def current_range_km(self):
-        return self.km_range if self.IsKM else self.km_range * 1.609344
-
-    def current_unit_label(self):
-        return "KM" if self.IsKM else "MI"
-
-    def convert_display_distance(self, km_distance):
-        return km_distance if self.IsKM else km_distance * 0.621371
     
     # -- Main Console Controller -- #
     def __init__(self, window, testMode = False):
@@ -161,9 +153,10 @@ class RadarConsole:
                 text="Radar Range",
                 font=("Consolas", 14))#.pack(pady=(10, 0))
 
-            self.unit = Label(self.left_frame,
+            self.unit = Button(self.left_frame,
                 textvariable=self.range_var,
-                font=("Consolas", 20, "bold"),
+                font=("Consolas", 16, "bold"),
+                command=self.plotter.toggleUnit,
                 bg=self.primary_color,
                 relief=RAISED
             )#.pack(pady=(10, 0))
@@ -289,6 +282,15 @@ class RadarConsole:
             self.conf_RightFrame()
             self.radar_loop()
             self.Rot = 0
+
+    def current_range_km(self):
+        return self.km_range if self.plotter.IsKM else self.km_range * 1.609344
+
+    def current_unit_label(self):
+        return f"{self.km_range}KM" if self.plotter.IsKM else f"{self.km_range}MI"
+
+    def convert_display_distance(self, km_distance):
+        return km_distance if self.plotter.IsKM else km_distance * 0.621371
 
     def conf_Menubar(self):
         # File menu - TEMPLATE
@@ -429,11 +431,14 @@ class RadarConsole:
             boat, number, distance, cpa, tcpa, consoleData, brg = entry
             if tcpa > -0.5 and tcpa < 0.5:
                 winsound.PlaySound(self.alarm, winsound.SND_FILENAME | winsound.SND_ASYNC)
+            string_distance = f"{distance:.2f} km"
+            if not self.plotter.IsKM:
+                string_distance = f"{km_to_miles(distance):.2f} mi"
 
             self.table.insert("", "end", values=(
                 number,
                 boat[4], # Mmsi
-                f"{distance:.2f}",
+                f"{string_distance}",
                 f"{cpa:.1f}",
                 f"{tcpa:.1f}",
                 f"{brg:.0f}°",
@@ -473,8 +478,12 @@ class RadarConsole:
             self.details_tree.insert("", "end", values=("Target", "Selected target not in current range"))
             return
 
+        
         self.details_tree.config(height=13)
         boat, number, distance, cpa, tcpa, consoleData, brg = target_entry
+        string_distance = f"{distance:.2f} km"
+        if not self.plotter.IsKM:
+            string_distance = f"{km_to_miles(distance):.2f} mi"
         details = [
             ("Boat ID", boat[0]),
             ("MMSI", boat[4]),
@@ -484,7 +493,7 @@ class RadarConsole:
             ("Speed", f"{boat[7]:.2f}"),
             ("Course", f"{boat[11]:.1f}"),
             ("Heading", f"{boat[12]:.1f}"),
-            ("Distance", f"{distance:.2f} km"),
+            ("Distance", f"{string_distance}"),
             ("CPA", f"{cpa:.1f} m"),
             ("TCPA", f"{tcpa:.1f} s"),
             ("T_BRG", f"{brg:.0f}°"),
@@ -558,7 +567,7 @@ class RadarConsole:
         ).pack()
 
     def update_label(self):
-            self.range_var.set(f"{self.km_range}KM")
+            self.range_var.set(self.current_unit_label())
             self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img.png")
             if os.path.isfile(self.img_compas):
                 self.overlay = Image.open(self.img_compas).convert("RGBA")
@@ -575,6 +584,7 @@ class RadarConsole:
                     f"{self.set_2digit(local_DT.tm_year)}",
                 bg=self.secondary_color
             )
+
 
     def heading_string_format(self):
         strHeading = str(round(self.myHeading))
@@ -650,7 +660,6 @@ class RadarConsole:
             # Convert to Tk image
             img = ImageTk.PhotoImage(base, master=self.window)
             
-
             # Save reference
             self.composite = img
 

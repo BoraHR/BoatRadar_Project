@@ -18,7 +18,7 @@ sys.path.append(BASE_DIR)
 
 import AIS_ResponderManager
 from AIS_ResponderManager import AIS_ResponderManager
-from test_pyais_decoder import DB_Exists, Decode_file, Save_DecodedData
+from test_pyais_decoder import DB_Exists, Save_DecodedData
 from Algorithm import haversine, bearing_deg, ConvertToX_Y, velocity_vector, calculate_cpa_tcpa, km_to_lat_deg, km_to_lon_deg
 
 from RadarConsole import RadarConsole
@@ -55,7 +55,7 @@ def ProgramForEachTest(size = 0):
     testARM = AIS_ResponderManager(1, True)
 
     testDrawer = RadarDrawing()
-    testPlotter = RadarPlotter()
+    testPlotter = RadarPlotter(True)
 
     window = Tk()
     testConsole = RadarConsole(window, True)
@@ -94,10 +94,11 @@ def test_initialize():
     end = time.perf_counter()
     result = end - start
     print(f"Result: {result:.40f}")
+    conn.close()
     assert result < 0.005
     assert boat != None
     assert boat[0] == 1
-    conn.close()
+    
 
 def test_SQL_retrieve_all_bb():
     print("\n")
@@ -122,9 +123,10 @@ def test_SQL_retrieve_all_bb():
     result = end - start
     print(f"Result (Connected): {result:.40f}")
     print(f"Count (Connected): {len(boats)}")
+    conn.close()
     assert result < 0.0025
     assert len(boats) == 750
-    conn.close()
+    
 
 def test_SQL_retrieve_all_with_foreachLoop():
     print("\n")
@@ -169,8 +171,9 @@ def test_SQL_update_SubData():
             0, 0, myBoat[7], myBoat[12],
             X_Y[0], X_Y[1], boat[7], boat[12]
         )
+        brg = bearing_deg(myBoat[10], myBoat[9], boat[10], boat[9])
         start = time.perf_counter()
-        testARM.Update_SubData_With_Value(conn, boat[0], distance, cpa, tcpa)
+        testARM.Update_SubData_With_Value(conn, boat[0], distance, cpa, tcpa, brg)
         end = time.perf_counter()
         result = end - start
         if result > max:
@@ -181,6 +184,7 @@ def test_SQL_update_SubData():
         count += 1
     GetResults_WithTargets("SQL UPDATE SUBDATA", count, total, max, min, 750, 0.009, 0.0003, 0.65, 0.03)
     conn.close()
+    # MODIFIED TARGETS
     # assert count == 749
     # assert max < 0.003 * 3
     # assert min != 2147483647.000

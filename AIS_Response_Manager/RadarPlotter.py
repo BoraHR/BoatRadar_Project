@@ -5,7 +5,7 @@ from pyais.stream import FileReaderStream
 import time
 from RadarDrawing import RadarDrawing 
 from datetime import datetime, timedelta
-from Algorithm import km_to_lat_deg,  km_to_lon_deg, bearing_deg, haversine, ConvertToX_Y, calculate_cpa_tcpa
+from Algorithm import km_to_lat_deg,  km_to_lon_deg, bearing_deg, haversine, ConvertToX_Y, calculate_cpa_tcpa, km_to_miles, miles_to_km
 # from pyais_decoder import Update_Row_AIS_Render_History
 from enum import Enum
 from AIS_ResponderManager import AIS_ResponderManager
@@ -31,6 +31,7 @@ class RadarPlotter:
 
     def __init__(self, IsTest = False):
         self.IsDebug = False
+        self.IsKM = True
         self.FileRoute_sql3 = FileRoute_sql3
         self.conn = sqlite3.connect(FileRoute_sql3)
         self.ID = ID
@@ -53,6 +54,12 @@ class RadarPlotter:
             self.IsDebug = False
         else:
             self.IsDebug = True
+
+    def toggleUnit(self):
+        if self.IsKM:
+            self.IsKM = False
+        else:
+            self.IsKM = True
 
     def setTarget(self, id):
         try:
@@ -77,27 +84,6 @@ class RadarPlotter:
 
     def clearConsoleData(self):
         self.RadarConsoleData.clear()
-
-    def saveBoatsOutOfRange(self, myBoat):
-        lon = myBoat[9]
-        lat = myBoat[10]
-        strDateTime = datetime.now().isoformat()
-        
-        for data2 in self.PrevRadarConsole_BoatID:
-            history = lambda id, RCD : any(item[0][0] == id for item in RCD)
-            if history(data2, self.RadarConsoleData) == False:
-                c = self.conn.cursor()
-                Lat_Long = c.execute('''
-                    SELECT Longitude, Latitude
-                    FROM AIS_Decoder
-                    WHERE id = ?
-                ''', (data2,)).fetchone()
-                LastRange = ConvertToX_Y(lat, lon, Lat_Long[0], Lat_Long[1])
-                # Update_Row_AIS_Render_History(strDateTime, LastRange[2], data2, True)
-                self.PrevRadarConsole_BoatID.remove(data2)
-
-    # def clearTarget(self):
-    #     self.targetId = -1
 
     def GetBoat(self, boat_id):
         c = self.conn.cursor()
@@ -139,6 +125,12 @@ class RadarPlotter:
     # range = distance between your boat and other boat in both Lad and long
     # timeWindow = how far appart the received message is allowed to be shown in the list of other Boats
     def InRangeHelper(self, boat_id, range=0.009, timeWindow = 10.00):
+        original_range_km = range
+        if not self.IsKM:
+            display_range = km_to_miles(original_range_km)
+        else:
+            display_range = original_range_km
+
         self.clearConsoleData()
         self.draw.clear_otherBoats()
         start = time.time()
@@ -165,10 +157,10 @@ class RadarPlotter:
         speed = myBoat[7]
         heading = myBoat[12]
 
-        performance = self.draw.draw_radar_Custom(range, heading, speed)
+        performance = self.draw.draw_radar_Custom(display_range, heading, speed, self.IsKM)
         # CONVERT KM → DEGREE BOUNDING BOX
-        lat_range = km_to_lat_deg(range)
-        lon_range = km_to_lon_deg(range, lat)
+        lat_range = km_to_lat_deg(original_range_km)
+        lon_range = km_to_lon_deg(original_range_km, lat)
 
         min_lon = lon - lon_range
         max_lon = lon + lon_range
@@ -231,8 +223,10 @@ class RadarPlotter:
                     print(f"Bearing to boat: {brg:.1f}°")
                 X_Y = ConvertToX_Y(lat, lon, boat[10], boat[9]) # tuple(X, Y, Distance)
 
-
-                range_meters = range * 1000
+                if self.IsKM:
+                    range_meters = range * 1000
+                else:
+                    range_meters = miles_to_km(range) * 1000
                 radar_radius_pixels = 250
 
                 cpa, tcpa = calculate_cpa_tcpa(

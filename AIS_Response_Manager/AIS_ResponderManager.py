@@ -10,6 +10,7 @@ class AIS_ResponderManager:
         self.FileRoute_sql3 = FileRoute_sql3
         if IsTest:
             self.FileRoute_sql3 = os.path.join(BASE_DIR, "PyTests/MockData/AIS-Responder.db")
+            self.USER_ID = 1
         self.USER_ID = _USER_ID # Refrence to self.
         self.Create_Table()
 

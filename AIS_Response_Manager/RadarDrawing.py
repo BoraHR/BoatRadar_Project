@@ -5,7 +5,7 @@ import os
 from PIL import Image
 import time
 import threading
-from Algorithm import calculate_cpa_tcpa
+from Algorithm import calculate_cpa_tcpa, miles_to_km
 
 screen = turtle.Screen()
 resulotionScale = 612
@@ -23,6 +23,7 @@ boats_t.speed(0)
 class RadarDrawing:
     def __init__(self):
         # radar_built = False
+        
         self.hideScreen = False
         self.KM_build = -1
         self.plotedBoats = []
@@ -47,10 +48,11 @@ class RadarDrawing:
         
         
     # KM the amount of lines represent keep in mind it must be an int.
-    def draw_radar_Custom(self, KM, heading, speed):
+    def draw_radar_Custom(self, KM, heading, speed, IsKM=True):
         # screen.bgcolor(float(self.RGB[0]/255), float(self.RGB[1]/255), float(self.RGB[2]/255))
         start = time.time()
-        
+        if not IsKM:
+            KM = round(miles_to_km(KM)) # round to prefent float in-accuracy       
         if KM < 1:
             KM = 1
         self.KM_build
@@ -62,6 +64,7 @@ class RadarDrawing:
         KM = int(math.ceil(KM))
 
         radius_list = [250]
+
         multiplier = 0
         multiplier += KM
         while(multiplier >= 1):
