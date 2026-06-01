@@ -57,6 +57,7 @@ class RadarConsole:
     
     # -- Main Console Controller -- #
     def __init__(self, window, testMode = False):
+        self.IsDark = False
         self.plotter = RadarPlotter()
         
         # RED == self.RGB_{Pri/Sec/Ter}[0]
@@ -160,10 +161,6 @@ class RadarConsole:
                 bg=self.primary_color,
                 relief=RAISED
             )#.pack(pady=(10, 0))
-                
-            # buttons frame
-            # btn_frame = Frame(window)
-            # btn_frame.pack(pady=10)
 
             self.KM_prev = Button(self.left_frame,
                 text="<",
@@ -180,6 +177,14 @@ class RadarConsole:
                 command=lambda: self.change_range(+1),
                 bg=self.secondary_color
             )#.pack(side=LEFT, padx=5)
+
+            self.Theme = Button(self.left_frame,
+                text="SUN",
+                width=3,
+                font=("Consolas", 16),
+                command=self.toggle_theme,
+                bg=self.secondary_color
+            )
 
             self.turtle_togle = Button(self.center_frame,
                 text="HIDE DRAWER",
@@ -324,6 +329,7 @@ class RadarConsole:
         self.KM_prev.grid(row=0, column=0, sticky="e", padx= (10,0), pady=(20,0))
         self.unit.grid(row=0, column=1, sticky="ew", pady=(20,0))
         self.KM_next.grid(row=0, column=2, sticky="w", pady=(20,0))
+        self.Theme.grid(row=1, column=0, sticky="ew", padx= (10,0))
 
     def conf_CenterFrame(self):
         self.image_label.grid(row=1, column=0, sticky="n", padx=10)
@@ -375,7 +381,7 @@ class RadarConsole:
         self.update_image()
         self.update_table()
 
-        # run again after 100 ms
+        # run again after 100 ms'
         if self.window.winfo_exists():
             self.window.after(100, self.radar_loop)
         end = time.time()
@@ -567,23 +573,23 @@ class RadarConsole:
         ).pack()
 
     def update_label(self):
-            self.range_var.set(self.current_unit_label())
-            self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img.png")
-            if os.path.isfile(self.img_compas):
-                self.overlay = Image.open(self.img_compas).convert("RGBA")
-            
-            # hh:mm:ss  DD-MM-YYYY
-            local_DT = time.localtime()
+        self.range_var.set(self.current_unit_label())
+        self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img.png")
+        if os.path.isfile(self.img_compas):
+            self.overlay = Image.open(self.img_compas).convert("RGBA")
+        
+        # hh:mm:ss  DD-MM-YYYY
+        local_DT = time.localtime()
 
-            self.time.config(
-                text=f"{self.set_2digit(local_DT.tm_hour)}:"
-                    f"{self.set_2digit(local_DT.tm_min)}:"
-                    f"{self.set_2digit(local_DT.tm_sec)}|"
-                    f"{self.set_2digit(local_DT.tm_mday)}-"
-                    f"{self.set_2digit(local_DT.tm_mon)}-"
-                    f"{self.set_2digit(local_DT.tm_year)}",
-                bg=self.secondary_color
-            )
+        self.time.config(
+            text=f"{self.set_2digit(local_DT.tm_hour)}:"
+                f"{self.set_2digit(local_DT.tm_min)}:"
+                f"{self.set_2digit(local_DT.tm_sec)}|"
+                f"{self.set_2digit(local_DT.tm_mday)}-"
+                f"{self.set_2digit(local_DT.tm_mon)}-"
+                f"{self.set_2digit(local_DT.tm_year)}",
+            bg=self.secondary_color
+        )
 
 
     def heading_string_format(self):
@@ -701,3 +707,58 @@ class RadarConsole:
 
     def toggle_print(self):
         self.plotter.toglePrint()
+
+    def toggle_theme(self):
+        if self.IsDark:
+            self.Theme.configure(text="SUN")
+            self.set_R_primary(144)
+            self.set_G_primary(144)
+            self.set_B_primary(144)
+
+            self.set_R_secondary(141)
+            self.set_G_secondary(199)
+            self.set_B_secondary(130)
+
+            self.set_R_tertiary(127)
+            self.set_G_tertiary(158)
+            self.set_B_tertiary(128)
+            self.plotter.draw.setBGColor_RGB(self.RGB_Pri[0], self.RGB_Pri[1], self.RGB_Pri[2])
+            self.IsDark = False
+            self.plotter.draw.IsDark = False # to indentify drawer to change cirkel lines and crosshair style
+        
+        else:
+            self.Theme.configure(text="DARK")
+            self.set_R_primary(0)
+            self.set_G_primary(76)
+            self.set_B_primary(153)
+
+            self.set_R_secondary(102)
+            self.set_G_secondary(102)
+            self.set_B_secondary(0)
+
+            self.set_R_tertiary(102)
+            self.set_G_tertiary(0)
+            self.set_B_tertiary(0)
+            self.plotter.draw.setBGColor_RGB(self.RGB_Pri[0], self.RGB_Pri[1], self.RGB_Pri[2])
+            self.IsDark = True
+            self.plotter.draw.IsDark = True
+        
+        self.update_UI_colorscheme()
+
+    def update_UI_colorscheme(self):
+        self.primary_color = self.from_rgb(tuple(self.RGB_Pri))
+        self.secondary_color = self.from_rgb(tuple(self.RGB_Sec))
+        self.tertiary_color = self.from_rgb(tuple(self.RGB_Ter))
+        # --- Primary update --
+        self.unit.configure(bg=self.primary_color)
+        # --- Secondary update --
+        self.Theme.configure(bg=self.secondary_color)
+        self.headingDisplay.configure(bg=self.secondary_color)
+        self.speedDisplay.configure(bg=self.secondary_color)
+        self.KM_prev.configure(bg=self.secondary_color)
+        self.KM_next.configure(bg=self.secondary_color)
+        # --- tertialy update --
+        self.speedLabel.configure(bg=self.tertiary_color)
+        self.headingLabel.configure(bg=self.tertiary_color)
+        
+        

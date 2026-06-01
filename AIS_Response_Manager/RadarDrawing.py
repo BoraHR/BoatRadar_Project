@@ -23,7 +23,7 @@ boats_t.speed(0)
 class RadarDrawing:
     def __init__(self):
         # radar_built = False
-        
+        self.IsDark = False
         self.hideScreen = False
         self.KM_build = -1
         self.plotedBoats = []
@@ -51,6 +51,8 @@ class RadarDrawing:
     def draw_radar_Custom(self, KM, heading, speed, IsKM=True):
         # screen.bgcolor(float(self.RGB[0]/255), float(self.RGB[1]/255), float(self.RGB[2]/255))
         start = time.time()
+        if self.IsDark:
+            radar_t.color("#FFFF99")
         if not IsKM:
             KM = round(miles_to_km(KM)) # round to prefent float in-accuracy       
         if KM < 1:
@@ -73,12 +75,15 @@ class RadarDrawing:
         
         radius_list.reverse()
         radar_t.color("darkgray")
+        if self.IsDark:
+            radar_t.color("#FFFF99")
         for r in radius_list:
             radar_t.penup()
             radar_t.goto(0, -r)
             radar_t.pendown()
             radar_t.circle(r)
         self.draw_crosshair(radius_list[-1])
+        radar_t.color("darkgray")
         # radar_t.write(str(KM), align="center", font=("Consolas", 16, "bold"))
         self.plot_myBoat(heading, speed, KM)
         end = time.time()
@@ -201,7 +206,7 @@ class RadarDrawing:
 
         heading = heading % 360 # fail save 
         radar_t.shape("arrow")
-        
+        radar_t.penup() # prefents upper line of crosshair redrawing
         radar_t.goto(0, 0) # Your boat is always in center of radar
         radar_t.setheading(90 - heading)
         radar_t.pendown()
@@ -246,7 +251,7 @@ class RadarDrawing:
         try:
             import time as time_module
             self.ps_loc = os.path.join(self.BASE_DIR, f"Radar/PostScript/drawing.ps")
-            self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img.png")
+            # self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img.png")
             
             ts = turtle.Screen()
             ts.bgcolor(self.get_bgcolor())
