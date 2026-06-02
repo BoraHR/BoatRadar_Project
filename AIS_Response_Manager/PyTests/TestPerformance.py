@@ -98,6 +98,8 @@ def test_initialize():
     assert result < 0.005
     assert boat != None
     assert boat[0] == 1
+    testConsole.window.destroy()
+    
     
 
 def test_SQL_retrieve_all_bb():
@@ -126,7 +128,7 @@ def test_SQL_retrieve_all_bb():
     conn.close()
     assert result < 0.0025
     assert len(boats) == 750
-    
+    time.sleep(0.01)
 
 def test_SQL_retrieve_all_with_foreachLoop():
     print("\n")
@@ -151,6 +153,7 @@ def test_SQL_retrieve_all_with_foreachLoop():
     assert result < 0.005
     assert len(boats) == 750
     assert count == 750
+    time.sleep(0.01)
 
 def test_SQL_update_SubData():
     test_FileRoute_sql3 = os.path.join(BASE_DIR, "PyTests/MockData/AIS-Responder.db")
@@ -190,6 +193,8 @@ def test_SQL_update_SubData():
     # assert min != 2147483647.000
     # assert avr < 0.0001 * 3
     # assert total < 0.01 * 3
+    testConsole.window.destroy()
+    time.sleep(0.01)
 
 def test_lat_long_algorithm_speed():
     i = 1
@@ -211,6 +216,7 @@ def test_lat_long_algorithm_speed():
         count += 1
         i += 1
     GetResults("LAT_LON_PERFORMANCE", count, total, max, min)
+    time.sleep(0.01)
 
 def test_vector_calculation_speed():
     test_FileRoute_sql3 = os.path.join(BASE_DIR, "PyTests/MockData/AIS-Responder.db")
@@ -237,6 +243,8 @@ def test_vector_calculation_speed():
         count += 1
     
     GetResults("VECTOR_CALLCULATION (calculate_cpa_tcpa helper)", count, total, max, min)
+    testConsole.window.destroy()
+    time.sleep(0.01)
 
 def test_convertX_Y_algorithm_speed():
     run_algorithm_speed_test("X_Y_CONVERSION (calculate_cpa_tcpa helper)", ConvertToX_Y)
@@ -271,12 +279,16 @@ def test_calculate_cpa_tcpa():
         count += 1
 
     GetResults("CALCULATE_CPA_TCPA", count, total, max, min)
+    testConsole.window.destroy()
+    time.sleep(0.01)
 
 def test_haversine_algorithm_speed():
     run_algorithm_speed_test("HAVERSINE", haversine)
+    time.sleep(0.01)
 
 def test_bearing_algorithm_speed():
     run_algorithm_speed_test("BEARING", bearing_deg)
+    time.sleep(0.01)
 
 def run_algorithm_speed_test(testname, algorithm):
     test_FileRoute_sql3 = os.path.join(BASE_DIR, "PyTests/MockData/AIS-Responder.db")
@@ -301,6 +313,8 @@ def run_algorithm_speed_test(testname, algorithm):
         total += result
         count += 1
     GetResults(testname, count, total, max, min)
+    testConsole.window.destroy()
+    time.sleep(0.01)
 
 def test_ImgSave_JustSelf_3KM():
     ImageSaveLoop("RADAR LOOP NO TARGETS 3km", 3, False)
@@ -367,6 +381,7 @@ def ImageSaveLoop(testname, KM, IncludeTargets):
         GetResults_WithTargets(testname, count, total, max, min, 10, 1.2, 0.6, 6.00)
     else:
         GetResults_WithTargets(testname, count, total, max, min, 10, 1.0, 0.5, 5.00)
+    testConsole.window.destroy()
 
 def GetResults(testname, count, total, max, min):
     avr = total / count

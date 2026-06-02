@@ -76,7 +76,7 @@ class RadarDrawing:
         radius_list.reverse()
         radar_t.color("darkgray")
         if self.IsDark:
-            radar_t.color("#FFFF99")
+            radar_t.color("darkblue")
         for r in radius_list:
             radar_t.penup()
             radar_t.goto(0, -r)
@@ -369,12 +369,12 @@ class RadarDrawing:
         return (self.RGB[0]/255, self.RGB[1]/255, self.RGB[2]/255)
     
     def screen_toggle(self):
-        if self.hideScreen:
-            self.hideScreen = False
-            screen.setup(width=resulotionScale, height=resulotionScale)
+        turtleWin = screen.getcanvas().winfo_toplevel()
+        if turtleWin.state() == "iconic":
+            turtleWin.deiconify()
         else:
             self.hideScreen = True
-            screen.setup(width=resulotionScale, height=resulotionScale, startx=1800)
+            turtleWin.iconify()
             
     def color_bg(self):
         # https://www.geeksforgeeks.org/python/python-pillow-colors-on-an-image/

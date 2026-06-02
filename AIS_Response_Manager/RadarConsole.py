@@ -77,6 +77,7 @@ class RadarConsole:
         self.plotter.draw.setBGColor_RGB(self.RGB_Pri[0], self.RGB_Pri[1], self.RGB_Pri[2])
 
         self.IsRelativeHeading = False
+        self.IsFullscreen = True
 
         # -- Name Conversion for thinker colorscheme -- #
         self.primary_color = self.from_rgb(tuple(self.RGB_Pri))
@@ -92,7 +93,7 @@ class RadarConsole:
         self.testMode = testMode
         if not testMode:
             self.window.title("AIS Radar Console")
-            # self.window.attributes('-fullscreen', True)
+            self.window.attributes('-fullscreen', True)
 
             # ---- STARTNG STATES ---- #
             self.boat_id = self.plotter.ID # Boat ID is assinged ID of your boat.
@@ -122,6 +123,8 @@ class RadarConsole:
             self.left_frame.grid(row=0, column=0, sticky="nsew")
             self.left_frame.rowconfigure(1, weight=1)
             self.left_frame.columnconfigure(0, weight=1)
+            self.left_frame.columnconfigure(1, weight=1)
+            self.left_frame.columnconfigure(2, weight=1)
             # CENTER
             self.center_frame = Frame(window)
             self.center_frame.grid(row=0, column=1, sticky="nsew")
@@ -318,6 +321,7 @@ class RadarConsole:
         setting_menu  = tk.Menu(self.menu_bar, tearoff=0)
         setting_menu.add_command(label="Color Settings", command=self.open_color_window)
         setting_menu.add_command(label="DEBUG_mode (DEV Only)", command=self.toggle_print)
+        setting_menu.add_command(label="Fullscreen toggle", command=self.toggle_fullscreen)
         
         self.menu_bar.add_cascade(label="settings", menu=setting_menu)
 
@@ -329,7 +333,14 @@ class RadarConsole:
         self.KM_prev.grid(row=0, column=0, sticky="e", padx= (10,0), pady=(20,0))
         self.unit.grid(row=0, column=1, sticky="ew", pady=(20,0))
         self.KM_next.grid(row=0, column=2, sticky="w", pady=(20,0))
-        self.Theme.grid(row=1, column=0, sticky="ew", padx= (10,0))
+        self.Theme.grid(
+            row=1,
+            column=0,
+            columnspan=3,
+            sticky="ew",
+            padx=10,
+            pady=(10,0)
+        )
 
     def conf_CenterFrame(self):
         self.image_label.grid(row=1, column=0, sticky="n", padx=10)
@@ -725,32 +736,50 @@ class RadarConsole:
             self.plotter.draw.setBGColor_RGB(self.RGB_Pri[0], self.RGB_Pri[1], self.RGB_Pri[2])
             self.IsDark = False
             self.plotter.draw.IsDark = False # to indentify drawer to change cirkel lines and crosshair style
+            self.img_compas = os.path.join(self.BASE_DIR, f"Radar/Compas/Current/360_Rotation-TranparantCenter.png")
+            self.apply_light_theme()
         
         else:
             self.Theme.configure(text="DARK")
             self.set_R_primary(0)
-            self.set_G_primary(76)
-            self.set_B_primary(153)
+            self.set_G_primary(23)
+            self.set_B_primary(68)
 
-            self.set_R_secondary(102)
-            self.set_G_secondary(102)
-            self.set_B_secondary(0)
+            self.set_R_secondary(91)
+            self.set_G_secondary(149)
+            self.set_B_secondary(70)
 
-            self.set_R_tertiary(102)
-            self.set_G_tertiary(0)
-            self.set_B_tertiary(0)
+            self.set_R_tertiary(77)
+            self.set_G_tertiary(108)
+            self.set_B_tertiary(78)
             self.plotter.draw.setBGColor_RGB(self.RGB_Pri[0], self.RGB_Pri[1], self.RGB_Pri[2])
             self.IsDark = True
             self.plotter.draw.IsDark = True
+            self.img_compas = os.path.join(self.BASE_DIR, f"Radar/Compas/Current/360_Rotation-TranparantCenter_Dark.png")
+            self.apply_dark_theme()
         
         self.update_UI_colorscheme()
+        self.plotter.draw.KM_build = -1
+
+    def toggle_fullscreen(self):
+        if self.IsFullscreen:
+            self.window.attributes('-fullscreen', False)
+            self.IsFullscreen = False
+        else:
+            self.window.attributes('-fullscreen', True)
+            self.IsFullscreen = True
+
+        
 
     def update_UI_colorscheme(self):
         self.primary_color = self.from_rgb(tuple(self.RGB_Pri))
         self.secondary_color = self.from_rgb(tuple(self.RGB_Sec))
         self.tertiary_color = self.from_rgb(tuple(self.RGB_Ter))
         # --- Primary update --
-        self.unit.configure(bg=self.primary_color)
+        if self.IsDark:
+            self.unit.configure(bg=self.primary_color, fg="white")
+        else:
+            self.unit.configure(bg=self.primary_color, fg="black")
         # --- Secondary update --
         self.Theme.configure(bg=self.secondary_color)
         self.headingDisplay.configure(bg=self.secondary_color)
@@ -761,4 +790,104 @@ class RadarConsole:
         self.speedLabel.configure(bg=self.tertiary_color)
         self.headingLabel.configure(bg=self.tertiary_color)
         
+    def apply_dark_theme(self):
+        self.style.theme_use("clam")
+        self.style.configure(
+            "Dark.Treeview",
+            background="#262626",
+            fieldbackground="#262626",
+            foreground="white",
+            rowheight=25,
+            bordercolor="#262626",
+            borderwidth=0
+        )
+        self.style.configure(
+            "Dark.Treeview.Heading",
+            background="#333333",
+            foreground="white",
+            relief="flat"
+        )
+        self.style.map(
+            "Dark.Treeview",
+            background=[("selected", "#226723")],
+            foreground=[("selected", "white")]
+        )
+
+        self.style.configure(
+            "Dark.Combobox.Heading",
+            fieldbackground="#262626",
+            background="#333333",
+            foreground="white",
+            arrowcolor="white",
+            bordercolor="#262626",
+            lightcolor="#262626",
+            darkcolor="#262626"
+        )
+        self.style.map(
+            "Dark.Combobox",
+            background=[("selected", "#226723")],
+            foreground=[("selected", "white")]
+        )
+
+        set1=[self.left_frame, self.center_frame, self.right_frame, self.top_frame]
+        for widget in set1:
+            widget.configure(bg='#1e1e1e')
+
+        set2=[self.details_tree, self.table]
+        for tree in set2:
+            tree.configure(style="Dark.Treeview")
         
+        self.menu_bar.configure(bg="#262626")
+        self.image_label.configure(bg="#262626")
+        self.combo_box.configure(style="Dark.Combobox.Heading")
+
+    def apply_light_theme(self):
+        self.style.theme_use("clam")
+        self.style.configure(
+            "Light.Treeview",
+            background='#FFFFFF',
+            fieldbackground='#FFFFFF',
+            foreground="black",
+            rowheight=25,
+            bordercolor="#d9d9d9",
+            borderwidth=0
+        )
+        self.style.configure(
+            "Light.Treeview.Heading",
+            background="#f0f0f0",
+            foreground="black",
+            relief="flat"
+        )
+        self.style.map(
+            "Light.Treeview",
+            background=[("selected", "#cce4ff")],
+            foreground=[("selected", "black")]
+        )
+
+        self.style.configure(
+            "Light.Combobox.Heading",
+            fieldbackground="#FFFFFF",
+            background="#f0f0f0",
+            foreground="black",
+            arrowcolor="black",
+            bordercolor="#FFFFFF",
+            lightcolor="#FFFFFF",
+            darkcolor="#FFFFFF"
+        )
+        self.style.map(
+            "Light.Combobox",
+            background=[("selected", "#226723")],
+            foreground=[("selected", "white")]
+        )
+
+        set1=[self.left_frame, self.center_frame, self.right_frame, self.top_frame]
+        for widget in set1:
+            widget.configure(bg='#F0F0F0')
+
+        set2=[self.details_tree, self.table]
+        for tree in set2:
+            tree.configure(style="Light.Treeview")
+        
+        self.menu_bar.configure(bg='#FFFFFF')
+        self.image_label.configure(bg='#F0F0F0')
+        self.combo_box.configure(style="Light.Combobox.Heading")
