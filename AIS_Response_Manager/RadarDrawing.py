@@ -77,12 +77,19 @@ class RadarDrawing:
         radar_t.color("darkgray")
         if self.IsDark:
             radar_t.color("darkblue")
-        
         for r in radius_list:
+            if r == radius_list[-1]:
+                radar_t.color("black")
+                radar_t.pensize(3)
             radar_t.penup()
             radar_t.goto(0, -r)
             radar_t.pendown()
             radar_t.circle(r)
+
+        radar_t.pensize(1)
+        radar_t.color("darkgray")
+        if self.IsDark:
+            radar_t.color("darkblue")
         self.draw_crosshair(radius_list[-1])
         radar_t.color("darkgray")
         # radar_t.write(str(KM), align="center", font=("Consolas", 16, "bold"))

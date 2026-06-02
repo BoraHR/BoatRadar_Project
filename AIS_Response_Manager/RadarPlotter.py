@@ -265,5 +265,5 @@ class RadarPlotter:
         self.draw.SaveImg()
         end = time.time()
         fin_performance = end - start
-        print(f"Radar data trasmited in {fin_performance} seconds")
+        print(f"Radar plotting data trasmited in {fin_performance} seconds")
         return myBoat

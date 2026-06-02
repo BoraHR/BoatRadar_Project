@@ -287,6 +287,7 @@ class RadarConsole:
             self.conf_LeftFrame()
             self.conf_CenterFrame()
             self.conf_RightFrame()
+            self.apply_light_theme()
             self.radar_loop()
             self.Rot = 0
 
