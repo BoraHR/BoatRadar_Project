@@ -77,6 +77,7 @@ class RadarDrawing:
         radar_t.color("darkgray")
         if self.IsDark:
             radar_t.color("darkblue")
+        
         for r in radius_list:
             radar_t.penup()
             radar_t.goto(0, -r)

@@ -148,7 +148,6 @@ class RadarConsole:
             self.overlay = None
             self.composite = None
             self.image_label = tk.Label(self.center_frame)
-            self.image_label#.pack()
 
             # self.image_label.grid(row=2, column=0, sticky="n", padx=10)
 
@@ -397,7 +396,7 @@ class RadarConsole:
             self.window.after(100, self.radar_loop)
         end = time.time()
         print(f"Loop performance: {end - start}")
-
+        
     def Quit(self):
         self.killswitch = True
         print("Closing program...")
@@ -737,6 +736,7 @@ class RadarConsole:
             self.IsDark = False
             self.plotter.draw.IsDark = False # to indentify drawer to change cirkel lines and crosshair style
             self.img_compas = os.path.join(self.BASE_DIR, f"Radar/Compas/Current/360_Rotation-TranparantCenter.png")
+            self.update_UI_colorscheme()
             self.apply_light_theme()
         
         else:
@@ -756,10 +756,10 @@ class RadarConsole:
             self.IsDark = True
             self.plotter.draw.IsDark = True
             self.img_compas = os.path.join(self.BASE_DIR, f"Radar/Compas/Current/360_Rotation-TranparantCenter_Dark.png")
+            self.update_UI_colorscheme()
             self.apply_dark_theme()
         
-        self.update_UI_colorscheme()
-        self.plotter.draw.KM_build = -1
+        self.plotter.draw.KM_build = -1 # ensures clearing radar cache to redraw for theme switch
 
     def toggle_fullscreen(self):
         if self.IsFullscreen:
@@ -768,8 +768,6 @@ class RadarConsole:
         else:
             self.window.attributes('-fullscreen', True)
             self.IsFullscreen = True
-
-        
 
     def update_UI_colorscheme(self):
         self.primary_color = self.from_rgb(tuple(self.RGB_Pri))
@@ -814,19 +812,11 @@ class RadarConsole:
         )
 
         self.style.configure(
-            "Dark.Combobox.Heading",
+            "TCombobox",
             fieldbackground="#262626",
             background="#333333",
-            foreground="white",
-            arrowcolor="white",
-            bordercolor="#262626",
-            lightcolor="#262626",
-            darkcolor="#262626"
-        )
-        self.style.map(
-            "Dark.Combobox",
-            background=[("selected", "#226723")],
-            foreground=[("selected", "white")]
+            foreground="black",
+            arrowcolor="white"
         )
 
         set1=[self.left_frame, self.center_frame, self.right_frame, self.top_frame]
@@ -838,8 +828,8 @@ class RadarConsole:
             tree.configure(style="Dark.Treeview")
         
         self.menu_bar.configure(bg="#262626")
-        self.image_label.configure(bg="#262626")
-        self.combo_box.configure(style="Dark.Combobox.Heading")
+        self.image_label.configure(bg=self.tertiary_color)
+        self.combo_box.configure(style="TCombobox")
 
     def apply_light_theme(self):
         self.style.theme_use("clam")
@@ -865,20 +855,13 @@ class RadarConsole:
         )
 
         self.style.configure(
-            "Light.Combobox.Heading",
+            "TCombobox",
             fieldbackground="#FFFFFF",
-            background="#f0f0f0",
+            background="#FFFFFF",
             foreground="black",
-            arrowcolor="black",
-            bordercolor="#FFFFFF",
-            lightcolor="#FFFFFF",
-            darkcolor="#FFFFFF"
+            arrowcolor="black"
         )
-        self.style.map(
-            "Light.Combobox",
-            background=[("selected", "#226723")],
-            foreground=[("selected", "white")]
-        )
+
 
         set1=[self.left_frame, self.center_frame, self.right_frame, self.top_frame]
         for widget in set1:
@@ -889,5 +872,5 @@ class RadarConsole:
             tree.configure(style="Light.Treeview")
         
         self.menu_bar.configure(bg='#FFFFFF')
-        self.image_label.configure(bg='#F0F0F0')
-        self.combo_box.configure(style="Light.Combobox.Heading")
+        self.image_label.configure(bg=self.tertiary_color)
+        self.combo_box.configure(style="TCombobox")
