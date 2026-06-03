@@ -32,6 +32,7 @@ class RadarDrawing:
         self.bg_loc = os.path.join(self.BASE_DIR, f"Radar/Background/R={self.RGB[0]},G={self.RGB[1]},B={self.RGB[2]}")
         self.ps_loc = os.path.join(self.BASE_DIR, f"Radar/PostScript/drawing.ps")
         self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img.png")
+        self.ps_id = 0
         self.ps_RAM = None
         self.img_RAM = None
         # Threading for async image saves
@@ -258,13 +259,16 @@ class RadarDrawing:
         """
         try:
             import time as time_module
-            self.ps_loc = os.path.join(self.BASE_DIR, f"Radar/PostScript/drawing.ps")
+            self.ps_loc = os.path.join(self.BASE_DIR, f"Radar/PostScript/drawing({self.ps_id}).ps")
+            self.ps_id += 1
+            if self.ps_id > 99:
+                self.ps_id = 0
             # self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img.png")
             
             ts = turtle.Screen()
             ts.bgcolor(self.get_bgcolor())
-            
             # Fast: Save PostScript (minimal blocking)
+            
             ts.getcanvas().postscript(file=self.ps_loc)
             
             # CRITICAL: Ensure file is flushed to disk before background thread reads it
