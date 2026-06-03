@@ -128,7 +128,7 @@ class RadarConsole:
             # CENTER
             self.center_frame = Frame(window)
             self.center_frame.grid(row=0, column=1, sticky="nsew")
-            self.center_frame.rowconfigure(1, weight=1)
+            self.center_frame.rowconfigure(0, weight=1)
             self.center_frame.columnconfigure(0, weight=1)
             # RIGHT
             self.right_frame = Frame(window)
@@ -148,8 +148,6 @@ class RadarConsole:
             self.overlay = None
             self.composite = None
             self.image_label = tk.Label(self.center_frame)
-
-            # self.image_label.grid(row=2, column=0, sticky="n", padx=10)
 
             # display
             self.unitInfo = Label(self.left_frame,
@@ -195,7 +193,6 @@ class RadarConsole:
                 command=self.plotter.draw.screen_toggle,
             )#.pack(pady=10)
 
-            
             self.mySpeed = self.myBoat[7]
             self.myHeading = self.myBoat[12]
 
@@ -232,12 +229,14 @@ class RadarConsole:
             self.table.heading("CPA", text="CPA (m)")
             self.table.heading("TCPA", text="TCPA (s)")
             self.table.heading("BRG", text="T_BRG")
+            self.table.heading("BoatID", text="BoatID")
             # Set column widths and prevent resizing
             self.table.column("ID", width=50, stretch=False)
             self.table.column("Mmsi", width=80, stretch=False)
             self.table.column("Range", width=60, stretch=False)
             self.table.column("CPA", width=80, stretch=False)
             self.table.column("TCPA", width=80, stretch=False)
+            self.table.column("BRG", width=80, stretch=False)
             self.table.column("BRG", width=80, stretch=False)
 
             self.table.bind("<<TreeviewSelect>>", self.setTarget)
@@ -343,7 +342,8 @@ class RadarConsole:
         )
 
     def conf_CenterFrame(self):
-        self.image_label.grid(row=1, column=0, sticky="n", padx=10)
+        self.image_label.config(width=780, height=755)
+        self.image_label.grid(row=0, column=0, sticky="n", padx=10)
 
     def conf_RightFrame(self):
         # Top frame for speed + heading
@@ -614,8 +614,8 @@ class RadarConsole:
 
         if self.km_range < 1:
             self.km_range = 1
-        if self.km_range > 50:
-            self.km_range = 50
+        if self.km_range > 12:
+            self.km_range = 12
 
         self.update_label()
         self.update_image()
@@ -776,7 +776,7 @@ class RadarConsole:
         self.tertiary_color = self.from_rgb(tuple(self.RGB_Ter))
         # --- Primary update --
         if self.IsDark:
-            self.unit.configure(bg=self.primary_color, fg="white")
+            self.unit.configure(bg=self.primary_color, fg="Silver")
         else:
             self.unit.configure(bg=self.primary_color, fg="black")
         # --- Secondary update --
@@ -795,7 +795,7 @@ class RadarConsole:
             "Dark.Treeview",
             background="#262626",
             fieldbackground="#262626",
-            foreground="white",
+            foreground="green",
             rowheight=25,
             bordercolor="#262626",
             borderwidth=0
@@ -803,13 +803,30 @@ class RadarConsole:
         self.style.configure(
             "Dark.Treeview.Heading",
             background="#333333",
-            foreground="white",
+            foreground="darkgreen",
             relief="flat"
+        )
+        self.style.map(
+            "Dark.Treeview.Heading",
+            background=[
+                ("active", "#3a3a3a"),   # hover
+                ("pressed", "#1f1f1f")   # click
+            ],
+            foreground=[
+                ("active", "green"),
+                ("pressed", "#66ff66")
+            ],
+            relief=[
+                ("pressed", "sunken"),
+                ("active", "flat")
+            ]
         )
         self.style.map(
             "Dark.Treeview",
             background=[("selected", "#226723")],
-            foreground=[("selected", "white")]
+            bordercolor="#262626",
+            foreground=[("selected", "black")]
+
         )
 
         self.style.configure(
