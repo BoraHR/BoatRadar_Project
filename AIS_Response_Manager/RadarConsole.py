@@ -831,10 +831,11 @@ class RadarConsole:
 
         self.style.configure(
             "TCombobox",
-            fieldbackground="#262626",
-            background="#333333",
+            fieldbackground="#262626",   # inside text area
+            background="#262626",
+            bordercolor="#2A2A2A",        # button area
             foreground="black",
-            arrowcolor="white"
+            arrowcolor="white",
         )
 
         set1=[self.left_frame, self.center_frame, self.right_frame, self.top_frame]
@@ -876,10 +877,10 @@ class RadarConsole:
             "TCombobox",
             fieldbackground="#FFFFFF",
             background="#FFFFFF",
+            boardercolor="#d9d9d9",
             foreground="black",
             arrowcolor="black"
         )
-
 
         set1=[self.left_frame, self.center_frame, self.right_frame, self.top_frame]
         for widget in set1:
