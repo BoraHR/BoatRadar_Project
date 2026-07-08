@@ -795,7 +795,7 @@ class RadarConsole:
             "Dark.Treeview",
             background="#262626",
             fieldbackground="#262626",
-            foreground="green",
+            foreground="limegreen",
             rowheight=25,
             bordercolor="#262626",
             borderwidth=0
@@ -803,7 +803,7 @@ class RadarConsole:
         self.style.configure(
             "Dark.Treeview.Heading",
             background="#333333",
-            foreground="darkgreen",
+            foreground="limegreen",
             relief="flat"
         )
         self.style.map(

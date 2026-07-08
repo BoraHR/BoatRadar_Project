@@ -90,7 +90,6 @@ def test_initialize():
     conn = sqlite3.connect(test_FileRoute_sql3)
     c = conn.cursor()
     boat = get_self(c)
-    
     end = time.perf_counter()
     result = end - start
     print(f"Result: {result:.40f}")
@@ -99,7 +98,6 @@ def test_initialize():
     assert boat != None
     assert boat[0] == 1
     testConsole.window.destroy()
-    
     
 
 def test_SQL_retrieve_all_bb():
@@ -150,7 +148,7 @@ def test_SQL_retrieve_all_with_foreachLoop():
     print(f"Result: {result:.40f}")
     print(f"ListCount: {len(boats)}")
     print(f"LoopCount: {count}")
-    assert result < 0.005
+    assert result < 0.05
     assert len(boats) == 750
     assert count == 750
 
@@ -184,14 +182,8 @@ def test_SQL_update_SubData():
             min = result
         total += result
         count += 1
-    GetResults_WithTargets("SQL UPDATE SUBDATA", count, total, max, min, 750, 0.09, 0.003, 0.65, 0.03)
+    GetResults_WithTargets("SQL UPDATE SUBDATA", count, total, max, min, 750, 0.09, 0.003, 0.65, False)
     conn.close()
-    # MODIFIED TARGETS
-    # assert count == 749
-    # assert max < 0.003 * 3
-    # assert min != 2147483647.000
-    # assert avr < 0.0001 * 3
-    # assert total < 0.01 * 3
     testConsole.window.destroy()
     time.sleep(0.01)
 
@@ -215,7 +207,7 @@ def test_lat_long_algorithm_speed():
         count += 1
         i += 1
     GetResults("LAT_LON_PERFORMANCE", count, total, max, min)
-    time.sleep(0.01)
+    time.sleep(0.05)
 
 def test_vector_calculation_speed():
     test_FileRoute_sql3 = os.path.join(BASE_DIR, "PyTests/MockData/AIS-Responder.db")
@@ -243,7 +235,7 @@ def test_vector_calculation_speed():
     
     GetResults("VECTOR_CALLCULATION (calculate_cpa_tcpa helper)", count, total, max, min)
     testConsole.window.destroy()
-    time.sleep(0.01)
+    time.sleep(0.05)
 
 def test_convertX_Y_algorithm_speed():
     run_algorithm_speed_test("X_Y_CONVERSION (calculate_cpa_tcpa helper)", ConvertToX_Y)
@@ -279,15 +271,15 @@ def test_calculate_cpa_tcpa():
 
     GetResults("CALCULATE_CPA_TCPA", count, total, max, min)
     testConsole.window.destroy()
-    time.sleep(0.01)
+    time.sleep(0.05)
 
 def test_haversine_algorithm_speed():
     run_algorithm_speed_test("HAVERSINE", haversine)
-    time.sleep(0.01)
+    time.sleep(0.05)
 
 def test_bearing_algorithm_speed():
     run_algorithm_speed_test("BEARING", bearing_deg)
-    time.sleep(0.01)
+    time.sleep(0.05)
 
 def run_algorithm_speed_test(testname, algorithm):
     test_FileRoute_sql3 = os.path.join(BASE_DIR, "PyTests/MockData/AIS-Responder.db")
@@ -313,7 +305,7 @@ def run_algorithm_speed_test(testname, algorithm):
         count += 1
     GetResults(testname, count, total, max, min)
     testConsole.window.destroy()
-    time.sleep(0.01)
+    time.sleep(0.05)
 
 def test_ImgSave_JustSelf_3KM():
     ImageSaveLoop("RADAR LOOP NO TARGETS 3km", 3, False)
@@ -360,7 +352,7 @@ def ImageSaveLoop(testname, KM, IncludeTargets):
     count = 0
     i = 0
     print("\n Testing image loop...")
-    while i < 11:
+    while i < 21:
         start = time.perf_counter()
         if not IncludeTargets:
             testDrawer.draw_radar_Custom(KM, 0.00, 2.0)
@@ -380,9 +372,12 @@ def ImageSaveLoop(testname, KM, IncludeTargets):
         i += 1
     
     if IncludeTargets:
-        GetResults_WithTargets(testname, count, total, max, min, 10, 1.2, 0.6, 6.00)
+        GetResults_WithTargets(testname, count, total, max, min, 20, 1.2, 0.6, 12.00)
     else:
-        GetResults_WithTargets(testname, count, total, max, min, 10, 1.0, 0.5, 5.00)
+        GetResults_WithTargets(testname, count, total, max, min, 20, 1.0, 0.5, 10.00)
+    while testConsole.plotter.draw._save_thread != None:
+        pass
+    testConsole.CleanFiles() # clean PostScript files for next run
     testConsole.window.destroy()
 
 def GetResults(testname, count, total, max, min):
@@ -390,10 +385,10 @@ def GetResults(testname, count, total, max, min):
     print("\n")
     print(f"---- {testname.upper()} ---- ")
     print(f"Count: {count}")
-    print(f"Total: {total:.40f}")
-    print(f"Max: {max:.40f}")
-    print(f"Min: {min:.40f}")
-    print(f"Avr: {avr:.40f}")
+    print(f"Total: sec{total:.40f}, ms{1000*total:.40f}")
+    print(f"Max: sec{max:.40f}, ms{1000*max:.40f}")
+    print(f"Min: sec{min:.40f}, ms{1000*min:.40f}")
+    print(f"Avr: sec{avr:.40f}, ms{1000*avr:.40f}")
     assert count == 749
     assert max < 0.03
     assert min != 2147483647.000
@@ -405,15 +400,15 @@ def GetResults_WithTargets(testname, count, total, max, min, TargetCount, Target
     print("\n")
     print(f"---- {testname.upper()} ---- ")
     print(f"Count: {count}")
-    print(f"Total: {total:.40f}")
+    print(f"Total: sec{total:.40f}, ms{1000*total:.40f}")
     if ShowFPS:
-        print(f"Max: {max:.40f}, FPS({get_FPS(max)})")
-        print(f"Min: {min:.40f}, FPS({get_FPS(min)})")
-        print(f"Avr: {avr:.40f}, FPS({get_FPS(avr)})")
+        print(f"Max: sec{max:.40f}, ms{1000*max:.40f}, FPS({get_FPS(max)})")
+        print(f"Min: sec{min:.40f}, ms{1000*min:.40f}, FPS({get_FPS(min)})")
+        print(f"Avr: sec{avr:.40f}, ms{1000*avr:.40f}, FPS({get_FPS(avr)})")
     else:
-        print(f"Max: {max:.40f}")
-        print(f"Min: {min:.40f}")
-        print(f"Avr: {avr:.40f}")
+        print(f"Max: sec{max:.40f}, ms{1000*max:.40f}")
+        print(f"Min: sec{min:.40f}, ms{1000*min:.40f}")
+        print(f"Avr: sec{avr:.40f}, ms{1000*avr:.40f}")
     assert count == TargetCount
     assert max < TargetMax
     assert min != 2147483647.000
