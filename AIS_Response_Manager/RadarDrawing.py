@@ -173,16 +173,25 @@ class RadarDrawing:
         W_L = 0.50
         boats_t.shapesize(W_L, W_L*4.0)
         if(IsTarget):
-            boats_t.color("aqua")
+            if(self.IsDark):
+                boats_t.color("violet")
+            else:
+                boats_t.color("aqua")
         elif tcpa > -0.5 and tcpa < 0.5:
             boats_t.color("red")
         else:
-            boats_t.color("black")
+            if(self.IsDark):
+                boats_t.color("gray")
+            else:
+                boats_t.color("black")
         boats_t.setheading(90 - heading)
         boats_t.back(10)
         boats_t.stamp()
         boats_t.forward(10)
-        boats_t.color("yellow")
+        if(self.IsDark):
+            boats_t.color("yellow")
+        else:
+            boats_t.color("yellow")
         boats_t.penup()
         vector_length = 0
         try:
@@ -202,7 +211,10 @@ class RadarDrawing:
             print(e)
         boats_t.pendown()
         boats_t.back(vector_length)
-        boats_t.color("yellow")
+        if(self.IsDark):
+            boats_t.color("yellow")
+        else:
+            boats_t.color("yellow")
         boats_t.write(number, align="center", font=("Consolas", 16, "bold"))
         boats_t.color("black")
         
@@ -225,7 +237,10 @@ class RadarDrawing:
         radar_t.back(10)
         radar_t.stamp()
         radar_t.forward(10)
-        radar_t.color("yellow")
+        if(self.IsDark):
+            radar_t.color("yellow")
+        else:
+            radar_t.color("yellow")
         radar_t.pendown()
         try:
             if speed > 0.00:
