@@ -592,6 +592,33 @@ class RadarConsole:
         # hh:mm:ss  DD-MM-YYYY
         local_DT = time.localtime()
 
+        if self.km_range <= 1:
+            self.KM_prev.config(
+                bg="gray",
+                relief=SUNKEN,
+                state=DISABLED
+            )
+        else:
+            self.KM_prev.config(
+                bg=self.secondary_color,
+                relief=RAISED,
+                state=NORMAL
+            )
+
+        if self.km_range >= 12:
+            self.KM_next.config(
+                bg="gray",
+                relief=SUNKEN,
+                state=DISABLED
+            )
+        else:
+            self.KM_next.config(
+                bg=self.secondary_color,
+                relief=RAISED,
+                state=NORMAL
+            )
+
+
         self.time.config(
             text=f"{self.set_2digit(local_DT.tm_hour)}:"
                 f"{self.set_2digit(local_DT.tm_min)}:"
