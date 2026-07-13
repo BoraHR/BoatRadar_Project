@@ -101,9 +101,18 @@ class RadarConsole:
             self.time_window = 10 # The window of time to consider plotting to be valid.
 
             # ---- Directories for image loading and saving ----
+            self.img_guide = os.path.join(self.BASE_DIR, f"Radar/Guide/Console_Guide.png")
             self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img.png") # updates in update_image()
             self.img_compas = os.path.join(self.BASE_DIR, f"Radar/Compas/Current/360_Rotation-TranparantCenter.png")
             self.alarm = os.path.join(self.BASE_DIR, f"Sounds/Alarm.WAV")
+            self.help_image = None
+            try:
+                self.help_image = ImageTk.PhotoImage(Image.open(self.img_guide))
+            except Exception as e:
+                print(f"Error loading HelpGuideImg:\n{e}")
+
+            # https://www.tutorialspoint.com/article/keyboard-shortcuts-with-tkinter-in-python-3#:~:text=Tkinter%20provides%20built-in%20functionality,when%20the%20shortcut%20is%20triggered.
+            self.window.bind('<F1>', self.open_help_window)
 
             # ---- UI ----
             self.range_var = StringVar(self.window)
@@ -125,6 +134,7 @@ class RadarConsole:
             self.left_frame.columnconfigure(0, weight=1)
             self.left_frame.columnconfigure(1, weight=1)
             self.left_frame.columnconfigure(2, weight=1)
+            self.left_frame.columnconfigure(3, weight=1)
             # CENTER
             self.center_frame = Frame(window)
             self.center_frame.grid(row=0, column=1, sticky="nsew")
@@ -148,6 +158,7 @@ class RadarConsole:
             self.overlay = None
             self.composite = None
             self.image_label = tk.Label(self.center_frame)
+            self.image_help = tk.Label()
 
             # display
             self.unitInfo = Label(self.left_frame,
@@ -183,6 +194,14 @@ class RadarConsole:
                 width=3,
                 font=("Consolas", 16),
                 command=self.toggle_theme,
+                bg=self.secondary_color
+            )
+
+            self.Help = Button(self.left_frame,
+                text="HELP",
+                width=3,
+                font=("Consolas", 16),
+                command=self.open_help_window,
                 bg=self.secondary_color
             )
 
@@ -313,7 +332,7 @@ class RadarConsole:
 
         # Help menu - TEMPLATE
         help_menu = tk.Menu(self.menu_bar, tearoff=0)
-        help_menu.add_command(label="About")
+        help_menu.add_command(label="About", command=self.open_help_window)
 
         self.menu_bar.add_cascade(label="Help", menu=help_menu)
 
@@ -340,6 +359,15 @@ class RadarConsole:
             padx=10,
             pady=(10,0)
         )
+        self.Help.grid(
+            row=2,
+            column=0,
+            columnspan=3,
+            sticky="ew",
+            padx=10,
+            pady=(10,10)
+        )
+
 
     def conf_CenterFrame(self):
         self.image_label.config(width=780, height=755)
@@ -520,6 +548,36 @@ class RadarConsole:
         for field, value in details:
             self.details_tree.insert("", "end", values=(field, value))
 
+    def open_help_window(self, event=None):
+        help_win = tk.Toplevel(self.window)
+        help_win.title("Help")
+        try:
+            image = Image.open(self.img_guide)
+            
+
+            screen_w = help_win.winfo_screenwidth()
+            screen_h = help_win.winfo_screenheight()
+
+            max_w = int(screen_w * 0.5)   # 80% of screen width
+            max_h = int(screen_h * 0.5)   # 80% of screen height
+
+            image.thumbnail((max_w, max_h), Image.Resampling.LANCZOS)
+
+            photo = ImageTk.PhotoImage(image, master=help_win)
+            guide = tk.Label(help_win, image=photo)
+            guide.image = photo # keep reference
+            guide.pack()
+
+            guide_text = tk.Label(
+                help_win, 
+                text = "1. Lower radar range by 1 (MIN 1)\n2. Unit display pressing it will toggle between KM and Mile\n3. extend radar range by 1 (MAX 12)\n4. Toggle between SUN and DARK theme ussefull setting depending on time of day\n5. Opens this guide\n6. Radar displays the fellowing:\n\t○ Green arrow is your own boat always located in center of the radar\n\t○ Red arrow indicates dengerously low TCPA between the marked target and your boat\n\t○ aqua (violet for dark) arrows is the selected target for for detailed overview, this will override the danger indicator so be allert when hearing alarms\n\t○ Black arrows are the boats caught in your configured radar range\n\t○ Each boat has assinged ID this can change depending on selected ENUM order, the assigned ID can get shuffled during order changes so you might want to track boat in detail target overview to preffent confusion\n\t○ The line drawn per plotted ellement (including self) will show the direction and predicted positioning depending on speed, it can be served aa helper for predicting CPA/TCPA overtime for mannual planning\n7. Current speed of your boat\n8. Current heading of your boat\n9. Boats caugth in configured range, you can sellect, deselect or swith target by clicking on a row\n10. detailed information of selected target it will remain tracked if target is outside configured range until unselected or switched on the radar taget apears in aqua color (violet in darkmode)\n11. an ENUM config it will change the order depending on selected type to order\n12. Systemtime might not appear if hardware bugs are pressent or no time tracking in system",
+                justify="left",
+                anchor="w"  
+            )
+            guide_text.pack()
+        except Exception as e:
+            print(f"Error in 'Help' top level window:\n{e}\n")
+
     def open_resulotion_window(self):
         resulotion_win = tk.Toplevel(self.window)
         resulotion_win.title("Thinker resolution config")
@@ -685,6 +743,7 @@ class RadarConsole:
             if self.overlay is not None:
                 if self.overlay.size != base.size:
                     if self.IsRelativeHeading:
+                        # THIS CONDITION IS NOT IMPLEMENTED YET
                         self.overlay = self.overlay.rotate(self.myHeading)
                     self.overlay = self.overlay.resize(base.size, Image.Resampling.LANCZOS)
 
@@ -808,6 +867,7 @@ class RadarConsole:
             self.unit.configure(bg=self.primary_color, fg="black")
         # --- Secondary update --
         self.Theme.configure(bg=self.secondary_color)
+        self.Help.configure(bg=self.secondary_color)
         self.headingDisplay.configure(bg=self.secondary_color)
         self.speedDisplay.configure(bg=self.secondary_color)
         self.KM_prev.configure(bg=self.secondary_color)

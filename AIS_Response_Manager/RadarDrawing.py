@@ -276,7 +276,7 @@ class RadarDrawing:
             import time as time_module
             self.ps_loc = os.path.join(self.BASE_DIR, f"Radar/PostScript/drawing({self.ps_id}).ps")
             self.ps_id += 1
-            if self.ps_id > 99:
+            if self.ps_id > 999:
                 self.ps_id = 0
             # self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img.png")
             
