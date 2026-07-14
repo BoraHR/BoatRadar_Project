@@ -767,7 +767,7 @@ class RadarConsole:
             
             # Save reference
             self.composite = img
-
+            # self.image_label.configure(image=self.composite, relief='solid')
             if self.image_item_id is None:
                 self.image_item_id = self.image_label.create_image(0, 0, anchor="nw")
             self.image_label.itemconfigure(self.image_item_id, image=self.composite)
@@ -794,16 +794,26 @@ class RadarConsole:
 
             x_px = x_meters * scale
             y_px = y_meters * scale
-            display_x = 375 + (x_px / 250.0) * 375
-            display_y = 375 - (y_px / 250.0) * 375
 
+            # Note: devide might need to be ajusted when changing resulotion of the image, 
+            # 300 for image of 750x750 might need to use calculation for consistency.
+            devide = 300 
+            display_x = 375 + (x_px / devide) * 375
+            display_y = 375 - (y_px / devide) * 375
+
+            # HS_radius:
+            # the hotspot size bigger values has more coverage but bigger chance targets overlap each other when very close together, 
+            # small values makes it harder to predict where tatget can be clicked on the radar but minimizes overlapping with other targets.
+            # a middle ground between 15 - 20 recomended, use outline and/or fill see hotspot location and size, use empty ("") to make the invisible.
+            # overlapping prioritizes highest id.
+            HS_radius = 20
             hotspot = self.image_label.create_oval(
-                display_x - 10,
-                display_y - 10,
-                display_x + 10,
-                display_y + 10,
-                outline="gold",
-                fill="pink",
+                display_x - HS_radius,
+                display_y - HS_radius,
+                display_x + HS_radius,
+                display_y + HS_radius,
+                outline="", # give color of choice for debugging ("pink" recomended) 
+                fill="", # give color of choice for debuggin ("gold" recomended) 
                 tags=("radar_hotspot", str(boat_id))
             )
             self.image_label.tag_bind(hotspot, "<Button-1>", lambda event, boat_id=boat_id: self.select_target(boat_id))
