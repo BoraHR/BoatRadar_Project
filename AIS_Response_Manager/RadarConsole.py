@@ -152,13 +152,15 @@ class RadarConsole:
             self.top_frame.columnconfigure(1, weight=1)
 
             # ---- radar image ----
-            # Create a placeholder label now; we'll populate it (and keep a reference to
-            # the PhotoImage) later in `update_image`.
+            # Create a canvas that can display the rendered radar image and clickable
+            # hotspots for each plotted target.
             self.image = None
             self.overlay = None
             self.composite = None
-            self.image_label = tk.Label(self.center_frame)
+            self.image_label = tk.Canvas(self.center_frame, width=750, height=750, highlightthickness=0, bd=0)
             self.image_help = tk.Label()
+            self.image_item_id = None
+            self.image_label.bind("<Button-1>", self.on_radar_click)
 
             # display
             self.unitInfo = Label(self.left_frame,
@@ -766,16 +768,73 @@ class RadarConsole:
             # Save reference
             self.composite = img
 
-            # Update label
-            self.image_label.configure(image=self.composite, relief='solid')
+            if self.image_item_id is None:
+                self.image_item_id = self.image_label.create_image(0, 0, anchor="nw")
+            self.image_label.itemconfigure(self.image_item_id, image=self.composite)
+            self.image_label.coords(self.image_item_id, 0, 0)
+            self.image_label.delete("radar_hotspot")
+            self._draw_radar_hotspots()
         except Exception as e:
             print("Radar reload failed:")
             print(e)
+
+    def _draw_radar_hotspots(self):
+        for entry in self.plotter.RadarConsoleData:
+            boat, number, distance, cpa, tcpa, consoleData, brg = entry
+            if not consoleData:
+                continue
+
+            boat_id = boat[0]
+            x_meters = consoleData[1]
+            y_meters = consoleData[2]
+            scale = consoleData[4]
+
+            if scale is None or scale <= 0:
+                continue
+
+            x_px = x_meters * scale
+            y_px = y_meters * scale
+            display_x = 375 + (x_px / 250.0) * 375
+            display_y = 375 - (y_px / 250.0) * 375
+
+            hotspot = self.image_label.create_oval(
+                display_x - 10,
+                display_y - 10,
+                display_x + 10,
+                display_y + 10,
+                outline="gold",
+                fill="pink",
+                tags=("radar_hotspot", str(boat_id))
+            )
+            self.image_label.tag_bind(hotspot, "<Button-1>", lambda event, boat_id=boat_id: self.select_target(boat_id))
+
+    def on_radar_click(self, event):
+        return
 
     def on_select(self, event):
         selected_value = self.combo_box.get()
         print(f"Selected: {selected_value}")
         self.plotter.setEnum(selected_value)
+
+    def select_target(self, boat_id):
+        try:
+            self.plotter.setTarget(int(boat_id))
+            self.refresh_selection_visuals()
+        except Exception as e:
+            print("Error selecting radar target:")
+            print(e)
+
+    def refresh_selection_visuals(self):
+        try:
+            self.plotter.draw.clear_otherBoats()
+            self.plotter.plot_boats(self.plotter.GetBoat(self.boat_id))
+            self.plotter.draw.SaveImg()
+        except Exception as e:
+            print("Failed to redraw radar selection:")
+            print(e)
+
+        self.update_target_details()
+        self.update_image()
 
     def setTarget(self, event):
         boats = self.table.selection()
@@ -789,8 +848,7 @@ class RadarConsole:
             return
         
         boat_id = int(values[6])
-        self.plotter.setTarget(int(boat_id))
-        self.update_target_details()
+        self.select_target(int(boat_id))
         # if self.plotter.targetId == int(boat_id):
         #     self.plotter.targetId = -1
         #     return
