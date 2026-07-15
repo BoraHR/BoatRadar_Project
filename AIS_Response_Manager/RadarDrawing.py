@@ -218,18 +218,100 @@ class RadarDrawing:
         else:
             boats_t.color("yellow")
         
+        
+        boats_t.penup()
         id_draw = True
+        # config min range which the required offset of both y and x position to make draw valid
+        # config substract is the amount offset the verious x and y combinations will try it should be equal or greater than min_range to minimize colision risks with the same id_loc
+        # there is possibility the id number will not be drawn if all spots are taken but should be rare in less crowded areas.
+        min_range = 15
+        subtract = 15
+
+        # try no offset
         for loc in self.id_locs:
-            min_range = 12
             if abs(loc[0] - px) < min_range and abs(loc[1] - py) < min_range:
                 id_draw = False
                 break
+        
+        # try px - substract offset
+        if id_draw == False:
+            id_draw = True
+            mod_px = px - subtract
+            for loc in self.id_locs:
+                if abs(loc[0] - mod_px) < min_range and abs(loc[1] - py) < min_range:
+                    id_draw = False
+                    break
+            boats_t.goto(mod_px, py)
+            if id_draw == True:
+                px = mod_px
+        
+        # try px + substract offset
+        if id_draw == False:
+            id_draw = True
+            mod_px = px + subtract
+            for loc in self.id_locs:
+                if abs(loc[0] - mod_px) < min_range and abs(loc[1] - py) < min_range:
+                    id_draw = False
+                    break
+            boats_t.goto(mod_px, py) 
+            if id_draw == True:
+                px = mod_px
 
-        if id_draw:
+        # try py - substract offset
+        if id_draw == False:
+            id_draw = True
+            mod_py = py - subtract
+            for loc in self.id_locs:
+                if abs(loc[0] - px) < min_range and abs(loc[1] - mod_py) < min_range:
+                    id_draw = False
+                    break
+            boats_t.goto(px, mod_py) 
+            if id_draw == True:
+                py = mod_py 
+
+        # try py + substract offset
+        if id_draw == False:
+            id_draw = True
+            mod_py = py + subtract
+            for loc in self.id_locs:
+                if abs(loc[0] - px) < min_range and abs(loc[1] - mod_py) < min_range:
+                    id_draw = False
+                    break
+            boats_t.goto(px, mod_py)
+            if id_draw == True:
+                py = mod_py 
+        
+        boats_t.pendown()
+        if id_draw == True:
             boats_t.write(number, align="center", font=("Consolas", 16, "bold"))
             self.id_locs.append((px,py))
         boats_t.color("black")
-        
+
+    def _isNumLocXValid(self, min_range, subtract, id_draw):
+        if id_draw == False:
+            id_draw = True
+            mod_px = px - subtract
+            for loc in self.id_locs:
+                if abs(loc[0] - mod_px) < min_range and abs(loc[1] - py) < min_range:
+                    id_draw = False
+                    break
+            boats_t.goto(mod_px, py)
+            if id_draw == True:
+                px = mod_px
+        return id_draw
+    
+    def _isNumLocYValid(self, min_range, subtract, id_draw):
+        if id_draw == False:
+            id_draw = True
+            mod_py = py - subtract
+            for loc in self.id_locs:
+                if abs(loc[0] - px) < min_range and abs(loc[1] - mod_py) < min_range:
+                    id_draw = False
+                    break
+            boats_t.goto(px, mod_py) 
+            if id_draw == True:
+                py = mod_py 
+
 
     def plot_myBoat(self, heading=0.00, speed=0.00, vectorRange=1.00):
         # heading += 90
