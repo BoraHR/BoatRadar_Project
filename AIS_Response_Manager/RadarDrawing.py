@@ -222,11 +222,11 @@ class RadarDrawing:
         boats_t.penup()
         
         # config min range which the required offset of both y and x position to make draw valid
-        # config substract is the amount offset the verious x and y combinations will try it should be equal or greater than min_range to minimize colision risks with the same id_loc
+        # config offset is the amount offset the verious x and y combinations will try it should be equal or greater than min_range to minimize colision risks with the same id_loc
         # there is possibility the id number will not be drawn if all spots are taken but should be rare in less crowded areas.
         id_draw = True
         min_range = 15
-        subtract = 15
+        offset = 15
 
         # try no offset
         for loc in self.id_locs:
@@ -234,17 +234,17 @@ class RadarDrawing:
                 id_draw = False
                 break
         
-        # try px - substract offset
-        id_draw, px = self._isNumLocXValid(px, py, min_range, -subtract, id_draw)
+        # try px - offset offset
+        id_draw, px = self._isNumLocXValid(px, py, min_range, -offset, id_draw)
         
-        # try px + substract offset
-        id_draw, px = self._isNumLocXValid(px, py, min_range, subtract, id_draw)
+        # try px + offset offset
+        id_draw, px = self._isNumLocXValid(px, py, min_range, offset, id_draw)
 
-        # try py - substract offset
-        id_draw, py = self._isNumLocYValid(px, py, min_range, -subtract, id_draw)
+        # try py - offset offset
+        id_draw, py = self._isNumLocYValid(px, py, min_range, -offset, id_draw)
 
-        # try py + substract offset
-        id_draw, py = self._isNumLocYValid(px, py, min_range, subtract, id_draw)
+        # try py + offset offset
+        id_draw, py = self._isNumLocYValid(px, py, min_range, offset, id_draw)
 
         boats_t.pendown()
         if id_draw == True:
@@ -252,10 +252,10 @@ class RadarDrawing:
             self.id_locs.append((px,py))
         boats_t.color("black")
 
-    def _isNumLocXValid(self, px, py, min_range, subtract, id_draw):
+    def _isNumLocXValid(self, px, py, min_range, offset, id_draw):
         if id_draw == False:
             id_draw = True
-            mod_px = px - subtract
+            mod_px = px - offset
             for loc in self.id_locs:
                 if abs(loc[0] - mod_px) < min_range and abs(loc[1] - py) < min_range:
                     id_draw = False
@@ -265,10 +265,10 @@ class RadarDrawing:
                 px = mod_px
         return id_draw, px
     
-    def _isNumLocYValid(self, px, py, min_range, subtract, id_draw):
+    def _isNumLocYValid(self, px, py, min_range, offset, id_draw):
         if id_draw == False:
             id_draw = True
-            mod_py = py - subtract
+            mod_py = py - offset
             for loc in self.id_locs:
                 if abs(loc[0] - px) < min_range and abs(loc[1] - mod_py) < min_range:
                     id_draw = False
@@ -277,7 +277,6 @@ class RadarDrawing:
             if id_draw == True:
                 py = mod_py 
         return id_draw, py
-
 
     def plot_myBoat(self, heading=0.00, speed=0.00, vectorRange=1.00):
         # heading += 90
