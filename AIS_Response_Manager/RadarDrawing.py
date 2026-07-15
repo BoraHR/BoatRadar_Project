@@ -27,6 +27,7 @@ class RadarDrawing:
         self.hideScreen = False
         self.KM_build = -1
         self.plotedBoats = []
+        self.id_locs = []
         self.RGB = (255,255,255)
         self.BASE_DIR = os.path.dirname(os.path.abspath(__file__))
         self.bg_loc = os.path.join(self.BASE_DIR, f"Radar/Background/R={self.RGB[0]},G={self.RGB[1]},B={self.RGB[2]}")
@@ -138,6 +139,7 @@ class RadarDrawing:
         # either recreate the screen or fail later if not recreated.
         try:
             boats_t.clear()
+            self.id_locs.clear()
         except Exception:
             # screen or turtle may have been destroyed; nothing we can do now
             pass
@@ -215,7 +217,17 @@ class RadarDrawing:
             boats_t.color("yellow")
         else:
             boats_t.color("yellow")
-        boats_t.write(number, align="center", font=("Consolas", 16, "bold"))
+        
+        id_draw = True
+        for loc in self.id_locs:
+            min_range = 12
+            if abs(loc[0] - px) < min_range and abs(loc[1] - py) < min_range:
+                id_draw = False
+                break
+
+        if id_draw:
+            boats_t.write(number, align="center", font=("Consolas", 16, "bold"))
+            self.id_locs.append((px,py))
         boats_t.color("black")
         
 
