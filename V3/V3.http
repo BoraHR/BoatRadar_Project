@@ -1,6 +1,0 @@
-@V3_HostAddress = http://localhost:5177
-
-GET {{V3_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
