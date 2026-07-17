@@ -1,0 +1,45 @@
+# Build output
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+
+# Generated files
+**/*AssemblyInfo.cs
+**/*.g.cs
+**/*.Designer.cs
+*.sourcelink.json
+
+# NuGet
+*.nuget.dgspec.json
+*.nuget.g.props
+*.nuget.g.targets
+project.assets.json
+project.lock.json
+
+# Visual Studio
+.vs/
+.vscode/
+*.sln.iml
+
+# Editor configs
+*.csproj.Up2Date
+*.csproj.FileListAbsolute.txt
+
+# User-specific files
+*.user
+*.userosscache
+*.sln.docstates
+
+# ReSharper
+.idea/
+*.resharper
+*.resharper.user
+
+# Template
+template.gitignore
+
+# DataFiles
+*.db
+*.xlsx
