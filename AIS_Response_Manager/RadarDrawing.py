@@ -231,7 +231,7 @@ class RadarDrawing:
         # try no offset
         for loc in self.id_locs:
             if abs(loc[0] - px) < min_range and abs(loc[1] - py) < min_range:
-                id_draw = False
+                id_draw = False # overlap detected mark id_draw as False to try other sulotions
                 break
         
         # try px - offset offset
