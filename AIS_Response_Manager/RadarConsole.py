@@ -150,6 +150,8 @@ class RadarConsole:
             self.top_frame.grid(row=0, column=0, sticky="ew")
             self.top_frame.columnconfigure(0, weight=1)
             self.top_frame.columnconfigure(1, weight=1)
+            self.top_frame.columnconfigure(2, weight=1)
+            self.top_frame.columnconfigure(3, weight=1)
 
             # ---- radar image ----
             # Create a canvas that can display the rendered radar image and clickable
@@ -214,8 +216,38 @@ class RadarConsole:
                 command=self.plotter.draw.screen_toggle,
             )#.pack(pady=10)
 
+            self.myLat = self.myBoat[9]
+            self.myLon = self.myBoat[10]
             self.mySpeed = self.myBoat[7]
             self.myHeading = self.myBoat[12]
+
+            self.latLabel = Label(self.top_frame,
+                text=f"LAT",
+                font=("Consolas", 20, "bold"),
+                bg=self.tertiary_color,
+                relief=RAISED
+            )
+            self.latDisplay = Label(self.top_frame,
+                text=f"{self.myLat}",
+                font=("Consolas", 20, "bold"),
+                bg=self.secondary_color,
+                relief=RAISED
+            )
+
+            self.lonLabel = Label(self.top_frame,
+                text=f"LON",
+                font=("Consolas", 20, "bold"),
+                bg=self.tertiary_color,
+                relief=RAISED
+            )
+            self.lonDisplay = Label(self.top_frame,
+                text=f"{self.myLon}",
+                font=("Consolas", 20, "bold"),
+                bg=self.secondary_color,
+                relief=RAISED
+            )
+
+            
 
             self.speedLabel = Label(self.top_frame,
                 text=f"STW",
@@ -370,7 +402,6 @@ class RadarConsole:
             pady=(10,10)
         )
 
-
     def conf_CenterFrame(self):
         self.image_label.config(width=780, height=755)
         self.image_label.grid(row=0, column=0, sticky="n", padx=10)
@@ -382,11 +413,19 @@ class RadarConsole:
 
         # Speed
         self.speedLabel.grid(row=0, column=0, sticky="ew", padx=(10,0), pady=(10,0))
-        self.speedDisplay.grid(row=0, column=1, sticky="ew", padx=(0,10), pady=(10,0))
+        self.speedDisplay.grid(row=0, column=1, sticky="ew", padx=(0,0), pady=(10,0))
 
         # Heading
         self.headingLabel.grid(row=1, column=0, sticky="ew", padx=(10,0), pady=(0,10))
-        self.headingDisplay.grid(row=1, column=1, sticky="ew", padx=(0,10), pady=(0,10))
+        self.headingDisplay.grid(row=1, column=1, sticky="ew", padx=(0,0), pady=(0,10))
+
+        # Latitude
+        self.latLabel.grid(row=0, column=2, sticky="ew", padx=(0,0), pady=(10,0))
+        self.latDisplay.grid(row=0, column=3, sticky="ew", padx=(0,10), pady=(10,0))
+
+        # Longitude
+        self.lonLabel.grid(row=1, column=2, sticky="ew", padx=(0,0), pady=(0,10))
+        self.lonDisplay.grid(row=1, column=3, sticky="ew", padx=(0,10), pady=(0,10))
 
         # Table (takes all remaining space)
         self.table.grid(row=1, column=0, sticky="nsew", padx=10)
@@ -572,7 +611,7 @@ class RadarConsole:
 
             guide_text = tk.Label(
                 help_win, 
-                text = "1. Lower radar range by 1 (MIN 1)\n2. Unit display pressing it will toggle between KM and Mile\n3. extend radar range by 1 (MAX 12)\n4. Toggle between SUN and DARK theme ussefull setting depending on time of day\n5. Opens this guide\n6. Radar displays the fellowing:\n\t○ Green arrow is your own boat always located in center of the radar\n\t○ Red arrow indicates dengerously low TCPA between the marked target and your boat\n\t○ aqua (violet for dark) arrows is the selected target for for detailed overview, this will override the danger indicator so be allert when hearing alarms\n\t○ Black arrows are the boats caught in your configured radar range\n\t○ Each boat has assinged ID this can change depending on selected ENUM order, the assigned ID can get shuffled during order changes so you might want to track boat in detail target overview to preffent confusion\n\t○ The line drawn per plotted ellement (including self) will show the direction and predicted positioning depending on speed, it can be served aa helper for predicting CPA/TCPA overtime for mannual planning\n7. Current speed of your boat\n8. Current heading of your boat\n9. Boats caugth in configured range, you can sellect, deselect or swith target by clicking on a row\n10. detailed information of selected target it will remain tracked if target is outside configured range until unselected or switched on the radar taget apears in aqua color (violet in darkmode)\n11. an ENUM config it will change the order depending on selected type to order\n12. Systemtime might not appear if hardware bugs are pressent or no time tracking in system",
+                text = "1. Lower radar range by 1 (MIN 1)\n2. Unit display pressing it will toggle between KM and Mile\n3. extend radar range by 1 (MAX 12)\n4. Toggle between SUN and DARK theme ussefull setting depending on time of day\n5. Opens this guide\n6. Radar displays the fellowing:\n\t○ Green arrow is your own boat always located in center of the radar\n\t○ Red arrow indicates dengerously low TCPA between the marked target and your boat\n\t○ aqua (violet for dark) arrows is the selected target for for detailed overview, this will override the danger indicator so be allert when hearing alarms\n\t○ Black arrows are the boats caught in your configured radar range\n\t○ Each boat has assinged ID this can change depending on selected ENUM order, the assigned ID can get shuffled during order changes so you might want to track boat in detail target overview to preffent confusion\n\t○ The line drawn per plotted ellement (including self) will show the direction and predicted positioning depending on speed, it can be served aa helper for predicting CPA/TCPA overtime for mannual planning\n7. Current speed of your boat and latitude position \n8. Current heading of your boat and lonitude position\n9. Boats caugth in configured range, you can sellect, deselect or swith target by clicking on a row\n10. detailed information of selected target it will remain tracked if target is outside configured range until unselected or switched on the radar taget apears in aqua color (violet in darkmode)\n11. an ENUM config it will change the order depending on selected type to order\n12. Systemtime might not appear if hardware bugs are pressent or no time tracking in system",
                 justify="left",
                 anchor="w"  
             )
@@ -933,16 +972,16 @@ class RadarConsole:
             self.unit.configure(bg=self.primary_color, fg="Silver")
         else:
             self.unit.configure(bg=self.primary_color, fg="black")
+
         # --- Secondary update --
-        self.Theme.configure(bg=self.secondary_color)
-        self.Help.configure(bg=self.secondary_color)
-        self.headingDisplay.configure(bg=self.secondary_color)
-        self.speedDisplay.configure(bg=self.secondary_color)
-        self.KM_prev.configure(bg=self.secondary_color)
-        self.KM_next.configure(bg=self.secondary_color)
+        sec_set = [self.Theme, self.Help, self.headingDisplay, self.speedDisplay, self.latDisplay, self.lonDisplay, self.KM_prev, self.KM_next]
+        for secVar in sec_set:
+            secVar.configure(bg=self.secondary_color)
+
         # --- tertialy update --
-        self.speedLabel.configure(bg=self.tertiary_color)
-        self.headingLabel.configure(bg=self.tertiary_color)
+        ter_set = [self.speedLabel, self.headingLabel, self.latLabel, self.lonLabel]
+        for terVar in ter_set:
+            terVar.configure(bg=self.tertiary_color)
         
     def apply_dark_theme(self):
         self.style.theme_use("clam")
