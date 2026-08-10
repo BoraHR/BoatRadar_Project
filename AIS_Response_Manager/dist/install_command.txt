@@ -1,0 +1,10 @@
+pyinstaller --clean --onefile --windowed --name ARPA `                                                  
+   --add-data Data;Data `                                   
+   --add-data Radar;Radar `
+   --add-data Sounds;Sounds `
+   --hidden-import pyais `
+   --hidden-import pyais.stream `
+   --hidden-import PIL `
+   --hidden-import numpy `
+   --hidden-import tkinter `
+   Program.py
