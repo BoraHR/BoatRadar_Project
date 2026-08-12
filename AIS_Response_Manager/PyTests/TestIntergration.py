@@ -4,6 +4,7 @@ import sys
 # Add parent directory to path to import pyais_decoder
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from RadarPlotter import RadarPlotter
+from Algorithm import miles_to_km
 
 def test_integration_plotter_with_mock_db():
     plotter = RadarPlotter(IsTest=True)
@@ -14,3 +15,14 @@ def test_integration_plotter_with_mock_db():
         time.sleep(0.05)
     
     assert plotter.draw.img_RAM is not None
+
+
+def test_miles_mode_range_is_converted_to_km_before_filtering():
+    plotter = RadarPlotter(IsTest=True)
+    plotter.IsKM = False
+    plotter.InRangeHelper(plotter.ID, range=1, timeWindow=10)
+
+    assert plotter.RadarConsoleData
+    for row in plotter.RadarConsoleData:
+        distance_km = row[2]
+        assert distance_km <= miles_to_km(1) + 1e-9
