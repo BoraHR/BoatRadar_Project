@@ -22,7 +22,7 @@ if __name__ == "__main__":
     try:
         if DB_Exists() == False:
             Save_DecodedData(ais_file1) # Passed: 26357 | Failed: 3092 | Skipped: 10878 | Time(ms): 16182.82
-            input("press ENTER to continue")
+            # input("press ENTER to continue")
             Save_DecodedData(ais_file2) # Passed: 13878 | Failed: 2842 | Skipped: 11857 | Time(ms): 9527.60
             Create_AIS_Render_History()
         window = Tk()

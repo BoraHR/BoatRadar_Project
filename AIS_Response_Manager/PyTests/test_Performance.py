@@ -185,7 +185,7 @@ def test_SQL_update_SubData():
     GetResults_WithTargets("SQL UPDATE SUBDATA", count, total, max, min, 750, 0.09, 0.003, 0.65, False)
     conn.close()
     testConsole.window.destroy()
-    time.sleep(0.01)
+    time.sleep(0.05)
 
 def test_lat_long_algorithm_speed():
     i = 1
