@@ -183,6 +183,7 @@ jobs:
           print("Coverage threshold met")
 
       - name: Check test database - afther creation
+        if: always()
         shell: python
         run: |
           import os
