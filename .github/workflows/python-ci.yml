@@ -10,78 +10,114 @@ jobs:
   tests:
     name: Run Python tests and coverage
     runs-on: windows-latest
+
     strategy:
       matrix:
         python-version: [3.11]
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Cache pip
         uses: actions/cache@v4
         with:
-          path: ~/.cache/pip
+          path: ~\AppData\Local\pip\Cache
           key: pip-${{ runner.os }}-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
             pip-${{ runner.os }}-
 
-      - name: Install dependencies (if present)
+      - name: Install dependencies
+        shell: pwsh
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; else echo "No requirements.txt found, skipping."; fi
+
+          if (Test-Path "requirements.txt") {
+              python -m pip install -r requirements.txt
+          }
+          else {
+              Write-Host "No requirements.txt found, skipping."
+          }
+
           python -m pip install pyais
           python -m pip install numpy
           python -m pip install Pillow
-          sudo apt-get update
-          sudo apt-get install -y xvfb # this installs a fake display for github actions required for turtle and thinker
 
       - name: Test Windows Python environment
         run: |
           python --version
+          python -c "import sys; print(sys.executable)"
           python -c "import winsound; print('winsound works')"
 
       - name: Ensure test tools
-        run: python -m pip install --upgrade pytest pytest-cov junit-xml
+        run: |
+          python -m pip install --upgrade pytest pytest-cov
 
       - name: Run pytest with coverage
         run: |
-          mkdir -p pytest-results
-          xvfb-run -a pytest -q --junitxml=pytest-results/junit.xml --cov=. --cov-report=xml:coverage.xml --cov-report=html:coverage-html || true
+          New-Item -ItemType Directory -Force -Path pytest-results
+          pytest -q `
+            --junitxml=pytest-results/junit.xml `
+            --cov=. `
+            --cov-report=xml:coverage.xml `
+            --cov-report=html:coverage-html
 
       - name: Write pytest summary
         if: always()
+        shell: python
         run: |
-          python - <<'PY'
-          import xml.etree.ElementTree as ET, glob, os
-          summary = os.environ.get('GITHUB_STEP_SUMMARY')
-          files = glob.glob('pytest-results/*.xml')
-          with open(summary, 'a', encoding='utf-8') as f:
-              f.write('## PyTest Summary\n\n')
+          import xml.etree.ElementTree as ET
+          import glob
+          import os
+
+          summary = os.environ.get("GITHUB_STEP_SUMMARY")
+          files = glob.glob("pytest-results/*.xml")
+
+          with open(summary, "a", encoding="utf-8") as f:
+              f.write("## PyTest Summary\n\n")
+
               if not files:
-                  f.write('No JUnit XML results found.\n')
+                  f.write("No JUnit XML results found.\n")
                   raise SystemExit(0)
+
               tree = ET.parse(files[0]).getroot()
-              total = int(tree.attrib.get('tests', 0))
-              failures = int(tree.attrib.get('failures', 0))
-              errors = int(tree.attrib.get('errors', 0))
-              skipped = int(tree.attrib.get('skipped', 0))
-              f.write(f'Total: {total}, Failures: {failures}, Errors: {errors}, Skipped: {skipped}\n\n')
+
+              total = int(tree.attrib.get("tests", 0))
+              failures = int(tree.attrib.get("failures", 0))
+              errors = int(tree.attrib.get("errors", 0))
+              skipped = int(tree.attrib.get("skipped", 0))
+
+              f.write(
+                  f"Total: {total}, "
+                  f"Failures: {failures}, "
+                  f"Errors: {errors}, "
+                  f"Skipped: {skipped}\n\n"
+              )
+
               if failures + errors == 0:
-                  f.write('| All tests passed | |\n')
+                  f.write("| All tests passed | |\n")
               else:
-                  f.write('| Test | Message |\n|------|---------|\n')
-                  for case in tree.findall('.//testcase'):
-                      name = case.attrib.get('name')
-                      fail = case.find('failure') or case.find('error')
+                  f.write("| Test | Message |\n")
+                  f.write("|------|---------|\n")
+
+                  for case in tree.findall(".//testcase"):
+                      name = case.attrib.get("name")
+                      fail = case.find("failure")
+
+                      if fail is None:
+                          fail = case.find("error")
+
                       if fail is not None:
-                          msg = (fail.attrib.get('message') or '').splitlines()[0]
-                          f.write(f'| {name} | {msg} |\n')
-          PY
+                          msg = (
+                              fail.attrib.get("message") or ""
+                          ).splitlines()[0]
+
+                          f.write(f"| {name} | {msg} |\n")
 
       - name: Upload test results and coverage artifacts
         if: always()
@@ -95,18 +131,26 @@ jobs:
 
       - name: Fail if coverage below threshold (80%)
         if: always()
+        shell: python
         run: |
-          python - <<'PY'
-          import xml.etree.ElementTree as ET, sys, os
-          cov_file = 'coverage.xml'
+          import xml.etree.ElementTree as ET
+          import sys
+          import os
+
+          cov_file = "coverage.xml"
+
           if not os.path.exists(cov_file):
-              print('No coverage.xml found, skipping threshold check')
+              print("No coverage.xml found")
               sys.exit(1)
+
           root = ET.parse(cov_file).getroot()
-          pct = float(root.attrib.get('line-rate', 0)) * 100
-          print(f'Total coverage: {pct:.2f}%')
+
+          pct = float(root.attrib.get("line-rate", 0)) * 100
+
+          print(f"Total coverage: {pct:.2f}%")
+
           if pct < 80:
-              print('ERROR: Coverage below 80%')
+              print("ERROR: Coverage below 80%")
               sys.exit(1)
-          print('Coverage threshold met')
-          PY
+
+          print("Coverage threshold met")
