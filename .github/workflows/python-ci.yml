@@ -37,6 +37,8 @@ jobs:
           python -m pip install pyais
           python -m pip install numpy
           python -m pip install Pillow
+          sudo apt-get update
+          sudo apt-get install -y xvfb # this installs a fake display for github actions required for turtle and thinker
 
       - name: Ensure test tools
         run: python -m pip install --upgrade pytest pytest-cov junit-xml
@@ -44,7 +46,7 @@ jobs:
       - name: Run pytest with coverage
         run: |
           mkdir -p pytest-results
-          pytest -q --junitxml=pytest-results/junit.xml --cov=. --cov-report=xml:coverage.xml --cov-report=html:coverage-html || true
+          xvfb-run -a pytest -q --junitxml=pytest-results/junit.xml --cov=. --cov-report=xml:coverage.xml --cov-report=html:coverage-html || true
 
       - name: Write pytest summary
         if: always()
@@ -94,7 +96,7 @@ jobs:
           cov_file = 'coverage.xml'
           if not os.path.exists(cov_file):
               print('No coverage.xml found, skipping threshold check')
-              sys.exit(0)
+              sys.exit(1)
           root = ET.parse(cov_file).getroot()
           pct = float(root.attrib.get('line-rate', 0)) * 100
           print(f'Total coverage: {pct:.2f}%')
