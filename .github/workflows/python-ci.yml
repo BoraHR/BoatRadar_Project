@@ -58,6 +58,33 @@ jobs:
         run: |
           python -m pip install --upgrade pytest pytest-cov
 
+      - name: Check test database
+        shell: python
+        run: |
+          import os
+          import sqlite3
+
+          path = "AIS_Response_Manager/PyTests/MockData/AIS-Responder.db"
+
+          print("Database:", path)
+          print("Exists:", os.path.exists(path))
+
+          if os.path.exists(path):
+              print("Size:", os.path.getsize(path), "bytes")
+
+              conn = sqlite3.connect(path)
+              cursor = conn.cursor()
+
+              tables = cursor.execute("""
+                  SELECT name
+                  FROM sqlite_master
+                  WHERE type='table'
+              """).fetchall()
+
+              print("Tables:", tables)
+
+              conn.close()
+
       - name: Run pytest with coverage
         run: |
           New-Item -ItemType Directory -Force -Path pytest-results
