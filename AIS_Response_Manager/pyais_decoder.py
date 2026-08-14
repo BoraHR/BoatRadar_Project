@@ -49,8 +49,6 @@ def Decode_file(file):
                     pass
 
 def Save_DecodedData(_file):
-    print(f"Destination: {FileRoute_sql3}")
-    print(f"Destination_test: {test_FileRoute_sql3}")
     total_time = 0.00
     failed = 0
     skipped = 0
@@ -83,6 +81,8 @@ def Save_DecodedData(_file):
     ''') 
     conn.commit()
     print("DB created")
+    print(f"Destination: {FileRoute_sql3}")
+    print(f"Destination_test: {test_FileRoute_sql3}")
     with open(_file, "r", encoding="utf-8", errors="ignore") as file:
         for line in file:
             start = time.time()
