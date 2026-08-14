@@ -74,7 +74,7 @@ def ClearDB():
         os.remove(test_FileRoute_sql3)
 
 def test_initialize():
-    testARM, testDrawer, testPlotter, testConsole = ProgramForEachTest()
+    testARM, testDrawer, testPlotter, testConsole = ProgramForEachTest(4)
 
     assert testARM is not None
     assert testDrawer is not None
