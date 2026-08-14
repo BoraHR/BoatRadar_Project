@@ -49,6 +49,8 @@ def Decode_file(file):
                     pass
 
 def Save_DecodedData(_file):
+    print(f"Destination: {FileRoute_sql3}")
+    print(f"Destination_test: {test_FileRoute_sql3}")
     total_time = 0.00
     failed = 0
     skipped = 0
