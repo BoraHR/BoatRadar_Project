@@ -10,7 +10,7 @@ import math
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ais_file1 = os.path.join(BASE_DIR, "Data/ais_arca.txt")
 ais_file2 = os.path.join(BASE_DIR, "Data/ais_rp42.txt")
-FileRoute_sql3 = os.path.join(BASE_DIR, "Pytests/MockData/AIS-Responder.db")
+FileRoute_sql3 = os.path.join(BASE_DIR, "PyTests/MockData/AIS-Responder.db")
 
 def DB_Exists():
     print("!!! DO NOT USE test_pyais_decoder.py IN ACTUAL PROGRAM USE pyais_decoder.py INSTEAD !!!")

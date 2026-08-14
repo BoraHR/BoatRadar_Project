@@ -11,7 +11,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
 
 def test_integration_plotter_with_mock_db():
-    test_AIS_file = os.path.join(BASE_DIR, "Pytests/MockData/ais_all.txt")
+    test_AIS_file = os.path.join(BASE_DIR, "PyTests/MockData/ais_all.txt")
     if DB_Exists() == False:
         Save_DecodedData(test_AIS_file)
     plotter = RadarPlotter(IsTest=True)
@@ -25,7 +25,7 @@ def test_integration_plotter_with_mock_db():
 
 
 def test_miles_mode_range_is_converted_to_km_before_filtering():
-    test_AIS_file = os.path.join(BASE_DIR, "Pytests/MockData/ais_all.txt")
+    test_AIS_file = os.path.join(BASE_DIR, "PyTests/MockData/ais_all.txt")
     if DB_Exists() == False:
         Save_DecodedData(test_AIS_file)
     plotter = RadarPlotter(IsTest=True)

@@ -15,8 +15,6 @@ import math
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
-
-import AIS_ResponderManager
 from AIS_ResponderManager import AIS_ResponderManager
 from test_pyais_decoder import DB_Exists, Save_DecodedData
 from Algorithm import haversine, bearing_deg, ConvertToX_Y, velocity_vector, calculate_cpa_tcpa, km_to_lat_deg, km_to_lon_deg
@@ -40,15 +38,15 @@ def get_all_boats(c, ignore = -1):
     ''', (ignore,)).fetchall()
 
 def ProgramForEachTest(size = 0):
-    test_AIS_file = os.path.join(BASE_DIR, "Pytests/MockData/ais_NONE.txt")
+    test_AIS_file = os.path.join(BASE_DIR, "PyTests/MockData/ais_NONE.txt")
     if size == 1:
-        test_AIS_file = os.path.join(BASE_DIR, "Pytests/MockData/ais_small.txt")
+        test_AIS_file = os.path.join(BASE_DIR, "PyTests/MockData/ais_small.txt")
     elif size == 2:
-        test_AIS_file = os.path.join(BASE_DIR, "Pytests/MockData/ais_moderate.txt")
+        test_AIS_file = os.path.join(BASE_DIR, "PyTests/MockData/ais_moderate.txt")
     elif size == 3:
-        test_AIS_file = os.path.join(BASE_DIR, "Pytests/MockData/ais_large.txt")
+        test_AIS_file = os.path.join(BASE_DIR, "PyTests/MockData/ais_large.txt")
     elif size == 4:
-        test_AIS_file = os.path.join(BASE_DIR, "Pytests/MockData/ais_all.txt")
+        test_AIS_file = os.path.join(BASE_DIR, "PyTests/MockData/ais_all.txt")
     
     if DB_Exists() == False:
         Save_DecodedData(test_AIS_file)
@@ -63,13 +61,13 @@ def ProgramForEachTest(size = 0):
     return testARM, testDrawer, testPlotter, testConsole
 
 def DB_Exists():
-    test_FileRoute_sql3 = os.path.join(BASE_DIR, "Pytests/MockData/AIS-Responder.db")
+    test_FileRoute_sql3 = os.path.join(BASE_DIR, "PyTests/MockData/AIS-Responder.db")
     if os.path.exists(test_FileRoute_sql3):
         return True
     return False
 
 def ClearDB():
-    test_FileRoute_sql3 = os.path.join(BASE_DIR, "Pytests/MockData/AIS-Responder.db")
+    test_FileRoute_sql3 = os.path.join(BASE_DIR, "PyTests/MockData/AIS-Responder.db")
     if os.path.exists(test_FileRoute_sql3):
         os.remove(test_FileRoute_sql3)
 
