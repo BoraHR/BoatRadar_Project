@@ -61,7 +61,7 @@ jobs:
       - name: Run pytest with coverage
         run: |
           New-Item -ItemType Directory -Force -Path pytest-results
-          pytest -q `
+          pytest `
             --junitxml=pytest-results/junit.xml `
             --cov=. `
             --cov-report=xml:coverage.xml `
