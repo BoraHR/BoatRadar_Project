@@ -109,17 +109,22 @@ class RadarPlotter:
             print(e)
 
     def plot_boats(self, myBoat):
+        MAX_PLOT = 30
         for i, item in enumerate(self.RadarConsoleData, start=1):
             item[1] = i
 
+        j = 0
         for boat in self.RadarConsoleData:
             if boat[5] != None:
                 pd = boat[5] # (boat_id, X_Y[0], X_Y[1], number, scale, boat[12], False)
                 #  def plot_otherBoat(self, boatToSave, x_meters, y_meters, number, scale=0.050, heading=0.00, IsTarget = False):
                 if self.targetId == boat[0][0]:
                     self.draw.plot_otherBoat(myBoat, boat[0], pd[1], pd[2], boat[1], pd[4], pd[5], True)
-                else:
+                    j = j + 1
+                elif j < MAX_PLOT:
                     self.draw.plot_otherBoat(myBoat, boat[0], pd[1], pd[2], boat[1], pd[4], pd[5], False)
+                    j = j + 1
+        # print(f"Plot count: {j}")
 
 
     # range = distance between your boat and other boat in both Lad and long
