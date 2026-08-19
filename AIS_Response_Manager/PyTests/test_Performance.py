@@ -50,6 +50,7 @@ def ProgramForEachTest(size = 0):
     
     if DB_Exists() == False:
         Save_DecodedData(test_AIS_file)
+
     testARM = AIS_ResponderManager(1, True)
 
     testDrawer = RadarDrawing()
@@ -57,6 +58,10 @@ def ProgramForEachTest(size = 0):
 
     window = Tk()
     testConsole = RadarConsole(window, True)
+    conn = sqlite3.connect(testARM.FileRoute_sql3)
+    c = conn.cursor()
+    if c.execute('''SELECT * FROM AIS_Decoder''').fetchone() == None:
+        Save_DecodedData() # failsave if previous db generation failed
 
     return testARM, testDrawer, testPlotter, testConsole
 
@@ -357,6 +362,7 @@ def ImageSaveLoop(testname, KM, IncludeTargets):
         testPlotter.plot_boats(myBoat)
         testDrawer.render_to_ram()
         end = time.perf_counter()
+        testDrawer.clear_otherBoats() 
         # the first index is always None value for img_RAM and should be ignored
         if i != 0:
             assert testDrawer.img_RAM != None
@@ -368,6 +374,7 @@ def ImageSaveLoop(testname, KM, IncludeTargets):
             total += result
             count += 1 
         i += 1
+        
     
     if IncludeTargets:
         GetResults_WithTargets(testname, count, total, max, min, 20, 1.2, 0.6, 12.00)
