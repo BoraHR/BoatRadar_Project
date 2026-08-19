@@ -1,6 +1,8 @@
+import tempfile
 import turtle
 import math
 import os
+import io
 # https://www.geeksforgeeks.org/python/python-pillow-colors-on-an-image/
 from PIL import Image
 import time
@@ -328,125 +330,49 @@ class RadarDrawing:
 
     def SaveImg(self, close=False):
         """
-        Non-blocking image save. Captures PostScript immediately and processes
-        image in background thread to avoid freezing the GUI.
+        Render the current turtle radar scene into an in-memory PostScript buffer,
+        convert it to a PIL image, and keep the final result in self.img_RAM.
+        This avoids creating temporary .ps files on disk.
         """
         try:
-            import time as time_module
-            self.ps_loc = os.path.join(self.BASE_DIR, f"Radar/PostScript/drawing({self.ps_id}).ps")
-            self.ps_id += 1
-            if self.ps_id > 999:
-                self.ps_id = 0
-            # self.img_loc = os.path.join(self.BASE_DIR, f"Radar/Renders/img.png")
-            
-            ts = turtle.Screen()
-            ts.bgcolor(self.get_bgcolor())
-            # Fast: Save PostScript (minimal blocking)
-            
-            ts.getcanvas().postscript(file=self.ps_loc)
-            
-            # CRITICAL: Ensure file is flushed to disk before background thread reads it
-            # This prevents race condition where thread tries to open incomplete file
-            time_module.sleep(0.05)  # Small delay to ensure OS has flushed the file
-            
+            ps = screen.getcanvas().postscript(colormode="color")
+
+            if not ps or not ps.strip():
+                raise ValueError("Empty PostScript output")
+
+            with tempfile.NamedTemporaryFile(suffix=".ps", delete=False) as tmp:
+                tmp.write(ps.encode("latin-1"))
+                tmp_path = tmp.name
+
+            try:
+                with Image.open(tmp_path) as img:
+                    img = img.convert("RGBA")
+
+                    bg = Image.new("RGBA", img.size, (*self.RGB, 255))
+                    final = Image.alpha_composite(bg, img)
+
+                    pixels = final.load()
+                    for y in range(final.height):
+                        for x in range(final.width):
+                            r, g, b, a = pixels[x, y]
+                            if r > 240 and g > 240 and b > 240:
+                                pixels[x, y] = (*self.RGB, 255)
+
+                    self.img_RAM = final
+            finally:
+                if os.path.exists(tmp_path):
+                    os.remove(tmp_path)
+
             screen.update()
-            
-            # Defer heavy image processing to background thread
-            if self._save_thread and self._save_thread.is_alive():
-                # Wait for previous save to complete before starting a new one
-                self._save_thread.join(timeout=2.0)
-            
-            self._save_thread = threading.Thread(
-                target=self._process_image_async,
-                kwargs={'close': close},
-                daemon=True
-            )
-            self._save_thread.start()
-            
         except Exception as e:
-            print(f"Error in SaveImg: {e}")
+            print(f"SaveImg failed: {e}")
+        finally:
             if close:
                 screen.bye()
 
-    def _process_image_async(self, close=False):
-        """
-        Background thread function for heavy image processing.
-        Runs asynchronously so GUI doesn't freeze.
-        Includes retry logic to handle race conditions.
-        """
-        import time as time_module
-        max_retries = 3
-        retry_count = 0
-        
-        while retry_count < max_retries:
-            try:
-                with self._save_lock:
-                    # Retry logic: wait a bit if file isn't ready
-                    if not os.path.exists(self.ps_loc):
-                        if retry_count < max_retries - 1:
-                            time_module.sleep(0.05)
-                            retry_count += 1
-                            continue
-                        else:
-                            raise FileNotFoundError(f"PostScript file not found: {self.ps_loc}")
-                    
-                    img = Image.open(self.ps_loc).convert("RGBA")
-
-                    if self.RGB[0] > 25 or self.RGB[1] > 25 or self.RGB[2] > 25:
-                        # Create background
-                        bg = Image.new("RGBA", img.size, (
-                            self.RGB[0],
-                            self.RGB[1],
-                            self.RGB[2],
-                            255
-                        ))
-
-                        # Combine background + drawing
-                        final = Image.alpha_composite(bg, img)
-                    
-                        # Process pixels - convert iterator to list first
-                        img_data = list(img.getdata())
-                        new_data = []
-                        for item in img_data:
-                            # Detect white (or near white)
-                            if item[0] > 240 and item[1] > 240 and item[2] > 240:
-                                # Make transparent
-                                new_data.append((255, 255, 255, 0))
-                            else:
-                                new_data.append(item)
-
-                        img.putdata(new_data)
-
-                        # Now create background
-                        bg = Image.new("RGBA", img.size, (
-                            self.RGB[0],
-                            self.RGB[1],
-                            self.RGB[2],
-                            255
-                        ))
-
-                        # Composite works NOW
-                        final = Image.alpha_composite(bg, img)
-
-                        # final.save(self.img_loc)
-                        self.img_RAM = final
-                    else:
-                        final = Image.open(self.ps_loc).convert("RGBA")
-                        # final.save(self.img_loc)
-                        self.img_RAM = final
-                    
-                    break  # Success - exit retry loop
-                    
-            except (FileNotFoundError, IOError, Exception) as e:
-                if retry_count < max_retries - 1:
-                    retry_count += 1
-                    time_module.sleep(0.05)
-                else:
-                    print(f"Error in background image processing (attempt {retry_count + 1}/{max_retries}): {e}")
-                    break
-            finally:
-                if close and retry_count >= max_retries - 1:
-                    screen.bye()
+    def render_to_ram(self):
+        """Compatibility wrapper so existing code can keep calling render_to_ram()."""
+        self.SaveImg(close=False)
 
     def CloseDrawer(self):
         screen.bye()
@@ -466,7 +392,7 @@ class RadarDrawing:
         # https://www.geeksforgeeks.org/python/python-pillow-colors-on-an-image/
         self.bg_loc = os.path.join(self.BASE_DIR, f"Radar/Background/R={self.RGB[0]},G={self.RGB[1]},B={self.RGB[2]}.png")
         # reuse color if already created
-        if os.path.exists(self.bg_loc) == False:
+        if os.path.exists(self.img_RAM) == False:
             # try:
             img = Image.open(os.path.join(self.BASE_DIR, f"Radar/Background/template/WhiteBG_1x1.png"))
             img = img.convert("RGB")
@@ -484,4 +410,4 @@ class RadarDrawing:
             img.putdata(new_image)
 
             # save new image
-            img.save(self.bg_loc)
+            img.save(self.img_RAM)

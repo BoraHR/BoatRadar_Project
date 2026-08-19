@@ -952,8 +952,18 @@ class RadarConsole:
             self.img_compas = os.path.join(self.BASE_DIR, f"Radar/Compas/Current/360_Rotation-TranparantCenter_Dark.png")
             self.update_UI_colorscheme()
             self.apply_dark_theme()
-        
+
+        self.sync_draw_background()
         self.plotter.draw.KM_build = -1 # ensures clearing radar cache to redraw for theme switch
+
+    def sync_draw_background(self):
+        self.plotter.draw.setBGColor_RGB(
+            self.RGB_Pri[0],
+            self.RGB_Pri[1],
+            self.RGB_Pri[2]
+        )
+        self.plotter.draw.SaveImg()
+        self.update_image()
 
     def toggle_fullscreen(self):
         if self.IsFullscreen:

@@ -355,7 +355,7 @@ def ImageSaveLoop(testname, KM, IncludeTargets):
         if not IncludeTargets:
             testDrawer.draw_radar_Custom(KM, 0.00, 2.0)
         testPlotter.plot_boats(myBoat)
-        testDrawer.SaveImg()
+        testDrawer.render_to_ram()
         end = time.perf_counter()
         # the first index is always None value for img_RAM and should be ignored
         if i != 0:

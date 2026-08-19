@@ -213,7 +213,7 @@ class RadarPlotter:
         if len(otherBoats) == 0:
             if self.IsDebug:
                 print(f"NO BOATS IN RANGE OF {effective_range_km:.2f}KM CONTACT YOUR AIS PROVIDER FOR ANY UPDATES")
-            self.draw.SaveImg()
+            self.draw.render_to_ram()
             return
         if self.IsDebug:
             print(f"Other boats in range of {effective_range_km:.2f}KM / {requested_range} UI units:")
@@ -270,7 +270,7 @@ class RadarPlotter:
         # saving the image does not close the turtle window by default;
         # we may call ``SaveImg(close=True)`` at the very end of the
         # program if we want to tear the canvas down.
-        self.draw.SaveImg()
+        self.draw.render_to_ram()
         end = time.time()
         fin_performance = end - start
         print(f"Radar plotting data trasmited count({len(self.RadarConsoleData)}) in {fin_performance} seconds")
