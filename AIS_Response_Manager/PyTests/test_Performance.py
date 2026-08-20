@@ -362,7 +362,7 @@ def ImageSaveLoop(testname, KM, IncludeTargets):
         testPlotter.plot_boats(myBoat)
         testDrawer.render_to_ram()
         end = time.perf_counter()
-        testDrawer.clear_otherBoats() 
+                
         # the first index is always None value for img_RAM and should be ignored
         if i != 0:
             assert testDrawer.img_RAM != None
@@ -374,6 +374,8 @@ def ImageSaveLoop(testname, KM, IncludeTargets):
             total += result
             count += 1 
         i += 1
+        testPlotter.draw.clear_otherBoats()
+
         
     
     if IncludeTargets:
