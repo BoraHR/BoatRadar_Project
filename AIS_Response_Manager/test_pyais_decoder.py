@@ -247,10 +247,10 @@ def Save_DecodedData(_file):
                     print("-" * 50)
                     total_time += end - start
                     continue
-        conn.commit()
-        conn.close()
-        print(f"Passed: {passed} | Failed: {failed} | Skipped: {skipped} | Time(ms): {total_time * 1000:.2f}")
-        print("!!! DO NOT USE test_pyais_decoder.py IN ACTUAL PROGRAM USE pyais_decoder.py INSTEAD !!!")
+    conn.commit()
+    conn.close()
+    print(f"Passed: {passed} | Failed: {failed} | Skipped: {skipped} | Time(ms): {total_time * 1000:.2f}")
+    print("!!! DO NOT USE test_pyais_decoder.py IN ACTUAL PROGRAM USE pyais_decoder.py INSTEAD !!!")
         
 def Create_AIS_Render_History():
     print("!!! DO NOT USE test_pyais_decoder.py IN ACTUAL PROGRAM USE pyais_decoder.py INSTEAD !!!")

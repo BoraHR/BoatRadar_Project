@@ -23,6 +23,45 @@ from RadarConsole import RadarConsole
 from RadarPlotter import RadarPlotter
 from RadarDrawing import RadarDrawing
 
+@pytest.fixture(scope="session", autouse=True)
+def setup_clean_mock_db():
+    """Create a fresh mock database once before the test session."""
+
+    test_db_path = os.path.join(
+        BASE_DIR,
+        "PyTests/MockData/AIS-Responder.db"
+    )
+
+    test_AIS_file = os.path.join(
+        BASE_DIR,
+        "PyTests/MockData/ais_all.txt"
+    )
+
+    # Remove old test database
+    if os.path.exists(test_db_path):
+        os.remove(test_db_path)
+
+    # Create AIS_Decoder table and populate it
+    Save_DecodedData(test_AIS_file)
+
+    # Create the additional table required by AIS_ResponderManager
+    with sqlite3.connect(test_db_path) as conn:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS AIS_SubData (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                distance REAL,
+                CPA REAL,
+                TCPA REAL,
+                BRG REAL,
+                Boat_ID INTEGER UNIQUE,
+                FOREIGN KEY (Boat_ID) REFERENCES AIS_Decoder(id)
+            )
+        """)
+
+        conn.commit()
+
+    yield
+
 def get_self(c):
     return c.execute('''
         SELECT *
