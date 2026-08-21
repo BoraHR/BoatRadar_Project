@@ -33,11 +33,11 @@ class RadarPlotter:
         self.IsDebug = False
         self.IsKM = True
         self.FileRoute_sql3 = FileRoute_sql3
-        self.conn = sqlite3.connect(FileRoute_sql3)
         self.ID = ID
         if IsTest:
             self.FileRoute_sql3 = os.path.join(BASE_DIR, "PyTests/MockData/AIS-Responder.db")
             self.ID = 1
+        self.conn = sqlite3.connect(self.FileRoute_sql3)
         self.Order = Order.RANGE
         self.RadarConsoleData = []
         self.PrevRadarConsole_BoatID = []
