@@ -59,7 +59,6 @@ def setup_clean_mock_db():
         """)
 
         conn.commit()
-        conn.close()
 
     yield
 
