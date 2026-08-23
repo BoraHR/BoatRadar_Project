@@ -52,7 +52,8 @@ class AIS_ResponderManager:
                 print(e)
         else:
             print("AIS-Responder.db not found")
-        conn.close()
+        if conn is not None:
+            conn.close()
         
     def Update_SubData_With_Value(self, c, Boat_ID, distance, CPA, TCPA, BRG):
         if self.DB_Exists():
