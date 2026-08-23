@@ -59,6 +59,8 @@ class RadarConsole:
     def __init__(self, window, testMode = False):
         self.IsDark = False
         self.plotter = RadarPlotter()
+        if testMode:
+            self.plotter = RadarPlotter(True)
         
         # RED == self.RGB_{Pri/Sec/Ter}[0]
         # GREEN == self.RGB_{Pri/Sec/Ter}[1]
