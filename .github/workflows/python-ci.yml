@@ -47,6 +47,7 @@ jobs:
           python -m pip install pyais
           python -m pip install numpy
           python -m pip install Pillow
+          choco install ghostscript -y
 
       - name: Test Windows Python environment
         run: |
