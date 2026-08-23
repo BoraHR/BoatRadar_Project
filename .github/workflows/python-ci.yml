@@ -49,6 +49,23 @@ jobs:
           python -m pip install Pillow
           choco install ghostscript -y
 
+      - name: Add Ghostscript to PATH
+        shell: pwsh
+        run: |
+          $gs = Get-ChildItem "C:\Program Files\gs" -Recurse -Filter "gswin64c.exe" |
+                Select-Object -First 1
+
+          if ($null -eq $gs) {
+              Write-Error "gswin64c.exe was not found"
+              exit 1
+          }
+
+          $gsDir = $gs.Directory.FullName
+
+          Write-Host "Found Ghostscript at: $gsDir"
+
+          Add-Content $env:GITHUB_PATH $gsDir
+
       - name: Test Windows Python environment
         run: |
           python --version
