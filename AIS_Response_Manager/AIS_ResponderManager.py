@@ -20,6 +20,7 @@ class AIS_ResponderManager:
         return False
     
     def Create_Table(self):
+        conn = None
         if self.DB_Exists():
             try:
                 conn = sqlite3.connect(self.FileRoute_sql3)
@@ -47,13 +48,18 @@ class AIS_ResponderManager:
                     (self.USER_ID,)
                 )
                 conn.commit()
+                conn.close()
+
             except Exception as e:
                 print("Error during AIS_SubData update:")
                 print(e)
+                
+            finally:
+                if conn is not None:
+                    conn.close()
         else:
             print("AIS-Responder.db not found")
-        if conn is not None:
-            conn.close()
+        
         
     def Update_SubData_With_Value(self, c, Boat_ID, distance, CPA, TCPA, BRG):
         if self.DB_Exists():
