@@ -17,18 +17,6 @@ from AIS_ResponderManager import AIS_ResponderManager
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
 
-# @pytest.fixture(scope="session", autouse=True)
-# def setup_clean_mock_db(TestARM = AIS_ResponderManager(1, True)):
-#     """Ensures a 100% fresh mock database before the test runs."""
-#     test_db_path = os.path.join(BASE_DIR, "PyTests/MockData/AIS-Responder.db")
-#     if os.path.exists(test_db_path):
-#         os.remove(test_db_path) # Wipe stale data
-        
-#     test_AIS_file = os.path.join(BASE_DIR, "PyTests/MockData/ais_all.txt")
-#     Save_DecodedData(test_AIS_file) # Seed fresh data
-#     TestARM.Create_Table()
-#     yield
-
 @pytest.fixture(scope="session", autouse=True)
 def setup_clean_mock_db():
     """Create a fresh mock database once before the test session."""
