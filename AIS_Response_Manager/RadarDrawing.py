@@ -330,44 +330,96 @@ class RadarDrawing:
 
     def SaveImg(self, close=False):
         """
-        Render the current turtle radar scene into an in-memory PostScript buffer,
-        convert it to a PIL image, and keep the final result in self.img_RAM.
-        This avoids creating temporary .ps files on disk.
+        Non-blocking image save.
+        Captures PostScript immediately and processes the image in a
+        background thread.
         """
         try:
+            # Capture PostScript in the GUI/main thread.
             ps = screen.getcanvas().postscript(colormode="color")
 
             if not ps or not ps.strip():
                 raise ValueError("Empty PostScript output")
 
-            with tempfile.NamedTemporaryFile(suffix=".ps", delete=False) as tmp:
+            # Wait for previous image processing if necessary.
+            if self._save_thread and self._save_thread.is_alive():
+                self._save_thread.join(timeout=2.0)
+
+            # Start expensive PIL processing in background.
+            self._save_thread = threading.Thread(
+                target=self._process_image_async,
+                args=(ps, close),
+                daemon=True
+            )
+
+            self._save_thread.start()
+
+        except Exception as e:
+            print(f"SaveImg failed: {e}")
+
+            if close:
+                screen.bye()
+
+    def _process_image_async(self, ps, close=False):
+        """
+        Processes the PostScript image in a background thread.
+
+        This prevents PIL image processing from blocking the GUI.
+        """
+        tmp_path = None
+
+        try:
+            # Create temporary PostScript file.
+            with tempfile.NamedTemporaryFile(
+                suffix=".ps",
+                delete=False
+            ) as tmp:
+
                 tmp.write(ps.encode("latin-1"))
                 tmp_path = tmp.name
 
-            try:
-                with Image.open(tmp_path) as img:
-                    img = img.convert("RGBA")
+            # Open PostScript with PIL/Ghostscript.
+            with Image.open(tmp_path) as img:
+                img = img.convert("RGBA")
 
-                    bg = Image.new("RGBA", img.size, (*self.RGB, 255))
-                    final = Image.alpha_composite(bg, img)
+                # Create background.
+                bg = Image.new(
+                    "RGBA",
+                    img.size,
+                    (*self.RGB, 255)
+                )
 
-                    pixels = final.load()
-                    for y in range(final.height):
-                        for x in range(final.width):
-                            r, g, b, a = pixels[x, y]
-                            if r > 240 and g > 240 and b > 240:
-                                pixels[x, y] = (*self.RGB, 255)
+                # Remove white pixels.
+                pixels = img.load()
 
-                    self.img_RAM = final
-            finally:
-                if os.path.exists(tmp_path):
-                    os.remove(tmp_path)
+                for y in range(img.height):
+                    for x in range(img.width):
+                        r, g, b, a = pixels[x, y]
 
-            screen.update()
+                        if r > 240 and g > 240 and b > 240:
+                            pixels[x, y] = (*self.RGB, 255)
+
+                # Composite drawing over background.
+                final = Image.alpha_composite(bg, img)
+
+                # Store result in RAM.
+                self.img_RAM = final
+
         except Exception as e:
-            print(f"SaveImg failed: {e}")
+            print(f"Background image processing failed: {e}")
+
         finally:
+            # Delete temporary PostScript file.
+            if tmp_path and os.path.exists(tmp_path):
+                try:
+                    os.remove(tmp_path)
+                except Exception as e:
+                    print(f"Could not remove temporary file: {e}")
+
             if close:
+                # IMPORTANT:
+                # tkinter/turtle GUI operations should ideally happen
+                # on the main thread, so this is not completely ideal.
                 screen.bye()
 
     def render_to_ram(self):
