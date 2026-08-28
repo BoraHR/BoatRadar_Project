@@ -66,6 +66,23 @@ def setup_clean_mock_db():
             conn.close()
     yield
 
+def wait_for_image(plotter, timeout=5.0):
+    start = time.time()
+
+    while time.time() - start < timeout:
+        if plotter.draw.img_RAM is not None:
+            return
+
+        if (
+            plotter.draw._save_thread is not None
+            and not plotter.draw._save_thread.is_alive()
+        ):
+            break
+
+        time.sleep(0.01)
+
+    assert plotter.draw.img_RAM is not None
+
 def test_mock_database_contains_required_tables():
     db_path = os.path.join(
         BASE_DIR,
@@ -130,6 +147,8 @@ def test_multiple_radar_refreshes_keep_rendering_images():
 
     for _ in range(5):
         plotter.InRangeHelper(plotter.ID, range=3, timeWindow=10)
+        wait_for_image(plotter)
+
         assert plotter.draw.img_RAM is not None
         assert plotter.RadarConsoleData
 
@@ -158,6 +177,7 @@ def test_rendering_with_multiple_targets_produces_radar_image():
     plotter.InRangeHelper(plotter.ID, range=12, timeWindow=10)
 
     assert len(plotter.RadarConsoleData) > 1
+    wait_for_image(plotter)
     assert plotter.draw.img_RAM is not None
 
 
@@ -178,14 +198,26 @@ def test_switching_day_and_night_mode_updates_render_configuration():
     plotter.draw.setBGColor_RGB(144, 144, 144)
     plotter.draw.IsDark = False
     plotter.InRangeHelper(plotter.ID, range=3, timeWindow=10)
+    wait_for_image(plotter)
     light_image = plotter.draw.img_RAM.copy()
 
     plotter.draw.setBGColor_RGB(0, 23, 68)
     plotter.draw.IsDark = True
     plotter.draw.KM_build = -1
     plotter.InRangeHelper(plotter.ID, range=3, timeWindow=10)
-    dark_image = plotter.draw.img_RAM
+    wait_for_image(plotter)
+    plotter.InRangeHelper(plotter.ID, range=3, timeWindow=10) # the 2nd refresh is required for dark/day mode to apply
+    wait_for_image(plotter)
+    dark_image = plotter.draw.img_RAM.copy()
 
-    assert plotter.draw.IsDark is True
-    assert plotter.draw.RGB == (0, 23, 68)
+    plotter.draw.setBGColor_RGB(144, 144, 144)
+    plotter.draw.IsDark = False
+    plotter.draw.KM_build = -1
+    plotter.InRangeHelper(plotter.ID, range=3, timeWindow=10)
+    wait_for_image(plotter)
+    plotter.InRangeHelper(plotter.ID, range=3, timeWindow=10) # the 2nd refresh is required for dark/day mode to apply
+    wait_for_image(plotter)
+    light_image_2 = plotter.draw.img_RAM
+
     assert light_image.getpixel((0, 0)) != dark_image.getpixel((0, 0))
+    assert light_image.getpixel((0, 0)) == light_image_2.getpixel((0, 0))
