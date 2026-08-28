@@ -104,7 +104,7 @@ def calculate_cpa_tcpa(x1, y1, speed1, heading1, x2, y2, speed2, heading2):
 
     return cpa, tcpa
 
-def decimal_to_dmm(value, axis):
+def decimal_to_ddm(value, axis):
     # axis: "lat" or "lon"
     if axis == "lat":
         hemi = "N" if value >= 0 else "S"

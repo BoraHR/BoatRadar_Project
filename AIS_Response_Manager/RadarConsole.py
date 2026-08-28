@@ -10,7 +10,7 @@ import os, shutil
 from PIL import Image, ImageTk, ImageDraw
 import time
 import winsound
-from Algorithm import km_to_miles
+from Algorithm import km_to_miles, decimal_to_ddm
 
 class RadarConsole:
     # https://www.adobe.com/creativecloud/design/discover/secondary-colors.html
@@ -230,7 +230,7 @@ class RadarConsole:
                 relief=RAISED
             )
             self.latDisplay = Label(self.top_frame,
-                text=f"{self.myLat}",
+                text=f"{decimal_to_ddm(self.myLat, "lat")}",
                 font=("Consolas", 20, "bold"),
                 bg=self.secondary_color,
                 relief=RAISED
@@ -243,7 +243,7 @@ class RadarConsole:
                 relief=RAISED
             )
             self.lonDisplay = Label(self.top_frame,
-                text=f"{self.myLon}",
+                text=f"{decimal_to_ddm(self.myLon, "lon")}",
                 font=("Consolas", 20, "bold"),
                 bg=self.secondary_color,
                 relief=RAISED
@@ -576,8 +576,8 @@ class RadarConsole:
             ("Boat ID", boat[0]),
             ("MMSI", boat[4]),
             ("Status", boat[5]),
-            ("Latitude", f"{boat[10]:.6f}" if boat[10] is not None else ""),
-            ("Longitude", f"{boat[9]:.6f}" if boat[9] is not None else ""),
+            ("Latitude", f"{decimal_to_ddm(boat[10], "lat")}" if boat[10] is not None else ""),
+            ("Longitude", f"{decimal_to_ddm(boat[9], "lon")}" if boat[9] is not None else ""),
             ("Speed", f"{boat[7]:.2f}"),
             ("Course", f"{boat[11]:.1f}"),
             ("Heading", f"{boat[12]:.1f}"),
