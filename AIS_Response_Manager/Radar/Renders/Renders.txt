@@ -1,0 +1,1 @@
+Hello, this folder use to store radar images for rendering. The images are now stored in memory.

@@ -33,11 +33,11 @@ class RadarPlotter:
         self.IsDebug = False
         self.IsKM = True
         self.FileRoute_sql3 = FileRoute_sql3
-        self.conn = sqlite3.connect(FileRoute_sql3)
         self.ID = ID
         if IsTest:
             self.FileRoute_sql3 = os.path.join(BASE_DIR, "PyTests/MockData/AIS-Responder.db")
             self.ID = 1
+        self.conn = sqlite3.connect(self.FileRoute_sql3)
         self.Order = Order.RANGE
         self.RadarConsoleData = []
         self.PrevRadarConsole_BoatID = []
@@ -109,27 +109,35 @@ class RadarPlotter:
             print(e)
 
     def plot_boats(self, myBoat):
+        MAX_PLOT = 30
         for i, item in enumerate(self.RadarConsoleData, start=1):
             item[1] = i
 
+        j = 0
         for boat in self.RadarConsoleData:
             if boat[5] != None:
                 pd = boat[5] # (boat_id, X_Y[0], X_Y[1], number, scale, boat[12], False)
                 #  def plot_otherBoat(self, boatToSave, x_meters, y_meters, number, scale=0.050, heading=0.00, IsTarget = False):
                 if self.targetId == boat[0][0]:
                     self.draw.plot_otherBoat(myBoat, boat[0], pd[1], pd[2], boat[1], pd[4], pd[5], True)
-                else:
+                    j = j + 1
+                elif j < MAX_PLOT:
                     self.draw.plot_otherBoat(myBoat, boat[0], pd[1], pd[2], boat[1], pd[4], pd[5], False)
+                    j = j + 1
+        # print(f"Plot count: {j}")
 
 
     # range = distance between your boat and other boat in both Lad and long
     # timeWindow = how far appart the received message is allowed to be shown in the list of other Boats
     def InRangeHelper(self, boat_id, range=0.009, timeWindow = 10.00):
-        original_range_km = range
-        if not self.IsKM:
-            display_range = km_to_miles(original_range_km)
+        requested_range = float(range)
+        
+        if self.IsKM:
+            effective_range_km = requested_range
+            display_range = requested_range
         else:
-            display_range = original_range_km
+            effective_range_km = miles_to_km(requested_range)
+            display_range = requested_range
 
         self.clearConsoleData()
         self.draw.clear_otherBoats()
@@ -157,10 +165,13 @@ class RadarPlotter:
         speed = myBoat[7]
         heading = myBoat[12]
 
-        performance = self.draw.draw_radar_Custom(display_range, heading, speed, self.IsKM)
+        drawTarget = range # ensures the drawn circles are consistent when switching between KM adn MI
+        if not self.IsKM:
+            drawTarget = km_to_miles(range)
+        performance = self.draw.draw_radar_Custom(drawTarget, heading, speed, self.IsKM)
         # CONVERT KM → DEGREE BOUNDING BOX
-        lat_range = km_to_lat_deg(original_range_km)
-        lon_range = km_to_lon_deg(original_range_km, lat)
+        lat_range = km_to_lat_deg(effective_range_km)
+        lon_range = km_to_lon_deg(effective_range_km, lat)
 
         min_lon = lon - lon_range
         max_lon = lon + lon_range
@@ -201,11 +212,11 @@ class RadarPlotter:
             print()
         if len(otherBoats) == 0:
             if self.IsDebug:
-                print(f"NO BOATS IN RANGE OF {range}KM CONTACT YOUR AIS PROVIDER FOR ANY UPDATES")
-            self.draw.SaveImg()
+                print(f"NO BOATS IN RANGE OF {effective_range_km:.2f}KM CONTACT YOUR AIS PROVIDER FOR ANY UPDATES")
+            self.draw.render_to_ram()
             return
         if self.IsDebug:
-            print(f"Other boats in range of {range} lon and lat:")
+            print(f"Other boats in range of {effective_range_km:.2f}KM / {requested_range} UI units:")
             print(dataTuple)
         number = 0
         for boat in otherBoats:
@@ -213,7 +224,7 @@ class RadarPlotter:
             is_target = boat[0] == self.targetId
             
             # Always include target boat, or include if in range
-            if distance <= range or is_target:
+            if distance <= effective_range_km or is_target:
                 number += 1
                 brg = bearing_deg(lat, lon, boat[10], boat[9])
                 if self.IsDebug:
@@ -223,10 +234,7 @@ class RadarPlotter:
                     print(f"Bearing to boat: {brg:.1f}°")
                 X_Y = ConvertToX_Y(lat, lon, boat[10], boat[9]) # tuple(X, Y, Distance)
 
-                if self.IsKM:
-                    range_meters = range * 1000
-                else:
-                    range_meters = miles_to_km(range) * 1000
+                range_meters = effective_range_km * 1000
                 radar_radius_pixels = 250
 
                 cpa, tcpa = calculate_cpa_tcpa(
@@ -262,7 +270,7 @@ class RadarPlotter:
         # saving the image does not close the turtle window by default;
         # we may call ``SaveImg(close=True)`` at the very end of the
         # program if we want to tear the canvas down.
-        self.draw.SaveImg()
+        self.draw.render_to_ram()
         end = time.time()
         fin_performance = end - start
         print(f"Radar plotting data trasmited count({len(self.RadarConsoleData)}) in {fin_performance} seconds")

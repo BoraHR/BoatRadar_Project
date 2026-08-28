@@ -10,7 +10,7 @@ import math
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ais_file1 = os.path.join(BASE_DIR, "Data/ais_arca.txt")
 ais_file2 = os.path.join(BASE_DIR, "Data/ais_rp42.txt")
-FileRoute_sql3 = os.path.join(BASE_DIR, "Pytests/MockData/AIS-Responder.db")
+FileRoute_sql3 = os.path.join(BASE_DIR, "PyTests/MockData/AIS-Responder.db")
 
 def DB_Exists():
     print("!!! DO NOT USE test_pyais_decoder.py IN ACTUAL PROGRAM USE pyais_decoder.py INSTEAD !!!")
@@ -85,6 +85,7 @@ def Save_DecodedData(_file):
     ''') 
     conn.commit()
     print("DB created")
+    print(f"Destination: {FileRoute_sql3}")
     with open(_file, "r", encoding="utf-8", errors="ignore") as file:
         for line in file:
             start = time.time()
@@ -246,10 +247,10 @@ def Save_DecodedData(_file):
                     print("-" * 50)
                     total_time += end - start
                     continue
-        conn.commit()
-        conn.close()
-        print(f"Passed: {passed} | Failed: {failed} | Skipped: {skipped} | Time(ms): {total_time * 1000:.2f}")
-        print("!!! DO NOT USE test_pyais_decoder.py IN ACTUAL PROGRAM USE pyais_decoder.py INSTEAD !!!")
+    conn.commit()
+    conn.close()
+    print(f"Passed: {passed} | Failed: {failed} | Skipped: {skipped} | Time(ms): {total_time * 1000:.2f}")
+    print("!!! DO NOT USE test_pyais_decoder.py IN ACTUAL PROGRAM USE pyais_decoder.py INSTEAD !!!")
         
 def Create_AIS_Render_History():
     print("!!! DO NOT USE test_pyais_decoder.py IN ACTUAL PROGRAM USE pyais_decoder.py INSTEAD !!!")

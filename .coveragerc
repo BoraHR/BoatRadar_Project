@@ -1,0 +1,3 @@
+[run]
+omit =
+    AIS_Response_Manager/pyais_decoder.py

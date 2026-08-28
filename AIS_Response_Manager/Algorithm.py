@@ -103,3 +103,18 @@ def calculate_cpa_tcpa(x1, y1, speed1, heading1, x2, y2, speed2, heading2):
     cpa = math.sqrt(cpa_x**2 + cpa_y**2)
 
     return cpa, tcpa
+
+def decimal_to_ddm(value, axis):
+    # axis: "lat" or "lon"
+    if axis == "lat":
+        hemi = "N" if value >= 0 else "S"
+    elif axis == "lon":
+        hemi = "E" if value >= 0 else "W"
+    else:
+        raise ValueError("axis must be 'lat' or 'lon'")
+
+    value = abs(value)
+    deg = int(value)
+    minutes = (value - deg) * 60.0
+
+    return f"{deg:02d}° {minutes:06.3f}' {hemi}"

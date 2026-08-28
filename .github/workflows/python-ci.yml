@@ -1,0 +1,252 @@
+name: Python CI
+
+on:
+  push:
+    branches: ["AutomatedTest", "AutomatedTest_RAM", "main"]
+  pull_request:
+    branches: ["AutomatedTest", "AutomatedTest_RAM", "main"]
+
+jobs:
+  tests:
+    name: Run Python tests and coverage
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        python-version: [3.12]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~\AppData\Local\pip\Cache
+          key: pip-${{ runner.os }}-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            pip-${{ runner.os }}-
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+
+          if (Test-Path "requirements.txt") {
+              python -m pip install -r requirements.txt
+          }
+          else {
+              Write-Host "No requirements.txt found, skipping."
+          }
+
+          python -m pip install pyais
+          python -m pip install numpy
+          python -m pip install Pillow
+          choco install ghostscript -y
+
+      - name: Add Ghostscript to PATH
+        shell: pwsh
+        run: |
+          $gs = Get-ChildItem "C:\Program Files\gs" -Recurse -Filter "gswin64c.exe" |
+                Select-Object -First 1
+
+          if ($null -eq $gs) {
+              Write-Error "gswin64c.exe was not found"
+              exit 1
+          }
+
+          $gsDir = $gs.Directory.FullName
+
+          Write-Host "Found Ghostscript at: $gsDir"
+
+          Add-Content $env:GITHUB_PATH $gsDir
+
+      - name: Test Windows Python environment
+        run: |
+          python --version
+          python -c "import sys; print(sys.executable)"
+          python -c "import winsound; print('winsound works')"
+
+      - name: Diagnose Tcl/Tk
+        shell: pwsh
+        run: |
+          Write-Host "Python location: $env:pythonLocation"
+
+          Write-Host "`nSearching for init.tcl..."
+          Get-ChildItem "C:\hostedtoolcache\windows\Python" `
+            -Recurse `
+            -Filter "init.tcl" `
+            -ErrorAction SilentlyContinue |
+            Select-Object -First 10 FullName
+
+          Write-Host "`nSearching for tk.tcl..."
+          Get-ChildItem "C:\hostedtoolcache\windows\Python" `
+            -Recurse `
+            -Filter "tk.tcl" `
+            -ErrorAction SilentlyContinue |
+            Select-Object -First 10 FullName
+
+          Write-Host "`nExpected directory:"
+          Test-Path "$env:pythonLocation\tcl\tcl8.6\init.tcl"
+
+      - name: Ensure test tools
+        run: |
+          python -m pip install --upgrade pytest pytest-cov
+
+      - name: Check test database - before creation
+        shell: python
+        run: |
+          import os
+          import sqlite3
+
+          path = "AIS_Response_Manager/PyTests/MockData/AIS-Responder.db"
+
+          print("Database:", path)
+          print("Exists:", os.path.exists(path))
+
+          if os.path.exists(path):
+              print("Size:", os.path.getsize(path), "bytes")
+
+              conn = sqlite3.connect(path)
+              cursor = conn.cursor()
+
+              tables = cursor.execute("""
+                  SELECT name
+                  FROM sqlite_master
+                  WHERE type='table'
+              """).fetchall()
+
+              print("Tables:", tables)
+
+              conn.close()
+
+      - name: Run pytest with coverage
+        run: |
+          New-Item -ItemType Directory -Force -Path pytest-results
+          pytest `
+            --junitxml=pytest-results/junit.xml `
+            --cov=. `
+            --cov-config=.coveragerc `
+            --cov-report=xml:coverage.xml `
+            --cov-report=html:coverage-html
+
+      - name: Write pytest summary
+        if: always()
+        shell: python
+        run: |
+          import xml.etree.ElementTree as ET
+          import glob
+          import os
+
+          summary = os.environ.get("GITHUB_STEP_SUMMARY")
+          files = glob.glob("pytest-results/*.xml")
+
+          with open(summary, "a", encoding="utf-8") as f:
+              f.write("## PyTest Summary\n\n")
+
+              if not files:
+                  f.write("No JUnit XML results found.\n")
+                  raise SystemExit(0)
+
+              tree = ET.parse(files[0]).getroot()
+
+              total = int(tree.attrib.get("tests", 0))
+              failures = int(tree.attrib.get("failures", 0))
+              errors = int(tree.attrib.get("errors", 0))
+              skipped = int(tree.attrib.get("skipped", 0))
+
+              f.write(
+                  f"Total: {total}, "
+                  f"Failures: {failures}, "
+                  f"Errors: {errors}, "
+                  f"Skipped: {skipped}\n\n"
+              )
+
+              if failures + errors == 0:
+                  f.write("| All tests passed | |\n")
+              else:
+                  f.write("| Test | Message |\n")
+                  f.write("|------|---------|\n")
+
+                  for case in tree.findall(".//testcase"):
+                      name = case.attrib.get("name")
+                      fail = case.find("failure")
+
+                      if fail is None:
+                          fail = case.find("error")
+
+                      if fail is not None:
+                          msg = (
+                              fail.attrib.get("message") or ""
+                          ).splitlines()[0]
+
+                          f.write(f"| {name} | {msg} |\n")
+
+      - name: Upload test results and coverage artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-test-artifacts
+          path: |
+            pytest-results/**
+            coverage.xml
+            coverage-html/**
+
+      - name: Fail if coverage below threshold (80%)
+        if: always()
+        shell: python
+        run: |
+          import xml.etree.ElementTree as ET
+          import sys
+          import os
+
+          cov_file = "coverage.xml"
+
+          if not os.path.exists(cov_file):
+              print("No coverage.xml found")
+              sys.exit(1)
+
+          root = ET.parse(cov_file).getroot()
+
+          pct = float(root.attrib.get("line-rate", 0)) * 100
+
+          print(f"Total coverage: {pct:.2f}%")
+
+          if pct < 80:
+              print("ERROR: Coverage below 80%")
+              sys.exit(1)
+
+          print("Coverage threshold met")
+
+      - name: Check test database - afther creation
+        if: always()
+        shell: python
+        run: |
+          import os
+          import sqlite3
+
+          path = "AIS_Response_Manager/PyTests/MockData/AIS-Responder.db"
+
+          print("Database:", path)
+          print("Exists:", os.path.exists(path))
+
+          if os.path.exists(path):
+              print("Size:", os.path.getsize(path), "bytes")
+
+              conn = sqlite3.connect(path)
+              cursor = conn.cursor()
+
+              tables = cursor.execute("""
+                  SELECT name
+                  FROM sqlite_master
+                  WHERE type='table'
+              """).fetchall()
+
+              print("Tables:", tables)
+
+              conn.close()

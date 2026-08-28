@@ -15,8 +15,6 @@ import math
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
-
-import AIS_ResponderManager
 from AIS_ResponderManager import AIS_ResponderManager
 from test_pyais_decoder import DB_Exists, Save_DecodedData
 from Algorithm import haversine, bearing_deg, ConvertToX_Y, velocity_vector, calculate_cpa_tcpa, km_to_lat_deg, km_to_lon_deg
@@ -24,6 +22,56 @@ from Algorithm import haversine, bearing_deg, ConvertToX_Y, velocity_vector, cal
 from RadarConsole import RadarConsole
 from RadarPlotter import RadarPlotter
 from RadarDrawing import RadarDrawing
+
+@pytest.fixture(scope="session", autouse=True)
+def setup_clean_mock_db():
+    """Create a fresh mock database once before the test session."""
+    
+    test_db_path = os.path.join(
+        BASE_DIR,
+        "PyTests/MockData/AIS-Responder.db"
+    )
+
+    test_AIS_file = os.path.join(
+        BASE_DIR,
+        "PyTests/MockData/ais_all.txt"
+    )
+    conn = None
+
+    # Remove old test database
+    try:
+        if os.path.exists(test_db_path):
+            os.remove(test_db_path)
+    
+
+        # Create AIS_Decoder table and populate it
+        Save_DecodedData(test_AIS_file)
+
+        # Create the additional table required by AIS_ResponderManager
+        with sqlite3.connect(test_db_path) as conn:
+
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS AIS_SubData (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    distance REAL,
+                    CPA REAL,
+                    TCPA REAL,
+                    BRG REAL,
+                    Boat_ID INTEGER UNIQUE,
+                    FOREIGN KEY (Boat_ID) REFERENCES AIS_Decoder(id)
+                )
+            """)
+
+            conn.commit()
+
+        
+    except Exception as e:
+            print("Failed mock database(re)creation:")
+            print(e)
+    finally:
+        if conn is not None:
+            conn.close()
+    yield
 
 def get_self(c):
     return c.execute('''
@@ -40,18 +88,19 @@ def get_all_boats(c, ignore = -1):
     ''', (ignore,)).fetchall()
 
 def ProgramForEachTest(size = 0):
-    test_AIS_file = os.path.join(BASE_DIR, "Pytests/MockData/ais_NONE.txt")
+    test_AIS_file = os.path.join(BASE_DIR, "PyTests/MockData/ais_NONE.txt")
     if size == 1:
-        test_AIS_file = os.path.join(BASE_DIR, "Pytests/MockData/ais_small.txt")
+        test_AIS_file = os.path.join(BASE_DIR, "PyTests/MockData/ais_small.txt")
     elif size == 2:
-        test_AIS_file = os.path.join(BASE_DIR, "Pytests/MockData/ais_moderate.txt")
+        test_AIS_file = os.path.join(BASE_DIR, "PyTests/MockData/ais_moderate.txt")
     elif size == 3:
-        test_AIS_file = os.path.join(BASE_DIR, "Pytests/MockData/ais_large.txt")
+        test_AIS_file = os.path.join(BASE_DIR, "PyTests/MockData/ais_large.txt")
     elif size == 4:
-        test_AIS_file = os.path.join(BASE_DIR, "Pytests/MockData/ais_all.txt")
+        test_AIS_file = os.path.join(BASE_DIR, "PyTests/MockData/ais_all.txt")
     
     if DB_Exists() == False:
         Save_DecodedData(test_AIS_file)
+
     testARM = AIS_ResponderManager(1, True)
 
     testDrawer = RadarDrawing()
@@ -59,22 +108,26 @@ def ProgramForEachTest(size = 0):
 
     window = Tk()
     testConsole = RadarConsole(window, True)
+    conn = sqlite3.connect(testARM.FileRoute_sql3)
+    c = conn.cursor()
+    if c.execute('''SELECT * FROM AIS_Decoder''').fetchone() == None:
+        Save_DecodedData() # failsave if previous db generation failed
 
     return testARM, testDrawer, testPlotter, testConsole
 
 def DB_Exists():
-    test_FileRoute_sql3 = os.path.join(BASE_DIR, "Pytests/MockData/AIS-Responder.db")
+    test_FileRoute_sql3 = os.path.join(BASE_DIR, "PyTests/MockData/AIS-Responder.db")
     if os.path.exists(test_FileRoute_sql3):
         return True
     return False
 
 def ClearDB():
-    test_FileRoute_sql3 = os.path.join(BASE_DIR, "Pytests/MockData/AIS-Responder.db")
+    test_FileRoute_sql3 = os.path.join(BASE_DIR, "PyTests/MockData/AIS-Responder.db")
     if os.path.exists(test_FileRoute_sql3):
         os.remove(test_FileRoute_sql3)
 
 def test_initialize():
-    testARM, testDrawer, testPlotter, testConsole = ProgramForEachTest()
+    testARM, testDrawer, testPlotter, testConsole = ProgramForEachTest(4)
 
     assert testARM is not None
     assert testDrawer is not None
@@ -185,7 +238,7 @@ def test_SQL_update_SubData():
     GetResults_WithTargets("SQL UPDATE SUBDATA", count, total, max, min, 750, 0.09, 0.003, 0.65, False)
     conn.close()
     testConsole.window.destroy()
-    time.sleep(0.01)
+    time.sleep(0.05)
 
 def test_lat_long_algorithm_speed():
     i = 1
@@ -357,8 +410,9 @@ def ImageSaveLoop(testname, KM, IncludeTargets):
         if not IncludeTargets:
             testDrawer.draw_radar_Custom(KM, 0.00, 2.0)
         testPlotter.plot_boats(myBoat)
-        testDrawer.SaveImg()
+        testDrawer.render_to_ram()
         end = time.perf_counter()
+                
         # the first index is always None value for img_RAM and should be ignored
         if i != 0:
             assert testDrawer.img_RAM != None
@@ -370,6 +424,9 @@ def ImageSaveLoop(testname, KM, IncludeTargets):
             total += result
             count += 1 
         i += 1
+        testPlotter.draw.clear_otherBoats()
+
+        
     
     if IncludeTargets:
         GetResults_WithTargets(testname, count, total, max, min, 20, 1.2, 0.6, 12.00)
